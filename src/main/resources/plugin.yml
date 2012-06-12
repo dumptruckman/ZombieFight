@@ -1,0 +1,10 @@
+name: ZombieFight
+main: com.dumptruckman.minecraft.zombiefight.ZombieFightPlugin
+version: maven-version-number
+author: dumptruckman
+softdepend: [Multiverse-Adventure]
+
+commands:
+  zf:
+    description: Main plugin command.
+    usage: /<command>
