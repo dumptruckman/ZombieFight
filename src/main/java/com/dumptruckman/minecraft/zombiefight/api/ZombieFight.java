@@ -11,5 +11,5 @@ import org.bukkit.plugin.Plugin;
  */
 public interface ZombieFight extends BukkitPlugin<ZFConfig>, Plugin {
 
-
+    GameManager getGameManager();
 }

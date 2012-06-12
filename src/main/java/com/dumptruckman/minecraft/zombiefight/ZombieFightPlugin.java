@@ -1,5 +1,6 @@
 package com.dumptruckman.minecraft.zombiefight;
 
+import com.dumptruckman.minecraft.zombiefight.api.GameManager;
 import com.dumptruckman.minecraft.zombiefight.api.ZFConfig;
 import com.dumptruckman.minecraft.zombiefight.api.ZombieFight;
 import com.dumptruckman.minecraft.zombiefight.command.CheckCommand;
@@ -18,6 +19,8 @@ import java.util.List;
 public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements ZombieFight {
 
     private final List<String> cmdPrefixes = Arrays.asList("zf");
+
+    private GameManager gameManager = null;
 
     @Override
     protected ZFConfig newConfigInstance() throws IOException {
@@ -38,6 +41,11 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
     }
 
     @Override
+    public void preReload() {
+        gameManager = null;
+    }
+
+    @Override
     public void onDisable() {
         getServer().getScheduler().cancelTasks(this);
         super.onDisable();
@@ -52,5 +60,13 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
     public List<String> dumpVersionInfo() {
         List<String> versionInfo = new LinkedList<String>();
         return versionInfo;
+    }
+
+    @Override
+    public GameManager getGameManager() {
+        if (gameManager == null) {
+            gameManager = new DefaultGameManager();
+        }
+        return gameManager;
     }
 }
