@@ -1,6 +1,7 @@
 package com.dumptruckman.minecraft.zombiefight.api;
 
 import com.dumptruckman.minecraft.pluginbase.plugin.BukkitPlugin;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
@@ -12,4 +13,6 @@ import org.bukkit.plugin.Plugin;
 public interface ZombieFight extends BukkitPlugin<ZFConfig>, Plugin {
 
     GameManager getGameManager();
+
+    void broadcastWorld(String worldName, String message);
 }

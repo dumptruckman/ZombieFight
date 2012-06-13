@@ -1,5 +1,6 @@
 package com.dumptruckman.minecraft.zombiefight;
 
+import com.dumptruckman.minecraft.pluginbase.util.Logging;
 import com.dumptruckman.minecraft.zombiefight.api.GameManager;
 import com.dumptruckman.minecraft.zombiefight.api.ZFConfig;
 import com.dumptruckman.minecraft.zombiefight.api.ZombieFight;
@@ -8,6 +9,9 @@ import com.dumptruckman.minecraft.zombiefight.util.CommentedConfig;
 import com.dumptruckman.minecraft.zombiefight.util.Language;
 import com.dumptruckman.minecraft.pluginbase.plugin.AbstractBukkitPlugin;
 import com.dumptruckman.minecraft.pluginbase.plugin.command.HelpCommand;
+import org.bukkit.Bukkit;
+import org.bukkit.World;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginManager;
 
 import java.io.File;
@@ -68,5 +72,18 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
             gameManager = new DefaultGameManager();
         }
         return gameManager;
+    }
+
+    @Override
+    public void broadcastWorld(String worldName, String message) {
+        World world = Bukkit.getWorld(worldName);
+        if (worldName == null) {
+            Logging.warning("World '" + worldName + "' missing!  (This shouldn't happen)");
+            Logging.warning("Could not broadcast: " + message);
+            return;
+        }
+        for (Player player : world.getPlayers()) {
+            player.sendMessage(message);
+        }
     }
 }
