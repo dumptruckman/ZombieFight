@@ -58,13 +58,13 @@ class DefaultGame implements Game {
             }
             for (String playerName : humanPlayers) {
                 Player player = Bukkit.getPlayerExact(playerName);
-                if (playerName != null) {
+                if (player != null) {
                     player.teleport(location);
                 }
             }
             for (String playerName : zombiePlayers) {
                 Player player = Bukkit.getPlayerExact(playerName);
-                if (playerName != null) {
+                if (player != null) {
                     player.teleport(location);
                     plugin.unZombifyPlayer(player.getName());
                 }
@@ -111,7 +111,7 @@ class DefaultGame implements Game {
         }
         for (String playerName : humanPlayers) {
             Player player = Bukkit.getPlayerExact(playerName);
-            if (playerName != null) {
+            if (player != null) {
                 player.teleport(location);
                 player.getInventory().clear();
             }

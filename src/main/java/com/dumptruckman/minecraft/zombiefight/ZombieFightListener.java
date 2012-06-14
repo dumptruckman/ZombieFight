@@ -257,7 +257,6 @@ public class ZombieFightListener implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.HIGH)
     public void playerChat(PlayerChatEvent event) {
         if (event.isCancelled()) {
             return;
@@ -305,6 +304,7 @@ public class ZombieFightListener implements Listener {
         }
     }
 
+    @EventHandler
     public void playerDeath(PlayerDeathEvent event) {
         Player player = event.getEntity();
         World world = player.getWorld();
