@@ -165,6 +165,7 @@ class DefaultGame implements Game {
                 Logging.fine("Random zombie selected: " + name);
                 return name;
             }
+            i++;
         }
         Logging.fine("Could not select random zombie.");
         return null;
