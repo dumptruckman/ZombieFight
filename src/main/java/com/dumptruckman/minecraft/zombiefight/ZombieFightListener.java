@@ -19,6 +19,7 @@ import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.scheduler.BukkitTask;
 
 public class ZombieFightListener implements Listener {
@@ -113,7 +114,7 @@ public class ZombieFightListener implements Listener {
                         break;
                 }
             }
-        });
+        }, 5L);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
@@ -182,7 +183,7 @@ public class ZombieFightListener implements Listener {
 
     @EventHandler
     public void playerMove(PlayerMoveEvent event) {
-        if (event.isCancelled()) {
+        if (event.isCancelled() || event instanceof PlayerTeleportEvent) {
             return;
         }
         Player player = event.getPlayer();
@@ -197,6 +198,7 @@ public class ZombieFightListener implements Listener {
                 if (firstZombie.equals(player.getName())) {
                     if (!event.getFrom().getBlock().equals(event.getTo().getBlock())) {
                         event.setCancelled(true);
+                        player.teleport(event.getFrom().getBlock().getLocation());
                     }
                 }
             }

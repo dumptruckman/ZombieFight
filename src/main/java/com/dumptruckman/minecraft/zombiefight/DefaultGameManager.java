@@ -25,10 +25,7 @@ class DefaultGameManager implements GameManager {
 
     @Override
     public Game getGame(String worldName) {
-        if (enabledWorlds == null) {
-            enabledWorlds = new CopyOnWriteArraySet<String>(plugin.config().getList(ZFConfig.ENABLED_WORLDS));
-        }
-        if (!enabledWorlds.contains(worldName)) {
+        if (!getEnabledWorlds().contains(worldName)) {
             return null;
         }
         Game game = gameMap.get(worldName);
@@ -39,6 +36,13 @@ class DefaultGameManager implements GameManager {
         return game;
     }
 
+    private Set<String> getEnabledWorlds() {
+        if (enabledWorlds == null) {
+            enabledWorlds = new CopyOnWriteArraySet<String>(plugin.config().getList(ZFConfig.ENABLED_WORLDS));
+        }
+        return enabledWorlds;
+    }
+
     @Override
     public Game newGame(String worldName) {
         return null;
@@ -46,20 +50,20 @@ class DefaultGameManager implements GameManager {
 
     @Override
     public boolean isWorldEnabled(String worldName) {
-        return enabledWorlds.contains(worldName);
+        return getEnabledWorlds().contains(worldName);
     }
 
     @Override
     public void enableWorld(String worldName) {
-        enabledWorlds.add(worldName);
-        plugin.config().set(ZFConfig.ENABLED_WORLDS, new ArrayList<String>(enabledWorlds));
+        getEnabledWorlds().add(worldName);
+        plugin.config().set(ZFConfig.ENABLED_WORLDS, new ArrayList<String>(getEnabledWorlds()));
         plugin.config().save();
     }
 
     @Override
     public void disableWorld(String worldName) {
-        enabledWorlds.remove(worldName);
-        plugin.config().set(ZFConfig.ENABLED_WORLDS, new ArrayList<String>(enabledWorlds));
+        getEnabledWorlds().remove(worldName);
+        plugin.config().set(ZFConfig.ENABLED_WORLDS, new ArrayList<String>(getEnabledWorlds()));
         plugin.config().save();
     }
 }
