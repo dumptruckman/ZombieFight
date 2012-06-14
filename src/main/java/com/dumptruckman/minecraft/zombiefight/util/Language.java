@@ -43,6 +43,20 @@ public class Language {
     public static final Message CMD_END_SUCCESS = new Message("cmd.end.success",
             "You have ended the game.");
 
+    public static final Message CMD_ENABLE_NAME = new Message("cmd.enable.name",
+            "Enables the game for the world.");
+    public static final Message CMD_ENABLE_ALREADY = new Message("cmd.enable.already_enabled",
+            "The game is already enabled for the world!");
+    public static final Message CMD_ENABLE_SUCCESS = new Message("cmd.enable.success",
+            "You have enabled the game for the world.");
+
+    public static final Message CMD_DISABLE_NAME = new Message("cmd.disable.name",
+            "Disables the game for the world.");
+    public static final Message CMD_DISABLE_ALREADY = new Message("cmd.disable.already_disabled",
+            "The game is already disabled for the world!");
+    public static final Message CMD_DISABLE_SUCCESS = new Message("cmd.disable.success",
+            "You have disabled the game for the world.");
+
     public static final Message JOIN_WHILE_GAME_IN_PROGRESS = new Message("joining.game_in_progress",
             "A game is in progress.  Please wait in the waiting area for the next game.");
     public static final Message JOIN_WHILE_GAME_PREPARING = new Message("joining.game_preparing",
