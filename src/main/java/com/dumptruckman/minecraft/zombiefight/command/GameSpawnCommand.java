@@ -36,6 +36,7 @@ public class GameSpawnCommand extends ZFCommand {
             if (Perms.CMD_GSPAWN_SET.hasPermission(player)) {
                 Location loc = player.getLocation();
                 plugin.config().set(ZFConfig.GAME_SPAWN.specific(loc.getWorld().getName()), loc);
+                plugin.config().save();
                 messager.good(Language.CMD_GSPAWN_SET_SUCCESS, player);
             } else {
                 messager.bad(Language.CMD_GSPAWN_SET_NO_PERM, player);

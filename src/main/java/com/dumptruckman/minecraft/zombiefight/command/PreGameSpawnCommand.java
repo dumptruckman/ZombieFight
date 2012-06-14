@@ -36,6 +36,7 @@ public class PreGameSpawnCommand extends ZFCommand {
             if (Perms.CMD_PGSPAWN_SET.hasPermission(player)) {
                 Location loc = player.getLocation();
                 plugin.config().set(ZFConfig.PRE_GAME_SPAWN.specific(loc.getWorld().getName()), loc);
+                plugin.config().save();
                 messager.good(Language.CMD_PGSPAWN_SET_SUCCESS, player);
             } else {
                 messager.bad(Language.CMD_PGSPAWN_SET_NO_PERM, player);
