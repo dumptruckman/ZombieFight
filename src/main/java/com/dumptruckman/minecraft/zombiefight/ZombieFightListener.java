@@ -195,7 +195,9 @@ public class ZombieFightListener implements Listener {
             String firstZombie = game.getFirstZombie();
             if (firstZombie != null) {
                 if (firstZombie.equals(player.getName())) {
-                    event.setCancelled(true);
+                    if (!event.getFrom().getBlock().equals(event.getTo().getBlock())) {
+                        event.setCancelled(true);
+                    }
                 }
             }
         }
@@ -213,6 +215,7 @@ public class ZombieFightListener implements Listener {
             return;
         }
         Player damager = (Player) event.getDamager();
+        Player damagee = (Player) event.getEntity();
         World world = damager.getWorld();
         Game game = plugin.getGameManager().getGame(world.getName());
         if (game == null) {
@@ -221,7 +224,7 @@ public class ZombieFightListener implements Listener {
         if (game.getStatus() == GameStatus.IN_PROGRESS) {
             if (game.isZombie(damager.getName())) {
                 String firstZombie = game.getFirstZombie();
-                if (firstZombie != null && firstZombie.equals(damager.getName())) {
+                if (firstZombie != null && (firstZombie.equals(damager.getName()) || firstZombie.equals(damagee.getName()))) {
                     event.setCancelled(true);
                     return;
                 }
