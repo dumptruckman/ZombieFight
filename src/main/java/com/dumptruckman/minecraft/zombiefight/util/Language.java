@@ -78,6 +78,8 @@ public class Language {
             "You have %1 seconds to run away from the zombie!");
     public static final Message PLAYER_ZOMBIFIED = new Message("game.player_zombified",
             "%1 has been turned into a zombie!");
+    public static final Message ZOMBIE_TAG = new Message("game.zombie_tag",
+            "[ZOMBIE] ");
 
     public static final Message COULD_NOT_COUNTDOWN = new Message("error.could_not_countdown",
             "Could not start countdown! Game will start immediately!");
