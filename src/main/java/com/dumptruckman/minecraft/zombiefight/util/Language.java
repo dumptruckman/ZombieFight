@@ -14,6 +14,14 @@ public class Language {
             "You have changed the pre-game spawn to your current location.");
     public static final Message CMD_PGSPAWN_SET_NO_PERM = new Message("cmd.pgspawn.set.no_perm",
             "You do not have the required permission to change pre-game spawn.");
+    public static final Message CMD_GSPAWN_NAME = new Message("cmd.gspawn.name",
+            "Warps you to the game spawn or sets one.");
+    public static final Message CMD_GSPAWN_FAIL = new Message("cmd.gspawn.failure",
+            "A game spawn has not been set yet!");
+    public static final Message CMD_GSPAWN_SET_SUCCESS = new Message("cmd.gspawn.set.success",
+            "You have changed the game spawn to your current location.");
+    public static final Message CMD_GSPAWN_SET_NO_PERM = new Message("cmd.gspawn.set.no_perm",
+            "You do not have the required permission to change game spawn.");
     public static final Message JOIN_WHILE_GAME_IN_PROGRESS = new Message("joining.game_in_progress",
             "A game is in progress.  Please wait in the waiting area for the next game.");
     public static final Message JOIN_WHILE_GAME_PREPARING = new Message("joining.game_preparing",
