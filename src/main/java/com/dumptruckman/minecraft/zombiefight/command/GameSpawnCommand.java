@@ -16,7 +16,7 @@ public class GameSpawnCommand extends ZFCommand {
         super(plugin);
         this.setName(messager.getMessage(Language.CMD_GSPAWN_NAME));
         this.setCommandUsage("/" + plugin.getCommandPrefixes().get(0) + " gspawn [set]");
-        this.setArgRange(0, 0);
+        this.setArgRange(0, 1);
         for (String prefix : plugin.getCommandPrefixes()) {
             this.addKey(prefix + " gspawn");
         }
