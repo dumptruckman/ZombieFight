@@ -184,13 +184,12 @@ and adjust the build number accordingly -->
         <!-- Bukkit Dependency -->
         <dependency>
             <groupId>org.bukkit</groupId>
-            <artifactId>bukkit</artifactId>
+            <artifactId>craftbukkit</artifactId>
             <version>1.2.5-R4.0</version>
             <type>jar</type>
             <scope>compile</scope>
         </dependency>
-        <!-- Bukkit Dependency -->
-        <!-- Start of PluginBase Dependency -->
+        <!-- PluginBase Dependency -->
         <dependency>
             <groupId>com.dumptruckman.minecraft</groupId>
             <artifactId>BukkitPlugin</artifactId>
@@ -198,7 +197,14 @@ and adjust the build number accordingly -->
             <type>jar</type>
             <scope>compile</scope>
         </dependency>
-        <!-- End of PluginBase Dependency -->
+        <!-- MobDisguise Dependency -->
+        <dependency>
+            <groupId>desmin88</groupId>
+            <artifactId>MobDisguise</artifactId>
+            <version>1.8.1</version>
+            <type>jar</type>
+            <scope>compile</scope>
+        </dependency>
         <!-- Start of Test Dependencies -->
         <dependency>
             <groupId>junit</groupId>

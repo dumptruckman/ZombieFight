@@ -23,6 +23,7 @@ public interface ZFConfig extends BaseConfig {
     ConfigEntry<Integer> MAX_PLAYERS = new EntryBuilder<Integer>(Integer.class, "game_settings.maximum_players").stringSerializer().def(30).defaultIfMissing().comment("# The maximum players for a game.  The game will start immediately if reached.").build();
 
     ConfigEntry<Integer> COUNTDOWN_TIME = new EntryBuilder<Integer>(Integer.class, "game_settings.countdown_length").stringSerializer().def(120).defaultIfMissing().comment("# The amount of time in seconds a game will countdown before starting when enough players have joined.").build();
+    ConfigEntry<Integer> END_DURATION = new EntryBuilder<Integer>(Integer.class, "game_settings.end_game_duration").stringSerializer().def(30).defaultIfMissing().comment("# How long to wait (in seconds) after a game has finished before beginning a new game.").build();
     ConfigEntry<Integer> ZOMBIE_LOCK = new EntryBuilder<Integer>(Integer.class, "game_settings.zombie_lock").stringSerializer().def(30).defaultIfMissing().comment("# The amount of time in seconds that the first zombie will be locked in place and unable to damage players").build();
     ConfigEntry<Integer> ZOMBIE_DAMAGE = new EntryBuilder<Integer>(Integer.class, "game_settings.zombie_damage").stringSerializer().def(1).defaultIfMissing().comment("# This is the amount of extra damage zombies do.").build();
 }

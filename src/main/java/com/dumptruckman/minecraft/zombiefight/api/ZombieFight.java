@@ -1,6 +1,7 @@
 package com.dumptruckman.minecraft.zombiefight.api;
 
 import com.dumptruckman.minecraft.pluginbase.plugin.BukkitPlugin;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
 import java.util.Collection;
@@ -18,4 +19,6 @@ public interface ZombieFight extends BukkitPlugin<ZFConfig>, Plugin {
     Collection<String> getPlayersForWorld(String worldName);
 
     void zombifyPlayer(String name);
+
+    void unZombifyPlayer(String name);
 }

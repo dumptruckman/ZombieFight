@@ -44,6 +44,32 @@ class DefaultGame implements Game {
         @Override
         public void run() {
             firstZombie = null;
+            plugin.broadcastWorld(worldName, plugin.getMessager().getMessage(Language.ZOMBIE_RELEASE));
+        }
+    }
+
+    private class GameEndTask implements Runnable {
+        @Override
+        public void run() {
+            Location location = plugin.config().get(ZFConfig.PRE_GAME_SPAWN.specific(worldName));
+            if (location == null) {
+                World world = Bukkit.getWorld(worldName);
+                location = world.getSpawnLocation();
+            }
+            for (String playerName : humanPlayers) {
+                Player player = Bukkit.getPlayerExact(playerName);
+                if (playerName != null) {
+                    player.teleport(location);
+                }
+            }
+            for (String playerName : zombiePlayers) {
+                Player player = Bukkit.getPlayerExact(playerName);
+                if (playerName != null) {
+                    player.teleport(location);
+                    plugin.unZombifyPlayer(player.getName());
+                }
+            }
+            plugin.getGameManager().newGame(worldName);
         }
     }
 
@@ -87,6 +113,7 @@ class DefaultGame implements Game {
             Player player = Bukkit.getPlayerExact(playerName);
             if (playerName != null) {
                 player.teleport(location);
+                player.getInventory().clear();
             }
         }
         firstZombie = randomZombie();
@@ -100,6 +127,9 @@ class DefaultGame implements Game {
     public void endGame() {
         plugin.broadcastWorld(worldName, plugin.getMessager().getMessage(Language.GAME_ENDED));
         status = GameStatus.ENDED;
+        int secondsToReset = plugin.config().get(ZFConfig.END_DURATION);
+        plugin.broadcastWorld(worldName, plugin.getMessager().getMessage(Language.GAME_RESETTING, secondsToReset));
+        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new GameEndTask(), BukkitTools.convertSecondsToTicks(secondsToReset));
     }
 
     @Override
@@ -181,5 +211,10 @@ class DefaultGame implements Game {
     @Override
     public String getFirstZombie() {
         return firstZombie;
+    }
+
+    @Override
+    public String getWorld() {
+        return worldName;
     }
 }

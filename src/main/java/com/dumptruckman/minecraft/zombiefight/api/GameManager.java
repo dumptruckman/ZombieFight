@@ -4,7 +4,7 @@ public interface GameManager {
 
     Game getGame(String worldName);
 
-    Game newGame(String worldName);
+    void newGame(String worldName);
 
     boolean isWorldEnabled(String worldName);
 

@@ -31,4 +31,6 @@ public interface Game {
     void makeZombie(String name);
 
     String getFirstZombie();
+
+    String getWorld();
 }

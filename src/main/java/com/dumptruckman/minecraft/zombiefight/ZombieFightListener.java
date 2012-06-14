@@ -16,10 +16,12 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerChatEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.scheduler.BukkitTask;
 
@@ -36,8 +38,7 @@ public class ZombieFightListener implements Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     public void playerJoin(PlayerJoinEvent event) {
         final Player player = event.getPlayer();
-        Location playerLoc = player.getLocation();
-        final World world = playerLoc.getWorld();
+        final World world = player.getWorld();
         final Game game = plugin.getGameManager().getGame(world.getName());
         if (game == null) {
             Logging.finest("Player joined non-game world.");
@@ -121,8 +122,7 @@ public class ZombieFightListener implements Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     public void playerQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
-        Location playerLoc = player.getLocation();
-        World world = playerLoc.getWorld();
+        World world = player.getWorld();
         Game game = plugin.getGameManager().getGame(world.getName());
         if (game == null) {
             Logging.finest("Player quit non-game world.");
@@ -270,6 +270,52 @@ public class ZombieFightListener implements Listener {
         }
         if (game.isZombie(player.getName())) {
             event.setMessage(messager.getMessage(Language.ZOMBIE_TAG) + event.getMessage());
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void playerRespawn(PlayerRespawnEvent event) {
+        Player player = event.getPlayer();
+        World world = player.getWorld();
+        Game game = plugin.getGameManager().getGame(world.getName());
+        if (game == null) {
+            return;
+        }
+        Location spawnLoc;
+        switch (game.getStatus()) {
+            case PREPARING:
+            case STARTING:
+                spawnLoc = plugin.config().get(ZFConfig.PRE_GAME_SPAWN.specific(world.getName()));
+                if (spawnLoc == null) {
+                    Logging.fine("No pre-game spawn set, will use world spawn.");
+                    spawnLoc = world.getSpawnLocation();
+                }
+                event.setRespawnLocation(spawnLoc);
+                break;
+            case IN_PROGRESS:
+            case ENDED:
+                spawnLoc = plugin.config().get(ZFConfig.GAME_SPAWN.specific(world.getName()));
+                if (spawnLoc == null) {
+                    Logging.fine("No pre-game spawn set, will use world spawn.");
+                    spawnLoc = world.getSpawnLocation();
+                }
+                break;
+            default:
+                break;
+        }
+    }
+
+    public void playerDeath(PlayerDeathEvent event) {
+        Player player = event.getEntity();
+        World world = player.getWorld();
+        Game game = plugin.getGameManager().getGame(world.getName());
+        if (game == null) {
+            return;
+        }
+        if (game.getStatus() == GameStatus.IN_PROGRESS) {
+            if (!game.isZombie(player.getName())) {
+                game.makeZombie(player.getName());
+            }
         }
     }
 }

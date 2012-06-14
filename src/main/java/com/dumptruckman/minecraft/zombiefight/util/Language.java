@@ -74,12 +74,18 @@ public class Language {
             "The game has begun!");
     public static final Message GAME_ENDED = new Message("game.ended.ended",
             "The game has ended!");
+    public static final Message GAME_ENDED_NO_WINNER = new Message("game.ended.no_winner",
+            "All the humans are dead... No one wins.");
     public static final Message RUN_FROM_ZOMBIE = new Message("game.run_from_zombie",
             "You have %1 seconds to run away from the zombie!");
     public static final Message PLAYER_ZOMBIFIED = new Message("game.player_zombified",
             "%1 has been turned into a zombie!");
     public static final Message ZOMBIE_TAG = new Message("game.zombie_tag",
             "[ZOMBIE] ");
+    public static final Message ZOMBIE_RELEASE = new Message("game.zombie_released",
+            "The zombie has been released!!");
+    public static final Message GAME_RESETTING = new Message("game.resetting_soon",
+            "The game will be resetting in %1 seconds...");
 
     public static final Message COULD_NOT_COUNTDOWN = new Message("error.could_not_countdown",
             "Could not start countdown! Game will start immediately!");

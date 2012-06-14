@@ -5,6 +5,7 @@ import com.dumptruckman.minecraft.zombiefight.api.GameManager;
 import com.dumptruckman.minecraft.zombiefight.api.GameStatus;
 import com.dumptruckman.minecraft.zombiefight.api.ZFConfig;
 import com.dumptruckman.minecraft.zombiefight.api.ZombieFight;
+import com.dumptruckman.minecraft.zombiefight.util.Language;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -44,8 +45,10 @@ class DefaultGameManager implements GameManager {
     }
 
     @Override
-    public Game newGame(String worldName) {
-        return null;
+    public void newGame(String worldName) {
+        Game game = new DefaultGame(plugin, worldName);
+        gameMap.put(worldName, game);
+        plugin.broadcastWorld(worldName, plugin.getMessager().getMessage(Language.JOIN_WHILE_GAME_PREPARING));
     }
 
     @Override
