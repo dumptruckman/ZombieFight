@@ -4,8 +4,16 @@ import com.dumptruckman.minecraft.pluginbase.locale.Message;
 
 public class Language {
 
-    public static final Message CMD_CHECK_NAME = new Message("cmd.check.name",
-            "Checks a chest and gives info relating to ZombieFight");
+    public static final Message IN_GAME_ONLY = new Message("cmd.in_game_only",
+            "You may only use this command in game!");
+    public static final Message CMD_PGSPAWN_NAME = new Message("cmd.pgspawn.name",
+            "Warps you to the pre-game spawn or sets one.");
+    public static final Message CMD_PGSPAWN_FAIL = new Message("cmd.pgspawn.failure",
+            "A pre-game spawn has not been set yet!");
+    public static final Message CMD_PGSPAWN_SET_SUCCESS = new Message("cmd.pgspawn.set.success",
+            "You have changed the pre-game spawn to your current location.");
+    public static final Message CMD_PGSPAWN_SET_NO_PERM = new Message("cmd.pgspawn.set.no_perm",
+            "You do not have the required permission to change pre-game spawn.");
     public static final Message JOIN_WHILE_GAME_IN_PROGRESS = new Message("joining.game_in_progress",
             "A game is in progress.  Please wait in the waiting area for the next game.");
     public static final Message JOIN_WHILE_GAME_PREPARING = new Message("joining.game_preparing",
