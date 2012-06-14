@@ -17,8 +17,11 @@ import org.bukkit.plugin.PluginManager;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements ZombieFight {
 
@@ -69,7 +72,7 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
     @Override
     public GameManager getGameManager() {
         if (gameManager == null) {
-            gameManager = new DefaultGameManager();
+            gameManager = new DefaultGameManager(this);
         }
         return gameManager;
     }
@@ -85,5 +88,26 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
         for (Player player : world.getPlayers()) {
             player.sendMessage(message);
         }
+    }
+
+    @Override
+    public Collection<String> getPlayersForWorld(String worldName) {
+        World world = Bukkit.getWorld(worldName);
+        Collection<String> players = new LinkedList<String>();
+        for (Player player : world.getPlayers()) {
+            players.add(player.getName());
+        }
+        return players;
+    }
+
+    @Override
+    public void zombifyPlayer(String name) {
+        Player player = Bukkit.getPlayer(name);
+        if (player == null) {
+            Bukkit.broadcastMessage("Could not zombify: " + name);
+            return;
+        }
+        World world = player.getWorld();
+        broadcastWorld(world.getName(), getMessager().getMessage(Language.PLAYER_ZOMBIFIED, player.getName()));
     }
 }

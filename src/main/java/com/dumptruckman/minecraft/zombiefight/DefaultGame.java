@@ -1,11 +1,21 @@
 package com.dumptruckman.minecraft.zombiefight;
 
+import com.dumptruckman.minecraft.pluginbase.util.BukkitTools;
+import com.dumptruckman.minecraft.pluginbase.util.Logging;
 import com.dumptruckman.minecraft.zombiefight.api.Game;
 import com.dumptruckman.minecraft.zombiefight.api.GameStatus;
 import com.dumptruckman.minecraft.zombiefight.api.ZFConfig;
 import com.dumptruckman.minecraft.zombiefight.api.ZombieFight;
 import com.dumptruckman.minecraft.zombiefight.util.Language;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.World;
+import org.bukkit.entity.Player;
+
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.Random;
+import java.util.Set;
 
 class DefaultGame implements Game {
 
@@ -14,6 +24,10 @@ class DefaultGame implements Game {
     private String worldName;
     private int countdown;
     private int countdownTask = -1;
+    private Set<String> zombiePlayers;
+    private Set<String> humanPlayers;
+    private Set<String> onlinePlayers;
+    private String firstZombie = "";
 
     private class CountdownTask implements Runnable {
         @Override
@@ -21,8 +35,15 @@ class DefaultGame implements Game {
             countdown--;
             if (countdown <= 0) {
                 forceStart();
+                Bukkit.getScheduler().cancelTask(countdownTask);
             }
-            Bukkit.getScheduler().cancelTask(countdownTask);
+        }
+    }
+
+    private class ZombieLockTask implements Runnable {
+        @Override
+        public void run() {
+            firstZombie = null;
         }
     }
 
@@ -30,6 +51,9 @@ class DefaultGame implements Game {
         this.plugin = plugin;
         this.worldName = worldName;
         this.countdown = plugin.config().get(ZFConfig.COUNTDOWN_TIME);
+        zombiePlayers = new HashSet<String>(plugin.config().get(ZFConfig.MAX_PLAYERS));
+        humanPlayers = new LinkedHashSet<String>(plugin.config().get(ZFConfig.MAX_PLAYERS));
+        onlinePlayers = new LinkedHashSet<String>(plugin.config().get(ZFConfig.MAX_PLAYERS));
     }
 
     @Override
@@ -52,57 +76,109 @@ class DefaultGame implements Game {
     @Override
     public void forceStart() {
         plugin.broadcastWorld(worldName, plugin.getMessager().getMessage(Language.GAME_STARTING));
+        humanPlayers.addAll(plugin.getPlayersForWorld(worldName));
         status = GameStatus.IN_PROGRESS;
+        Location location = plugin.config().get(ZFConfig.GAME_SPAWN.specific(worldName));
+        if (location == null) {
+            World world = Bukkit.getWorld(worldName);
+            location = world.getSpawnLocation();
+        }
+        for (String playerName : humanPlayers) {
+            Player player = Bukkit.getPlayerExact(playerName);
+            if (playerName != null) {
+                player.teleport(location);
+            }
+        }
+        firstZombie = randomZombie();
+        int secondsToRun = plugin.config().get(ZFConfig.ZOMBIE_LOCK);
+        plugin.broadcastWorld(worldName, plugin.getMessager().getMessage(Language.RUN_FROM_ZOMBIE, secondsToRun));
+        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new ZombieLockTask(), BukkitTools.convertSecondsToTicks(secondsToRun));
+        makeZombie(firstZombie);
     }
 
     @Override
     public void endGame() {
-        plugin.broadcastWorld(worldName, plugin.getMessager().getMessage(Language.GAME_STARTING));
+        plugin.broadcastWorld(worldName, plugin.getMessager().getMessage(Language.GAME_ENDED));
         status = GameStatus.ENDED;
     }
 
     @Override
     public boolean isPlaying(String name) {
-        return false;  //To change body of implemented methods use File | Settings | File Templates.
+        return humanPlayers.contains(name) || zombiePlayers.contains(name);
     }
 
     @Override
     public void haltCountdown() {
-        //To change body of implemented methods use File | Settings | File Templates.
+        Bukkit.getScheduler().cancelTask(countdownTask);
+        countdownTask = -1;
     }
 
     @Override
     public boolean isZombie(String playerName) {
-        return false;  //To change body of implemented methods use File | Settings | File Templates.
+        return zombiePlayers.contains(playerName);
     }
 
     @Override
     public boolean hasOnlineZombies() {
-        return false;  //To change body of implemented methods use File | Settings | File Templates.
+        for (String name : zombiePlayers) {
+            if (onlinePlayers.contains(name)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
     public boolean hasOnlineHumans() {
-        return false;  //To change body of implemented methods use File | Settings | File Templates.
+        for (String name : humanPlayers) {
+            if (onlinePlayers.contains(name)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
     public int onlinePlayerCount() {
-        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+        return onlinePlayers.size();
     }
 
     @Override
     public void playerQuit(String playerName) {
-        //To change body of implemented methods use File | Settings | File Templates.
+        Logging.finer("Player quit game in world: " + worldName);
+        onlinePlayers.remove(playerName);
     }
 
     @Override
     public void playerJoined(String playerName) {
-        //To change body of implemented methods use File | Settings | File Templates.
+        Logging.finer("Player joined game in world: " + worldName);
+        onlinePlayers.add(playerName);
     }
 
     @Override
     public String randomZombie() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        Random random = new Random(System.currentTimeMillis());
+        int randPlayer = random.nextInt(humanPlayers.size());
+        int i = 0;
+        for (String name : humanPlayers) {
+            if (i == randPlayer) {
+                Logging.fine("Random zombie selected: " + name);
+                return name;
+            }
+        }
+        Logging.fine("Could not select random zombie.");
+        return null;
+    }
+
+    @Override
+    public void makeZombie(String name) {
+        humanPlayers.remove(name);
+        plugin.zombifyPlayer(name);
+        zombiePlayers.add(name);
+    }
+
+    @Override
+    public String getFirstZombie() {
+        return firstZombie;
     }
 }

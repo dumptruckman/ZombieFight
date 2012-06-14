@@ -27,4 +27,8 @@ public interface Game {
     void playerJoined(String playerName);
 
     String randomZombie();
+
+    void makeZombie(String name);
+
+    String getFirstZombie();
 }
