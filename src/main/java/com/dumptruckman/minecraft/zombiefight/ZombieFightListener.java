@@ -317,5 +317,8 @@ public class ZombieFightListener implements Listener {
                 game.makeZombie(player.getName());
             }
         }
+        if (!game.hasOnlineHumans()) {
+            gameEnd(game);
+        }
     }
 }
