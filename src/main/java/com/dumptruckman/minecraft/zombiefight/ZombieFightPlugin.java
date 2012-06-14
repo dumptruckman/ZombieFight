@@ -117,5 +117,7 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
         }
         World world = player.getWorld();
         broadcastWorld(world.getName(), getMessager().getMessage(Language.PLAYER_ZOMBIFIED, player.getName()));
+        player.setFoodLevel(20);
+        player.setHealth(20);
     }
 }
