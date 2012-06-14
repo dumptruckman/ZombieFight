@@ -6,6 +6,7 @@ public class Language {
 
     public static final Message IN_GAME_ONLY = new Message("cmd.in_game_only",
             "You may only use this command in game!");
+
     public static final Message CMD_PGSPAWN_NAME = new Message("cmd.pgspawn.name",
             "Warps you to the pre-game spawn or sets one.");
     public static final Message CMD_PGSPAWN_FAIL = new Message("cmd.pgspawn.failure",
@@ -14,6 +15,7 @@ public class Language {
             "You have changed the pre-game spawn to your current location.");
     public static final Message CMD_PGSPAWN_SET_NO_PERM = new Message("cmd.pgspawn.set.no_perm",
             "You do not have the required permission to change pre-game spawn.");
+
     public static final Message CMD_GSPAWN_NAME = new Message("cmd.gspawn.name",
             "Warps you to the game spawn or sets one.");
     public static final Message CMD_GSPAWN_FAIL = new Message("cmd.gspawn.failure",
@@ -22,6 +24,18 @@ public class Language {
             "You have changed the game spawn to your current location.");
     public static final Message CMD_GSPAWN_SET_NO_PERM = new Message("cmd.gspawn.set.no_perm",
             "You do not have the required permission to change game spawn.");
+
+    public static final Message CMD_START_GAME_NAME = new Message("cmd.start.name",
+            "Starts the game in your current world.");
+    public static final Message CMD_START_CONSOLE_ERROR = new Message("cmd.start.console_error",
+            "Must use world flag to use from console.");
+    public static final Message CMD_START_ALREADY_STARTED = new Message("cmd.start.already_started",
+            "The game for this world has already started!");
+    public static final Message CMD_START_FORCE_SUCCESS = new Message("cmd.start.force_success",
+            "You have force started the game.");
+    public static final Message CMD_START_SUCCESS = new Message("cmd.start.success",
+            "You have begun the countdown for the game.");
+
     public static final Message JOIN_WHILE_GAME_IN_PROGRESS = new Message("joining.game_in_progress",
             "A game is in progress.  Please wait in the waiting area for the next game.");
     public static final Message JOIN_WHILE_GAME_PREPARING = new Message("joining.game_preparing",
@@ -46,6 +60,10 @@ public class Language {
 
     public static final Message COULD_NOT_COUNTDOWN = new Message("error.could_not_countdown",
             "Could not start countdown! Game will start immediately!");
+    public static final Message NO_WORLD = new Message("error.no_world",
+            "There is no world named: %1");
+    public static final Message NOT_GAME_WORLD = new Message("error.not_game_world",
+            "'%1' is not a game world!");
 
     public static void init() { }
 }
