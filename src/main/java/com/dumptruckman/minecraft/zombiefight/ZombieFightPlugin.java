@@ -4,8 +4,10 @@ import com.dumptruckman.minecraft.pluginbase.util.Logging;
 import com.dumptruckman.minecraft.zombiefight.api.GameManager;
 import com.dumptruckman.minecraft.zombiefight.api.ZFConfig;
 import com.dumptruckman.minecraft.zombiefight.api.ZombieFight;
+import com.dumptruckman.minecraft.zombiefight.command.EndGameCommand;
 import com.dumptruckman.minecraft.zombiefight.command.GameSpawnCommand;
 import com.dumptruckman.minecraft.zombiefight.command.PreGameSpawnCommand;
+import com.dumptruckman.minecraft.zombiefight.command.StartGameCommand;
 import com.dumptruckman.minecraft.zombiefight.util.CommentedConfig;
 import com.dumptruckman.minecraft.zombiefight.util.Language;
 import com.dumptruckman.minecraft.pluginbase.plugin.AbstractBukkitPlugin;
@@ -45,6 +47,8 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
         pm.registerEvents(new ZombieFightListener(this), this);
         getCommandHandler().registerCommand(new PreGameSpawnCommand(this));
         getCommandHandler().registerCommand(new GameSpawnCommand(this));
+        getCommandHandler().registerCommand(new StartGameCommand(this));
+        getCommandHandler().registerCommand(new EndGameCommand(this));
     }
 
     @Override

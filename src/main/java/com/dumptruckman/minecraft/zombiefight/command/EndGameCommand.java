@@ -13,20 +13,19 @@ import org.bukkit.entity.Player;
 
 import java.util.List;
 
-public class StartGameCommand extends ZFCommand {
+public class EndGameCommand extends ZFCommand {
 
-    public StartGameCommand(ZombieFight plugin) {
+    public EndGameCommand(ZombieFight plugin) {
         super(plugin);
-        this.setName(messager.getMessage(Language.CMD_START_GAME_NAME));
-        this.setCommandUsage("/" + plugin.getCommandPrefixes().get(0) + " start [-f] [-w <worldname>]");
-        this.setArgRange(0, 3);
+        this.setName(messager.getMessage(Language.CMD_END_GAME_NAME));
+        this.setCommandUsage("/" + plugin.getCommandPrefixes().get(0) + " end [-w <worldname>]");
+        this.setArgRange(0, 2);
         for (String prefix : plugin.getCommandPrefixes()) {
-            this.addKey(prefix + " start");
+            this.addKey(prefix + " end");
         }
-        this.addCommandExample("/" + plugin.getCommandPrefixes().get(0) + " start");
-        this.addCommandExample("/" + plugin.getCommandPrefixes().get(0) + " start -f");
-        this.addCommandExample("/" + plugin.getCommandPrefixes().get(0) + " start -w world_nether");
-        this.setPermission(Perms.CMD_START.getPermission());
+        this.addCommandExample("/" + plugin.getCommandPrefixes().get(0) + " end");
+        this.addCommandExample("/" + plugin.getCommandPrefixes().get(0) + " end -w world_nether");
+        this.setPermission(Perms.CMD_END.getPermission());
     }
 
     @Override
@@ -52,17 +51,12 @@ public class StartGameCommand extends ZFCommand {
             messager.bad(Language.NOT_GAME_WORLD, sender, world.getName());
             return;
         }
-        if (game.getStatus() == GameStatus.IN_PROGRESS || game.getStatus() == GameStatus.ENDED) {
-            messager.normal(Language.CMD_START_ALREADY_STARTED, sender);
+        if (game.getStatus() == GameStatus.STARTING || game.getStatus() == GameStatus.PREPARING) {
+            messager.normal(Language.CMD_END_NOT_STARTED, sender);
             return;
         }
 
-        if (CommandHandler.hasFlag("-f", args)) {
-            messager.good(Language.CMD_START_FORCE_SUCCESS, sender);
-            game.forceStart();
-        } else {
-            messager.good(Language.CMD_START_SUCCESS, sender);
-            game.countdown();
-        }
+        messager.good(Language.CMD_END_SUCCESS, sender);
+        game.endGame();
     }
 }

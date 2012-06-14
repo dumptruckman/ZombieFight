@@ -6,6 +6,8 @@ public class Language {
 
     public static final Message IN_GAME_ONLY = new Message("cmd.in_game_only",
             "You may only use this command in game!");
+    public static final Message CMD_CONSOLE_REQUIRES_WORLD = new Message("cmd.console_requires_world",
+            "Must use world flag to use from console.");
 
     public static final Message CMD_PGSPAWN_NAME = new Message("cmd.pgspawn.name",
             "Warps you to the pre-game spawn or sets one.");
@@ -26,15 +28,20 @@ public class Language {
             "You do not have the required permission to change game spawn.");
 
     public static final Message CMD_START_GAME_NAME = new Message("cmd.start.name",
-            "Starts the game in your current world.");
-    public static final Message CMD_START_CONSOLE_ERROR = new Message("cmd.start.console_error",
-            "Must use world flag to use from console.");
+            "Starts the game.");
     public static final Message CMD_START_ALREADY_STARTED = new Message("cmd.start.already_started",
             "The game for this world has already started!");
     public static final Message CMD_START_FORCE_SUCCESS = new Message("cmd.start.force_success",
             "You have force started the game.");
     public static final Message CMD_START_SUCCESS = new Message("cmd.start.success",
             "You have begun the countdown for the game.");
+
+    public static final Message CMD_END_GAME_NAME = new Message("cmd.end.name",
+            "Ends the game.");
+    public static final Message CMD_END_NOT_STARTED = new Message("cmd.end.not_started",
+            "The game for this world has not yet started!");
+    public static final Message CMD_END_SUCCESS = new Message("cmd.end.success",
+            "You have ended the game.");
 
     public static final Message JOIN_WHILE_GAME_IN_PROGRESS = new Message("joining.game_in_progress",
             "A game is in progress.  Please wait in the waiting area for the next game.");

@@ -14,4 +14,6 @@ public class Perms {
     public static final Perm CMD_GSPAWN_SET = new Builder(BASE_PERM + "cmd.gspwan.set").parent(CMD_GSPAWN).build();
 
     public static final Perm CMD_START = new Perm.Builder(BASE_PERM + "cmd.start").commandPermission().build();
+
+    public static final Perm CMD_END = new Perm.Builder(BASE_PERM + "cmd.end").commandPermission().build();
 }
