@@ -15,7 +15,7 @@ import java.util.Arrays;
  */
 public interface ZFConfig extends BaseConfig {
 
-    ListConfigEntry<String> ENABLED_WORLDS = new EntryBuilder<String>(String.class, "worlds.enabled").stringSerializer().defList(Arrays.asList("world")).comment("# Worlds game is enabled in.").buildList();
+    ListConfigEntry<String> ENABLED_WORLDS = new EntryBuilder<String>(String.class, "worlds.enabled").stringSerializer().comment("# Worlds game is enabled in.").buildList();
     MappedConfigEntry<Location> PRE_GAME_SPAWN = new EntryBuilder<Location>(Location.class, "spawns.pre-game_spawn").serializer(new LocationSerializer()).comment("# The location of the pre-game spawn, per world.").buildMap();
     MappedConfigEntry<Location> GAME_SPAWN = new EntryBuilder<Location>(Location.class, "spawns.game_spawn").serializer(new LocationSerializer()).comment("# The location of the game spawn, per world.").buildMap();
 
