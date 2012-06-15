@@ -56,6 +56,7 @@ public class ZombieFightListener implements Listener {
                 if (game.isPlaying(player.getName())) {
                     game.playerJoined(player.getName());
                 }
+                break;
             case ENDED:
                 if (!game.isPlaying(player.getName())) {
                     Logging.fine("Teleporting non-game-playing player to spawn.");
