@@ -14,13 +14,9 @@ import com.dumptruckman.minecraft.zombiefight.util.CommentedConfig;
 import com.dumptruckman.minecraft.zombiefight.util.Language;
 import com.dumptruckman.minecraft.pluginbase.plugin.AbstractBukkitPlugin;
 import com.dumptruckman.minecraft.pluginbase.plugin.command.HelpCommand;
-import me.desmin88.mobdisguise.MobDisguise;
 import me.desmin88.mobdisguise.api.MobDisguiseAPI;
-import net.minecraft.server.EntityPlayer;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.World;
-import org.bukkit.craftbukkit.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
@@ -38,6 +34,7 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
 
     private GameManager gameManager = null;
     private boolean mobDisguise = false;
+    private ZombieFightListener listener;
 
     @Override
     protected ZFConfig newConfigInstance() throws IOException {
@@ -52,8 +49,9 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
 
     @Override
     public void postEnable() {
+        listener = new ZombieFightListener(this);
         PluginManager pm = getServer().getPluginManager();
-        pm.registerEvents(new ZombieFightListener(this), this);
+        pm.registerEvents(listener, this);
         getCommandHandler().registerCommand(new PreGameSpawnCommand(this));
         getCommandHandler().registerCommand(new GameSpawnCommand(this));
         getCommandHandler().registerCommand(new StartGameCommand(this));

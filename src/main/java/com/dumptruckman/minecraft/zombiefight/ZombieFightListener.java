@@ -28,11 +28,13 @@ import org.bukkit.scheduler.BukkitTask;
 public class ZombieFightListener implements Listener {
 
     private ZombieFight plugin;
-    private Messager messager;
 
     public ZombieFightListener(ZombieFight plugin) {
         this.plugin = plugin;
-        this.messager = plugin.getMessager();
+    }
+
+    private Messager getMessager() {
+        return plugin.getMessager();
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
@@ -64,7 +66,7 @@ public class ZombieFightListener implements Listener {
                     Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
                         @Override
                         public void run() {
-                            messager.normal(Language.JOIN_WHILE_GAME_IN_PROGRESS, player);
+                            getMessager().normal(Language.JOIN_WHILE_GAME_IN_PROGRESS, player);
                         }
                     });
                 }
@@ -75,7 +77,7 @@ public class ZombieFightListener implements Listener {
                 Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
                     @Override
                     public void run() {
-                        messager.normal(Language.JOIN_WHILE_GAME_PREPARING, player);
+                        getMessager().normal(Language.JOIN_WHILE_GAME_PREPARING, player);
                     }
                 });
                 break;
@@ -85,7 +87,7 @@ public class ZombieFightListener implements Listener {
                 Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
                     @Override
                     public void run() {
-                        messager.normal(Language.JOIN_WHILE_GAME_STARTING, player);
+                        getMessager().normal(Language.JOIN_WHILE_GAME_STARTING, player);
                     }
                 });
                 break;
@@ -105,11 +107,11 @@ public class ZombieFightListener implements Listener {
                         int maxPlayers = plugin.config().get(ZFConfig.MAX_PLAYERS);
                         if (playersInWorld >= minPlayers && playersInWorld < maxPlayers) {
                             Logging.fine("Enough players to start countdown.");
-                            plugin.broadcastWorld(world.getName(), messager.getMessage(Language.ENOUGH_FOR_COUNTDOWN_START));
+                            plugin.broadcastWorld(world.getName(), getMessager().getMessage(Language.ENOUGH_FOR_COUNTDOWN_START));
                             game.countdown();
                         } else if (world.getPlayers().size() >= maxPlayers) {
                             Logging.fine("Enough players to force game start.");
-                            plugin.broadcastWorld(world.getName(), messager.getMessage(Language.ENOUGH_FOR_QUICK_START));
+                            plugin.broadcastWorld(world.getName(), getMessager().getMessage(Language.ENOUGH_FOR_QUICK_START));
                             game.forceStart();
                         }
                         break;
@@ -135,7 +137,7 @@ public class ZombieFightListener implements Listener {
                 int minPlayers = plugin.config().get(ZFConfig.MIN_PLAYERS);
                 if (playersInWorld < minPlayers) {
                     Logging.fine("Player quit caused countdown to halt.");
-                    plugin.broadcastWorld(world.getName(), messager.getMessage(Language.TOO_FEW_PLAYERS));
+                    plugin.broadcastWorld(world.getName(), getMessager().getMessage(Language.TOO_FEW_PLAYERS));
                     game.haltCountdown();
                 }
                 break;
@@ -269,7 +271,7 @@ public class ZombieFightListener implements Listener {
             return;
         }
         if (game.isZombie(player.getName())) {
-            event.setMessage(messager.getMessage(Language.ZOMBIE_TAG) + event.getMessage());
+            event.setMessage(getMessager().getMessage(Language.ZOMBIE_TAG) + event.getMessage());
         }
     }
 
