@@ -50,9 +50,12 @@ public class MockPlayer implements Player {
 
     String name;
     Server server;
+    World world;
     
-    public MockPlayer(String name, Server server) {
+    public MockPlayer(String name, Server server, World world) {
         this.name = name;
+        this.server = server;
+        this.world = world;
     }
     
 
@@ -252,7 +255,7 @@ public class MockPlayer implements Player {
 
     @Override
     public World getWorld() {
-        return null;
+        return world;
     }
 
     @Override

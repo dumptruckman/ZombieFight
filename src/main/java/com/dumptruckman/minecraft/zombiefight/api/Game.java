@@ -33,4 +33,8 @@ public interface Game {
     String getFirstZombie();
 
     String getWorld();
+
+    void checkGameStart();
+
+    void checkGameEnd();
 }

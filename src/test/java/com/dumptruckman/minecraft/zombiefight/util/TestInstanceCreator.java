@@ -10,12 +10,13 @@ package com.dumptruckman.minecraft.zombiefight.util;
 import com.dumptruckman.minecraft.pluginbase.plugin.AbstractBukkitPlugin;
 import com.dumptruckman.minecraft.pluginbase.util.FileUtils;
 import com.dumptruckman.minecraft.pluginbase.util.Logging;
+import com.dumptruckman.minecraft.zombiefight.GameManagerHelper;
 import com.dumptruckman.minecraft.zombiefight.ZombieFightListener;
 import com.dumptruckman.minecraft.zombiefight.ZombieFightPlugin;
+import com.dumptruckman.minecraft.zombiefight.api.GameManager;
 import junit.framework.Assert;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.Server;
 import org.bukkit.World;
 import org.bukkit.World.Environment;
@@ -23,6 +24,8 @@ import org.bukkit.WorldCreator;
 import org.bukkit.WorldType;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.permissions.Permission;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginDescriptionFile;
@@ -57,6 +60,7 @@ import static org.mockito.Mockito.when;
 @PrepareForTest({AbstractBukkitPlugin.class, ZombieFightListener.class})
 public class TestInstanceCreator {
     private ZombieFightPlugin plugin;
+    private ZombieFightListener listener;
     private Server mockServer;
     private CommandSender commandSender;
     public Map<String, Player> players = new HashMap<String, Player>();
@@ -122,29 +126,6 @@ public class TestInstanceCreator {
             when(mockServer.getWorldContainer()).thenReturn(worldsDirectory);
             when(plugin.getServer()).thenReturn(mockServer);
             when(mockServer.getPluginManager()).thenReturn(mockPluginManager);
-            Answer<Player> playerAnswer = new Answer<Player>() {
-                public Player answer(InvocationOnMock invocation) throws Throwable {
-                    String arg;
-                    try {
-                        arg = (String) invocation.getArguments()[0];
-                    } catch (Exception e) {
-                        return null;
-                    }
-                    Player player = players.get(arg);
-                    if (player == null) {
-                        player = new MockPlayer(arg, mockServer);
-                        players.put(arg, player);
-                    }
-                    return player;
-                }
-            };
-            when(mockServer.getPlayer(anyString())).thenAnswer(playerAnswer);
-            when(mockServer.getOfflinePlayer(anyString())).thenAnswer(playerAnswer);
-            when(mockServer.getOfflinePlayers()).thenAnswer(new Answer<OfflinePlayer[]>() {
-                public OfflinePlayer[] answer(InvocationOnMock invocation) throws Throwable {
-                    return players.values().toArray(new Player[players.values().size()]);
-                }
-            });
 
             // Give the server some worlds
             when(mockServer.getWorld(anyString())).thenAnswer(new Answer<World>() {
@@ -165,8 +146,6 @@ public class TestInstanceCreator {
                 }
             });
 
-
-
             when(mockServer.createWorld(Matchers.isA(WorldCreator.class))).thenAnswer(
                     new Answer<World>() {
                         public World answer(InvocationOnMock invocation) throws Throwable {
@@ -186,6 +165,32 @@ public class TestInstanceCreator {
                     });
 
             when(mockServer.unloadWorld(anyString(), anyBoolean())).thenReturn(true);
+
+            // Setup server.getPlayer();
+            Answer<Player> playerAnswer = new Answer<Player>() {
+                public Player answer(InvocationOnMock invocation) throws Throwable {
+                    String arg;
+                    try {
+                        arg = (String) invocation.getArguments()[0];
+                    } catch (Exception e) {
+                        return null;
+                    }
+                    Player player = players.get(arg);
+                    if (player != null) {
+
+                    }
+                    return players.get(arg);
+                }
+            };
+            when(mockServer.getPlayer(anyString())).thenAnswer(playerAnswer);
+            /*
+            when(mockServer.getOfflinePlayer(anyString())).thenAnswer(playerAnswer);
+            when(mockServer.getOfflinePlayers()).thenAnswer(new Answer<OfflinePlayer[]>() {
+                public OfflinePlayer[] answer(InvocationOnMock invocation) throws Throwable {
+                    return players.values().toArray(new Player[players.values().size()]);
+                }
+            });
+            */
 
             // add mock scheduler
             BukkitScheduler mockScheduler = mock(BukkitScheduler.class);
@@ -218,10 +223,19 @@ public class TestInstanceCreator {
             when(mockServer.getScheduler()).thenReturn(mockScheduler);
 
             // Set InventoriesListener
-            ZombieFightListener il = PowerMockito.spy(new ZombieFightListener(plugin));
+            listener = PowerMockito.spy(new ZombieFightListener(plugin));
             Field inventoriesListenerField = ZombieFightPlugin.class.getDeclaredField("listener");
             inventoriesListenerField.setAccessible(true);
-            inventoriesListenerField.set(plugin, il);
+            inventoriesListenerField.set(plugin, listener);
+
+            /*
+            // Set GameManager
+            GameManager gm = PowerMockito.spy(GameManagerHelper.newGameManager(plugin));
+            Field gameManagerField = ZombieFightPlugin.class.getDeclaredField("gameManager");
+            gameManagerField.setAccessible(true);
+            gameManagerField.set(plugin, gm);
+            when(plugin.getGameManager()).thenReturn(gm);
+            */
 
             // Set server
             Field serverfield = JavaPlugin.class.getDeclaredField("server");
@@ -301,5 +315,33 @@ public class TestInstanceCreator {
 
     public CommandSender getCommandSender() {
         return commandSender;
+    }
+
+    public void playerJoin(String name) {
+        Player player = players.get(name);
+        if (player == null) {
+            //player = new MockPlayer(name, mockServer, mockServer.getWorld("world"));
+            player = PowerMockito.mock(Player.class);
+            players.put(name, player);
+        }
+        World world = mockServer.getWorld("world");
+        when(player.getWorld()).thenReturn(world);
+        final Logger playerLogger = Logger.getLogger("Player: " + name);
+        playerLogger.setParent(Util.logger);
+        doAnswer(new Answer<Void>() {
+            public Void answer(InvocationOnMock invocation) throws Throwable {
+                playerLogger.info(ChatColor.stripColor((String) invocation.getArguments()[0]));
+                return null;
+            }
+        }).when(player).sendMessage(anyString());
+        listener.playerJoin(new PlayerJoinEvent(player, "JOIN"));
+    }
+
+    public void playerQuit(String name) {
+        Player player = players.get(name);
+        if (player != null) {
+            listener.playerQuit(new PlayerQuitEvent(player, "QUIT"));
+            players.remove(name);
+        }
     }
 }

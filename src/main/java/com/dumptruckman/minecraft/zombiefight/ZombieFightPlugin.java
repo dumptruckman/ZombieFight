@@ -1,7 +1,9 @@
 package com.dumptruckman.minecraft.zombiefight;
 
 import com.dumptruckman.minecraft.pluginbase.util.Logging;
+import com.dumptruckman.minecraft.zombiefight.api.Game;
 import com.dumptruckman.minecraft.zombiefight.api.GameManager;
+import com.dumptruckman.minecraft.zombiefight.api.LootConfig;
 import com.dumptruckman.minecraft.zombiefight.api.ZFConfig;
 import com.dumptruckman.minecraft.zombiefight.api.ZombieFight;
 import com.dumptruckman.minecraft.zombiefight.command.DisableGameCommand;
@@ -16,6 +18,7 @@ import com.dumptruckman.minecraft.pluginbase.plugin.AbstractBukkitPlugin;
 import com.dumptruckman.minecraft.pluginbase.plugin.command.HelpCommand;
 import me.desmin88.mobdisguise.api.MobDisguiseAPI;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
@@ -33,6 +36,7 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
     private final List<String> cmdPrefixes = Arrays.asList("zf");
 
     private GameManager gameManager = null;
+    private LootConfig lootConfig = null;
     private boolean mobDisguise = false;
     private ZombieFightListener listener;
 
@@ -45,11 +49,11 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
     public void preEnable() {
         Language.init();
         HelpCommand.addStaticPrefixedKey("");
+        listener = new ZombieFightListener(this);
     }
 
     @Override
     public void postEnable() {
-        listener = new ZombieFightListener(this);
         PluginManager pm = getServer().getPluginManager();
         pm.registerEvents(listener, this);
         getCommandHandler().registerCommand(new PreGameSpawnCommand(this));
@@ -63,11 +67,18 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
             Logging.info("Hooked MobDisguise!");
             mobDisguise = true;
         }
+        getLootConfig();
     }
 
     @Override
     public void preReload() {
         gameManager = null;
+        lootConfig = null;
+    }
+
+    @Override
+    public void postReload() {
+        listener.resetBorderDamager();
     }
 
     @Override
@@ -103,6 +114,7 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
             Logging.warning("Could not broadcast: " + message);
             return;
         }
+        Logging.fine("'" + worldName + "' broadcast: " + message);
         for (Player player : world.getPlayers()) {
             getMessager().sendMessage(player, message);
         }
@@ -120,7 +132,8 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
 
     @Override
     public void zombifyPlayer(String name) {
-        Player player = Bukkit.getPlayer(name);
+        Logging.finer("Zombifying " + name);
+        Player player = getServer().getPlayerExact(name);
         if (player == null) {
             Bukkit.broadcastMessage("Could not zombify: " + name);
             return;
@@ -131,11 +144,17 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
         player.setHealth(20);
         disguiseAsZombie(player);
         reddenName(player);
+        Location loc = config().get(ZFConfig.GAME_SPAWN.specific(world.getName()));
+        if (loc == null) {
+            loc = world.getSpawnLocation();
+        }
+        player.teleport(loc);
     }
 
     @Override
     public void unZombifyPlayer(String name) {
-        Player player = Bukkit.getPlayer(name);
+        Logging.finer("Unzombifying " + name);
+        Player player = getServer().getPlayerExact(name);
         if (player == null) {
             Bukkit.broadcastMessage("Could not un-zombify: " + name);
             return;
@@ -168,5 +187,12 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
         if (mobDisguise) {
             MobDisguiseAPI.undisguisePlayer(player);
         }
+    }
+
+    public LootConfig getLootConfig() {
+        if (lootConfig == null) {
+            lootConfig = new DefaultLootConfig(this);
+        }
+        return lootConfig;
     }
 }

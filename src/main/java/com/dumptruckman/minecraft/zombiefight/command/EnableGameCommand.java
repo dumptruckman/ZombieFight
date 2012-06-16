@@ -1,6 +1,7 @@
 package com.dumptruckman.minecraft.zombiefight.command;
 
 import com.dumptruckman.minecraft.pluginbase.util.commandhandler.CommandHandler;
+import com.dumptruckman.minecraft.zombiefight.api.ZFConfig;
 import com.dumptruckman.minecraft.zombiefight.api.ZombieFight;
 import com.dumptruckman.minecraft.zombiefight.util.Language;
 import com.dumptruckman.minecraft.zombiefight.util.Perms;
@@ -48,6 +49,10 @@ public class EnableGameCommand extends ZFCommand {
             messager.bad(Language.CMD_ENABLE_ALREADY, sender);
             return;
         }
+        int borderRadius = plugin.config().get(ZFConfig.BORDER_RADIUS.specific(world.getName()));
+        plugin.config().set(ZFConfig.BORDER_RADIUS.specific(world.getName()), borderRadius);
+        int borderWarn = plugin.config().get(ZFConfig.BORDER_WARN.specific(world.getName()));
+        plugin.config().set(ZFConfig.BORDER_WARN.specific(world.getName()), borderWarn);
         plugin.getGameManager().enableWorld(world.getName());
         messager.good(Language.CMD_ENABLE_SUCCESS, sender);
     }

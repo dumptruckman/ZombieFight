@@ -74,8 +74,8 @@ public class Language {
             "The game has begun!");
     public static final Message GAME_ENDED = new Message("game.ended.ended",
             "The game has ended!");
-    public static final Message GAME_ENDED_NO_WINNER = new Message("game.ended.no_winner",
-            "All the humans are dead... No one wins.");
+    public static final Message ALL_HUMANS_DEAD = new Message("game.ended.all_humans_dead",
+            "All humans are dead.");
     public static final Message RUN_FROM_ZOMBIE = new Message("game.run_from_zombie",
             "You have %1 seconds to run away from the zombie!");
     public static final Message PLAYER_ZOMBIFIED = new Message("game.player_zombified",
@@ -86,6 +86,12 @@ public class Language {
             "The zombie has been released!!");
     public static final Message GAME_RESETTING = new Message("game.resetting_soon",
             "The game will be resetting in %1 seconds...");
+    public static final Message ONE_HUMAN_LEFT = new Message("game.last_human.left",
+            "Only one human remains... Can they survive the zombie horde for %1 seconds?");
+    public static final Message LAST_HUMAN_WON = new Message("game.last_human.won",
+            "The last human survived the final onslaught. Congratulations &6%1!");
+    public static final Message APPROACHING_BORDER = new Message("game.border.approaching",
+            "&cYou are approaching the border, turn back now or you will start to die!");
 
     public static final Message COULD_NOT_COUNTDOWN = new Message("error.could_not_countdown",
             "Could not start countdown! Game will start immediately!");

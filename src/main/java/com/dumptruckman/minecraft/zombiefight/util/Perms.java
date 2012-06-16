@@ -19,4 +19,6 @@ public class Perms {
 
     public static final Perm CMD_ENABLE = new Perm.Builder(BASE_PERM + "cmd.enable").commandPermission().build();
     public static final Perm CMD_DISABLE = new Perm.Builder(BASE_PERM + "cmd.disable").commandPermission().build();
+
+    public static final Perm CAN_ALWAYS_BREAK = new Builder(BASE_PERM + "alwaysbreak").build();
 }
