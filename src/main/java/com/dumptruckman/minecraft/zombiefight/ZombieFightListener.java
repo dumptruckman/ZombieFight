@@ -9,21 +9,39 @@ import com.dumptruckman.minecraft.zombiefight.api.ZombieFight;
 import com.dumptruckman.minecraft.pluginbase.locale.Messager;
 import com.dumptruckman.minecraft.zombiefight.util.Language;
 import com.dumptruckman.minecraft.zombiefight.util.Perms;
+import net.minecraft.server.BlockPiston;
 import net.minecraft.server.EntityPlayer;
 import org.bukkit.Bukkit;
+import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.craftbukkit.entity.CraftPlayer;
 import org.bukkit.entity.Player;
+import org.bukkit.event.Cancellable;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockBurnEvent;
 import org.bukkit.event.block.BlockDamageEvent;
+import org.bukkit.event.block.BlockDispenseEvent;
+import org.bukkit.event.block.BlockEvent;
+import org.bukkit.event.block.BlockFadeEvent;
+import org.bukkit.event.block.BlockFromToEvent;
+import org.bukkit.event.block.BlockGrowEvent;
+import org.bukkit.event.block.BlockIgniteEvent;
+import org.bukkit.event.block.BlockPhysicsEvent;
+import org.bukkit.event.block.BlockPistonEvent;
+import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.block.LeavesDecayEvent;
+import org.bukkit.event.block.SignChangeEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.inventory.BrewEvent;
+import org.bukkit.event.inventory.FurnaceBurnEvent;
+import org.bukkit.event.inventory.FurnaceSmeltEvent;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerChatEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -33,6 +51,7 @@ import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
+import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.event.world.WorldUnloadEvent;
 import org.bukkit.scheduler.BukkitTask;
 
@@ -115,6 +134,16 @@ public class ZombieFightListener implements Listener {
         game.playerJoined(player.getName());
     }
 
+    public void chunkLoad(ChunkLoadEvent event) {
+        Chunk chunk = event.getChunk();
+        World world = chunk.getWorld();
+        Game game = plugin.getGameManager().getGame(world.getName());
+        if (game == null) {
+            return;
+        }
+        game.snapshotChunk(chunk);
+    }
+
     @EventHandler
     public void blockDamage(BlockDamageEvent event) {
         Player player = event.getPlayer();
@@ -195,14 +224,19 @@ public class ZombieFightListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void playerQuit(PlayerQuitEvent event) {
-        Player player = event.getPlayer();
+        final Player player = event.getPlayer();
         World world = player.getWorld();
-        Game game = plugin.getGameManager().getGame(world.getName());
+        final Game game = plugin.getGameManager().getGame(world.getName());
         if (game == null) {
             Logging.finest("Player quit non-game world.");
             return;
         }
-        game.playerQuit(player.getName());
+        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
+            @Override
+            public void run() {
+                game.playerQuit(player.getName());
+            }
+        }, 2L);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
@@ -394,5 +428,173 @@ public class ZombieFightListener implements Listener {
                 });
             }
         }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void blockMonitor(BlockBreakEvent event) {
+        if (event.isCancelled()) {
+            return;
+        }
+        Game game = plugin.getGameManager().getGame(event.getBlock().getWorld().getName());
+        if (game == null) {
+            return;
+        }
+        game.snapshotBlock(event.getBlock());
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void blockMonitor(BlockBurnEvent event) {
+        if (event.isCancelled()) {
+            return;
+        }
+        Game game = plugin.getGameManager().getGame(event.getBlock().getWorld().getName());
+        if (game == null) {
+            return;
+        }
+        game.snapshotBlock(event.getBlock());
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void blockMonitor(BlockDispenseEvent event) {
+        if (event.isCancelled()) {
+            return;
+        }
+        Game game = plugin.getGameManager().getGame(event.getBlock().getWorld().getName());
+        if (game == null) {
+            return;
+        }
+        game.snapshotBlock(event.getBlock());
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void blockMonitor(BlockFadeEvent event) {
+        if (event.isCancelled()) {
+            return;
+        }
+        Game game = plugin.getGameManager().getGame(event.getBlock().getWorld().getName());
+        if (game == null) {
+            return;
+        }
+        game.snapshotBlock(event.getBlock());
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void blockMonitor(BlockFromToEvent event) {
+        if (event.isCancelled()) {
+            return;
+        }
+        Game game = plugin.getGameManager().getGame(event.getBlock().getWorld().getName());
+        if (game == null) {
+            return;
+        }
+        game.snapshotBlock(event.getBlock());
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void blockMonitor(BlockGrowEvent event) {
+        if (event.isCancelled()) {
+            return;
+        }
+        Game game = plugin.getGameManager().getGame(event.getBlock().getWorld().getName());
+        if (game == null) {
+            return;
+        }
+        game.snapshotBlock(event.getBlock());
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void blockMonitor(BlockIgniteEvent event) {
+        if (event.isCancelled()) {
+            return;
+        }
+        Game game = plugin.getGameManager().getGame(event.getBlock().getWorld().getName());
+        if (game == null) {
+            return;
+        }
+        game.snapshotBlock(event.getBlock());
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void blockMonitor(BlockPhysicsEvent event) {
+        if (event.isCancelled()) {
+            return;
+        }
+        Game game = plugin.getGameManager().getGame(event.getBlock().getWorld().getName());
+        if (game == null) {
+            return;
+        }
+        game.snapshotBlock(event.getBlock());
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void blockMonitor(BlockPlaceEvent event) {
+        if (event.isCancelled()) {
+            return;
+        }
+        Game game = plugin.getGameManager().getGame(event.getBlock().getWorld().getName());
+        if (game == null) {
+            return;
+        }
+        game.snapshotBlock(event.getBlock());
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void blockMonitor(BrewEvent event) {
+        if (event.isCancelled()) {
+            return;
+        }
+        Game game = plugin.getGameManager().getGame(event.getBlock().getWorld().getName());
+        if (game == null) {
+            return;
+        }
+        game.snapshotBlock(event.getBlock());
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void blockMonitor(FurnaceBurnEvent event) {
+        if (event.isCancelled()) {
+            return;
+        }
+        Game game = plugin.getGameManager().getGame(event.getBlock().getWorld().getName());
+        if (game == null) {
+            return;
+        }
+        game.snapshotBlock(event.getBlock());
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void blockMonitor(FurnaceSmeltEvent event) {
+        if (event.isCancelled()) {
+            return;
+        }
+        Game game = plugin.getGameManager().getGame(event.getBlock().getWorld().getName());
+        if (game == null) {
+            return;
+        }
+        game.snapshotBlock(event.getBlock());
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void blockMonitor(LeavesDecayEvent event) {
+        if (event.isCancelled()) {
+            return;
+        }
+        Game game = plugin.getGameManager().getGame(event.getBlock().getWorld().getName());
+        if (game == null) {
+            return;
+        }
+        game.snapshotBlock(event.getBlock());
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void blockMonitor(SignChangeEvent event) {
+        if (event.isCancelled()) {
+            return;
+        }
+        Game game = plugin.getGameManager().getGame(event.getBlock().getWorld().getName());
+        if (game == null) {
+            return;
+        }
+        game.snapshotBlock(event.getBlock());
     }
 }

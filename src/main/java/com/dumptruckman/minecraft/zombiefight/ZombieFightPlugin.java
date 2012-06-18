@@ -72,6 +72,12 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
 
     @Override
     public void preReload() {
+        for (World world : Bukkit.getWorlds()) {
+            Game game = getGameManager().getGame(world.getName());
+            if (game != null) {
+                game.forceEnd(false);
+            }
+        }
         gameManager = null;
         lootConfig = null;
     }
@@ -79,6 +85,12 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
     @Override
     public void postReload() {
         listener.resetBorderDamager();
+        for (World world : Bukkit.getWorlds()) {
+            Game game = getGameManager().getGame(world.getName());
+            if (game != null) {
+                game.checkGameStart();
+            }
+        }
     }
 
     @Override

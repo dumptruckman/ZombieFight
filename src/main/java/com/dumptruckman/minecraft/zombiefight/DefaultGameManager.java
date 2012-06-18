@@ -6,6 +6,10 @@ import com.dumptruckman.minecraft.zombiefight.api.GameStatus;
 import com.dumptruckman.minecraft.zombiefight.api.ZFConfig;
 import com.dumptruckman.minecraft.zombiefight.api.ZombieFight;
 import com.dumptruckman.minecraft.zombiefight.util.Language;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.World;
+import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -62,12 +66,23 @@ class DefaultGameManager implements GameManager {
         getEnabledWorlds().add(worldName);
         plugin.config().set(ZFConfig.ENABLED_WORLDS, new ArrayList<String>(getEnabledWorlds()));
         plugin.config().save();
+        Game game = getGame(worldName);
+        World world = Bukkit.getWorld(worldName);
+        Location loc = plugin.config().get(ZFConfig.GAME_SPAWN.specific(worldName));
+        if (loc == null ) {
+            loc = world.getSpawnLocation();
+        }
+        for (Player player : world.getPlayers()) {
+            player.teleport(loc);
+        }
+        game.checkGameStart();
     }
 
     @Override
     public void disableWorld(String worldName) {
         Game game = getGame(worldName);
         game.forceEnd(false);
+        gameMap.remove(worldName);
         getEnabledWorlds().remove(worldName);
         plugin.config().set(ZFConfig.ENABLED_WORLDS, new ArrayList<String>(getEnabledWorlds()));
         plugin.config().save();

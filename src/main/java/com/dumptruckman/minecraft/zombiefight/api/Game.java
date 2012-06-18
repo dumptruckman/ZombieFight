@@ -2,6 +2,7 @@ package com.dumptruckman.minecraft.zombiefight.api;
 
 import com.dumptruckman.minecraft.pluginbase.locale.Message;
 import org.bukkit.Chunk;
+import org.bukkit.block.Block;
 
 public interface Game {
 
@@ -48,4 +49,6 @@ public interface Game {
     void forceEnd(boolean restart);
 
     void snapshotChunk(Chunk chunk);
+
+    void snapshotBlock(Block block);
 }

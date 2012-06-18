@@ -6,18 +6,23 @@ import com.dumptruckman.minecraft.pluginbase.util.Logging;
 import com.dumptruckman.minecraft.zombiefight.api.Game;
 import com.dumptruckman.minecraft.zombiefight.api.GameStatus;
 import com.dumptruckman.minecraft.zombiefight.api.LootTable;
+import com.dumptruckman.minecraft.zombiefight.api.Snapshot;
 import com.dumptruckman.minecraft.zombiefight.api.ZFConfig;
 import com.dumptruckman.minecraft.zombiefight.api.ZombieFight;
 import com.dumptruckman.minecraft.zombiefight.util.Language;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
-import org.bukkit.ChunkSnapshot;
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.block.Block;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
@@ -38,7 +43,8 @@ class DefaultGame implements Game {
     private Set<String> humanPlayers;
     private Set<String> onlinePlayers;
     private String firstZombie = "";
-    private Set<ChunkSnapshot> 
+    private Map<Integer, Map<Integer, Snapshot>> snapshots = new HashMap<Integer, Map<Integer, Snapshot>>();
+    boolean rollingBack = false;
 
     private class CountdownTask implements Runnable {
         private CountdownTask() {
@@ -76,8 +82,7 @@ class DefaultGame implements Game {
         @Override
         public void run() {
             Logging.finest("Game end task ended");
-            end();
-            restartGame();
+            end(true);
         }
     }
 
@@ -111,7 +116,6 @@ class DefaultGame implements Game {
         @Override
         public void run() {
             long lastHit = humanFinder - plugin.config().get(ZFConfig.HUMAN_FINDER_START);
-            Logging.finest("Humanfinder: " + lastHit + " beaconTick: " + beaconTick);
             if (lastHit == 0) {
                 strike();
                 tick();
@@ -138,6 +142,17 @@ class DefaultGame implements Game {
                     loc.getWorld().strikeLightningEffect(loc);
                 }
             }
+        }
+    }
+
+    private class RollbackTask implements Runnable {
+        private Snapshot snapshot;
+        private RollbackTask(Snapshot snapshot) {
+            this.snapshot = snapshot;
+        }
+        @Override
+        public void run() {
+            snapshot.applySnapshot();
         }
     }
 
@@ -179,6 +194,7 @@ class DefaultGame implements Game {
         }
         Logging.finest("Game.forceStart() called");
         broadcast(Language.GAME_STARTING);
+        Logging.finer("Snapshotting chunks before game start.");
         Chunk[] loadedChunks = Bukkit.getWorld(worldName).getLoadedChunks();
         for (Chunk chunk : loadedChunks) {
             snapshotChunk(chunk);
@@ -234,7 +250,7 @@ class DefaultGame implements Game {
         Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new GameEndTask(), BukkitTools.convertSecondsToTicks(secondsToReset));
     }
 
-    private void end() {
+    private void end(boolean restart) {
         if (lastHumanTask != -1) {
             Bukkit.getScheduler().cancelTask(lastHumanTask);
             lastHumanTask = -1;
@@ -271,18 +287,12 @@ class DefaultGame implements Game {
                 player.teleport(location);
             }
         }
+        rollbackWorld(restart);
     }
 
     public void forceEnd(boolean restart) {
         broadcast(Language.FORCE_END);
-        end();
-        if (restart) {
-            restartGame();
-        }
-    }
-
-    private void restartGame() {
-        plugin.getGameManager().newGame(worldName);
+        end(restart);
     }
 
     @Override
@@ -353,6 +363,10 @@ class DefaultGame implements Game {
             default:
                 break;
         }
+        Player player = Bukkit.getPlayerExact(playerName);
+        if (player != null) {
+            player.setDisplayName(ChatColor.stripColor(player.getDisplayName()));
+        }
     }
 
     @Override
@@ -371,6 +385,9 @@ class DefaultGame implements Game {
                 if (isPlaying(playerName)) {
                     Logging.finer("Player joined game in world: " + worldName);
                     onlinePlayers.add(playerName);
+                    if (!isZombie(playerName)) {
+                        plugin.unZombifyPlayer(player.getName());
+                    }
                 } else {
                     Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
                         @Override
@@ -379,6 +396,7 @@ class DefaultGame implements Game {
                             plugin.getMessager().normal(Language.JOIN_WHILE_GAME_IN_PROGRESS, player);
                         }
                     }, 2L);
+                    plugin.unZombifyPlayer(player.getName());
                 }
                 break;
             case ENDED:
@@ -391,6 +409,11 @@ class DefaultGame implements Game {
                             plugin.getMessager().normal(Language.JOIN_WHILE_GAME_IN_PROGRESS, player);
                         }
                     }, 2L);
+                    plugin.unZombifyPlayer(player.getName());
+                } else {
+                    if (!isZombie(playerName)) {
+                        plugin.unZombifyPlayer(player.getName());
+                    }
                 }
                 break;
             case PREPARING:
@@ -402,6 +425,7 @@ class DefaultGame implements Game {
                         plugin.getMessager().normal(Language.JOIN_WHILE_GAME_PREPARING, player);
                     }
                 }, 2L);
+                plugin.unZombifyPlayer(player.getName());
                 break;
             case STARTING:
                 Logging.fine("Game starting soon, teleporting player to spawn.");
@@ -412,9 +436,18 @@ class DefaultGame implements Game {
                         plugin.getMessager().normal(Language.JOIN_WHILE_GAME_STARTING, player);
                     }
                 }, 2L);
+                plugin.unZombifyPlayer(player.getName());
                 break;
             default:
                 break;
+        }
+
+        if (player != null) {
+            if (isZombie(playerName)) {
+                player.setDisplayName(ChatColor.DARK_RED + player.getDisplayName());
+            } else {
+                player.setDisplayName(ChatColor.DARK_GREEN + player.getDisplayName());
+            }
         }
 
         Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
@@ -530,7 +563,7 @@ class DefaultGame implements Game {
                         Player player = plugin.getServer().getPlayerExact(name);
                         if (player != null) {
                             reward.addToInventory(player.getInventory());
-                            return;
+                            break;
                         }
                     }
                 }
@@ -548,5 +581,59 @@ class DefaultGame implements Game {
     @Override
     public void humanFound() {
         humanFinder = 0;
+    }
+
+    @Override
+    public void snapshotChunk(Chunk chunk) {
+        if (rollingBack) {
+            return;
+        }
+        if (!chunk.getWorld().getName().equals(worldName)) {
+            Logging.finer("Tried to snapshot chunk for world not for this game");
+            return;
+        }
+        if (snapshots.containsKey(chunk.getX())) {
+            Map<Integer, Snapshot> snapshot = snapshots.get(chunk.getX());
+            if (!snapshot.containsKey(chunk.getZ())) {
+                snapshot.put(chunk.getZ(), new DefaultSnapshot(chunk));
+            }
+        } else {
+            Map<Integer, Snapshot> snapshot = new HashMap<Integer, Snapshot>();
+            snapshot.put(chunk.getZ(), new DefaultSnapshot(chunk));
+            snapshots.put(chunk.getX(), snapshot);
+        }
+    }
+
+    @Override
+    public void snapshotBlock(Block block) {
+        if (rollingBack) {
+            return;
+        }
+        if (!block.getWorld().getName().equals(worldName)) {
+            Logging.finer("Tried to snapshot block for world not for this game");
+            return;
+        }
+        Chunk chunk = block.getChunk();
+        snapshotChunk(chunk);
+        Snapshot snapshot = snapshots.get(chunk.getX()).get(chunk.getZ());
+        snapshot.snapshotBlock(block);
+    }
+
+    private void rollbackWorld(boolean restartAfter) {
+        rollingBack = true;
+        broadcast(Language.ROLLBACK);
+        for (Map.Entry<Integer, Map<Integer, Snapshot>> x : snapshots.entrySet()) {
+            for (Map.Entry<Integer, Snapshot> z : x.getValue().entrySet()) {
+                Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new RollbackTask(z.getValue()));
+            }
+        }
+        if (restartAfter) {
+            Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
+                @Override
+                public void run() {
+                    plugin.getGameManager().newGame(worldName);
+                }
+            });
+        }
     }
 }

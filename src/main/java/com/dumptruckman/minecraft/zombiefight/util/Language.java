@@ -97,6 +97,8 @@ public class Language {
             "The last human survived the final onslaught. Congratulations &6%1!");
     public static final Message APPROACHING_BORDER = new Message("game.border.approaching",
             "&cYou are approaching the border, turn back now or you will start to die!");
+    public static final Message ROLLBACK = new Message("game.rollback",
+            "Rolling back the game world.. This will take a moment and may cause lag.");
 
     public static final Message FORCE_END = new Message("game.force_end",
             "The game was ended abruptly!");
