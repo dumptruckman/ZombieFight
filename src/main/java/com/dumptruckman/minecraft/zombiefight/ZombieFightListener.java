@@ -320,6 +320,8 @@ public class ZombieFightListener implements Listener {
                 // Humans no hurt humans.
                 event.setCancelled(true);
                 return;
+            } else {
+                game.humanFound();
             }
             if (game.isZombie(damager.getName())) {
                 event.setDamage(event.getDamage() + plugin.config().get(ZFConfig.ZOMBIE_DAMAGE));

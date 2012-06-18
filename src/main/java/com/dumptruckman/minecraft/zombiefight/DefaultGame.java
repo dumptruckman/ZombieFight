@@ -28,6 +28,8 @@ class DefaultGame implements Game {
     private int countdownTask = -1;
     private int lastHumanTask = -1;
     private int zombieLockTask = -1;
+    private int humanFinderTask = -1;
+    private long humanFinder = 0;
     private ZombieLockTask zombieLock;
     private Set<String> zombiePlayers;
     private Set<String> humanPlayers;
@@ -59,6 +61,7 @@ class DefaultGame implements Game {
             firstZombie = null;
             broadcast(Language.ZOMBIE_RELEASE);
             zombieLockTask = -1;
+            humanFinderTask = Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, new HumanFinderTask(), 0L, 20L);
         }
     }
 
@@ -92,6 +95,44 @@ class DefaultGame implements Game {
             }
             broadcast(Language.LAST_HUMAN_WON, winner);
             endGame();
+        }
+    }
+
+    private class HumanFinderTask implements Runnable {
+        private long beaconTick = 0;
+        private HumanFinderTask() {
+            Logging.finest("Human finder task started");
+        }
+        @Override
+        public void run() {
+            long lastHit = humanFinder - plugin.config().get(ZFConfig.HUMAN_FINDER_START);
+            Logging.finest("Humanfinder: " + lastHit + " beaconTick: " + beaconTick);
+            if (lastHit == 0) {
+                strike();
+                tick();
+            } else if (lastHit > 0) {
+                if (beaconTick >= plugin.config().get(ZFConfig.HUMAN_FINDER_TICK)) {
+                    strike();
+                    beaconTick = 0;
+                }
+                tick();
+            } else {
+                beaconTick = 0;
+                humanFinder++;
+            }
+        }
+        private void tick() {
+            humanFinder++;
+            beaconTick++;
+        }
+        private void strike() {
+            for (String name : humanPlayers) {
+                Player player = plugin.getServer().getPlayerExact(name);
+                if (player != null) {
+                    Location loc = player.getLocation();
+                    loc.getWorld().strikeLightningEffect(loc);
+                }
+            }
         }
     }
 
@@ -163,6 +204,10 @@ class DefaultGame implements Game {
             Bukkit.getScheduler().cancelTask(lastHumanTask);
             lastHumanTask = -1;
         }
+        if (humanFinderTask != -1) {
+            Bukkit.getScheduler().cancelTask(humanFinderTask);
+            humanFinderTask = -1;
+        }
         if (zombieLockTask != -1) {
             zombieLock.run();
             Bukkit.getScheduler().cancelTask(zombieLockTask);
@@ -184,6 +229,10 @@ class DefaultGame implements Game {
         if (lastHumanTask != -1) {
             Bukkit.getScheduler().cancelTask(lastHumanTask);
             lastHumanTask = -1;
+        }
+        if (humanFinderTask != -1) {
+            Bukkit.getScheduler().cancelTask(humanFinderTask);
+            humanFinderTask = -1;
         }
         if (zombieLockTask != -1) {
             zombieLock.run();
@@ -387,5 +436,10 @@ class DefaultGame implements Game {
 
     private void broadcast(Message message, Object...args) {
         plugin.broadcastWorld(worldName, plugin.getMessager().getMessage(message, args));
+    }
+
+    @Override
+    public void humanFound() {
+        humanFinder = 0;
     }
 }

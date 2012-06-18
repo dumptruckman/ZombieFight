@@ -37,4 +37,6 @@ public interface Game {
     void checkGameStart();
 
     void checkGameEnd();
+
+    void humanFound();
 }
