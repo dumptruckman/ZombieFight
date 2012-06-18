@@ -24,13 +24,16 @@ import org.bukkit.event.block.BlockDamageEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerChatEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
+import org.bukkit.event.world.WorldUnloadEvent;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.util.HashSet;
@@ -109,63 +112,7 @@ public class ZombieFightListener implements Listener {
             Logging.finest("Player joined non-game world.");
             return;
         }
-        Location loc = plugin.config().get(ZFConfig.PRE_GAME_SPAWN.specific(world.getName()));
-        if (loc == null) {
-            Logging.fine("No pre-game spawn set, will use world spawn.");
-            loc = world.getSpawnLocation();
-        }
-        final Location spawnLoc = loc;
-
-        // Handle joining
-        switch (game.getStatus()) {
-            case IN_PROGRESS:
-                if (game.isPlaying(player.getName())) {
-                    game.playerJoined(player.getName());
-                }
-                break;
-            case ENDED:
-                if (!game.isPlaying(player.getName())) {
-                    Logging.fine("Teleporting non-game-playing player to spawn.");
-                    Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
-                        @Override
-                        public void run() {
-                            player.teleport(spawnLoc);
-                            getMessager().normal(Language.JOIN_WHILE_GAME_IN_PROGRESS, player);
-                        }
-                    }, 2L);
-                }
-                break;
-            case PREPARING:
-                Logging.fine("Game not started, teleporting player to spawn.");
-                Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
-                    @Override
-                    public void run() {
-                        player.teleport(spawnLoc);
-                        getMessager().normal(Language.JOIN_WHILE_GAME_PREPARING, player);
-                    }
-                }, 2L);
-                break;
-            case STARTING:
-                Logging.fine("Game starting soon, teleporting player to spawn.");
-                Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
-                    @Override
-                    public void run() {
-                        player.teleport(spawnLoc);
-                        getMessager().normal(Language.JOIN_WHILE_GAME_STARTING, player);
-                    }
-                }, 2L);
-                break;
-            default:
-                break;
-        }
-
-        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
-            @Override
-            public void run() {
-                // Handle starting game
-            game.checkGameStart();
-            }
-        }, 5L);
+        game.playerJoined(player.getName());
     }
 
     @EventHandler
@@ -213,6 +160,39 @@ public class ZombieFightListener implements Listener {
         }
     }
 
+    @EventHandler
+    public void playerChangeWorld(PlayerChangedWorldEvent event) {
+        Player player = event.getPlayer();
+        World fromWorld = event.getFrom();
+        World toWorld = player.getWorld();
+        Game fromGame = plugin.getGameManager().getGame(fromWorld.getName());
+        Game toGame = plugin.getGameManager().getGame(toWorld.getName());
+        if (fromGame != null) {
+            fromGame.broadcast(Language.LEAVE_WORLD, player.getName());
+            fromGame.playerQuit(player.getName());
+        }
+        if (toGame != null) {
+            toGame.broadcast(Language.JOIN_WORLD, player.getName());
+            toGame.playerJoined(player.getName());
+        }
+    }
+
+    @EventHandler
+    public void playerPickupItem(PlayerPickupItemEvent event) {
+        if (event.isCancelled()) {
+            return;
+        }
+        Player player = event.getPlayer();
+        World world = player.getWorld();
+        Game game = plugin.getGameManager().getGame(world.getName());
+        if (game == null) {
+            return;
+        }
+        if (game.isZombie(player.getName())) {
+            event.setCancelled(true);
+        }
+    }
+
     @EventHandler(priority = EventPriority.MONITOR)
     public void playerQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
@@ -222,25 +202,20 @@ public class ZombieFightListener implements Listener {
             Logging.finest("Player quit non-game world.");
             return;
         }
-        switch (game.getStatus()) {
-            case STARTING:
-                int playersInWorld = world.getPlayers().size();
-                int minPlayers = plugin.config().get(ZFConfig.MIN_PLAYERS);
-                if (playersInWorld < minPlayers) {
-                    Logging.fine("Player quit caused countdown to halt.");
-                    plugin.broadcastWorld(world.getName(), getMessager().getMessage(Language.TOO_FEW_PLAYERS));
-                    game.haltCountdown();
-                }
-                break;
-            case IN_PROGRESS:
-                if (game.isPlaying(player.getName())) {
-                    game.playerQuit(player.getName());
-                    game.checkGameEnd();
-                }
-                break;
-            default:
-                break;
+        game.playerQuit(player.getName());
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void unloadWorld(WorldUnloadEvent event) {
+        if (event.isCancelled()) {
+            return;
         }
+        World world = event.getWorld();
+        Game game = plugin.getGameManager().getGame(world.getName());
+        if (game == null) {
+            return;
+        }
+        plugin.getGameManager().disableWorld(world.getName());
     }
 
     @EventHandler

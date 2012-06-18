@@ -1,5 +1,8 @@
 package com.dumptruckman.minecraft.zombiefight.api;
 
+import com.dumptruckman.minecraft.pluginbase.locale.Message;
+import org.bukkit.Chunk;
+
 public interface Game {
 
     GameStatus getStatus();
@@ -39,4 +42,10 @@ public interface Game {
     void checkGameEnd();
 
     void humanFound();
+
+    void broadcast(Message message, Object...args);
+
+    void forceEnd(boolean restart);
+
+    void snapshotChunk(Chunk chunk);
 }

@@ -10,6 +10,8 @@ import com.dumptruckman.minecraft.zombiefight.api.ZFConfig;
 import com.dumptruckman.minecraft.zombiefight.api.ZombieFight;
 import com.dumptruckman.minecraft.zombiefight.util.Language;
 import org.bukkit.Bukkit;
+import org.bukkit.Chunk;
+import org.bukkit.ChunkSnapshot;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
@@ -29,12 +31,14 @@ class DefaultGame implements Game {
     private int lastHumanTask = -1;
     private int zombieLockTask = -1;
     private int humanFinderTask = -1;
+    private int gameEndTask = -1;
     private long humanFinder = 0;
     private ZombieLockTask zombieLock;
     private Set<String> zombiePlayers;
     private Set<String> humanPlayers;
     private Set<String> onlinePlayers;
     private String firstZombie = "";
+    private Set<ChunkSnapshot> 
 
     private class CountdownTask implements Runnable {
         private CountdownTask() {
@@ -72,7 +76,8 @@ class DefaultGame implements Game {
         @Override
         public void run() {
             Logging.finest("Game end task ended");
-            forceEnd();
+            end();
+            restartGame();
         }
     }
 
@@ -174,6 +179,10 @@ class DefaultGame implements Game {
         }
         Logging.finest("Game.forceStart() called");
         broadcast(Language.GAME_STARTING);
+        Chunk[] loadedChunks = Bukkit.getWorld(worldName).getLoadedChunks();
+        for (Chunk chunk : loadedChunks) {
+            snapshotChunk(chunk);
+        }
         humanPlayers.addAll(plugin.getPlayersForWorld(worldName));
         onlinePlayers.addAll(humanPlayers);
         status = GameStatus.IN_PROGRESS;
@@ -225,7 +234,7 @@ class DefaultGame implements Game {
         Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new GameEndTask(), BukkitTools.convertSecondsToTicks(secondsToReset));
     }
 
-    private void forceEnd() {
+    private void end() {
         if (lastHumanTask != -1) {
             Bukkit.getScheduler().cancelTask(lastHumanTask);
             lastHumanTask = -1;
@@ -234,11 +243,16 @@ class DefaultGame implements Game {
             Bukkit.getScheduler().cancelTask(humanFinderTask);
             humanFinderTask = -1;
         }
+        if (gameEndTask != -1) {
+            Bukkit.getScheduler().cancelTask(gameEndTask);
+            gameEndTask = -1;
+        }
         if (zombieLockTask != -1) {
             zombieLock.run();
             Bukkit.getScheduler().cancelTask(zombieLockTask);
             zombieLockTask = -1;
         }
+        status = GameStatus.ENDED;
         Location location = plugin.config().get(ZFConfig.PRE_GAME_SPAWN.specific(worldName));
         if (location == null) {
             World world = Bukkit.getWorld(worldName);
@@ -257,8 +271,18 @@ class DefaultGame implements Game {
                 player.teleport(location);
             }
         }
+    }
+
+    public void forceEnd(boolean restart) {
+        broadcast(Language.FORCE_END);
+        end();
+        if (restart) {
+            restartGame();
+        }
+    }
+
+    private void restartGame() {
         plugin.getGameManager().newGame(worldName);
-        plugin.getGameManager().getGame(worldName).checkGameStart();
     }
 
     @Override
@@ -310,13 +334,96 @@ class DefaultGame implements Game {
     @Override
     public void playerQuit(String playerName) {
         Logging.finer("Player quit game in world: " + worldName);
-        onlinePlayers.remove(playerName);
+        switch (getStatus()) {
+            case STARTING:
+                int playersInWorld = Bukkit.getWorld(worldName).getPlayers().size();
+                int minPlayers = plugin.config().get(ZFConfig.MIN_PLAYERS);
+                if (playersInWorld < minPlayers) {
+                    Logging.fine("Player quit caused countdown to halt.");
+                    broadcast(Language.TOO_FEW_PLAYERS);
+                    haltCountdown();
+                }
+                break;
+            case IN_PROGRESS:
+                if (isPlaying(playerName)) {
+                    onlinePlayers.remove(playerName);
+                    checkGameEnd();
+                }
+                break;
+            default:
+                break;
+        }
     }
 
     @Override
     public void playerJoined(String playerName) {
-        Logging.finer("Player joined game in world: " + worldName);
-        onlinePlayers.add(playerName);
+        Location loc = plugin.config().get(ZFConfig.PRE_GAME_SPAWN.specific(worldName));
+        if (loc == null) {
+            Logging.fine("No pre-game spawn set, will use world spawn.");
+            loc = Bukkit.getWorld(worldName).getSpawnLocation();
+        }
+        final Location spawnLoc = loc;
+        final Player player = Bukkit.getPlayerExact(playerName);
+
+        // Handle joining
+        switch (getStatus()) {
+            case IN_PROGRESS:
+                if (isPlaying(playerName)) {
+                    Logging.finer("Player joined game in world: " + worldName);
+                    onlinePlayers.add(playerName);
+                } else {
+                    Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
+                        @Override
+                        public void run() {
+                            player.teleport(spawnLoc);
+                            plugin.getMessager().normal(Language.JOIN_WHILE_GAME_IN_PROGRESS, player);
+                        }
+                    }, 2L);
+                }
+                break;
+            case ENDED:
+                if (!isPlaying(player.getName())) {
+                    Logging.fine("Teleporting non-game-playing player to spawn.");
+                    Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
+                        @Override
+                        public void run() {
+                            player.teleport(spawnLoc);
+                            plugin.getMessager().normal(Language.JOIN_WHILE_GAME_IN_PROGRESS, player);
+                        }
+                    }, 2L);
+                }
+                break;
+            case PREPARING:
+                Logging.fine("Game not started, teleporting player to spawn.");
+                Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
+                    @Override
+                    public void run() {
+                        player.teleport(spawnLoc);
+                        plugin.getMessager().normal(Language.JOIN_WHILE_GAME_PREPARING, player);
+                    }
+                }, 2L);
+                break;
+            case STARTING:
+                Logging.fine("Game starting soon, teleporting player to spawn.");
+                Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
+                    @Override
+                    public void run() {
+                        player.teleport(spawnLoc);
+                        plugin.getMessager().normal(Language.JOIN_WHILE_GAME_STARTING, player);
+                    }
+                }, 2L);
+                break;
+            default:
+                break;
+        }
+
+        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
+            @Override
+            public void run() {
+                // Handle starting game
+                checkGameStart();
+            }
+        }, 5L);
     }
 
     @Override
@@ -434,7 +541,7 @@ class DefaultGame implements Game {
         }
     }
 
-    private void broadcast(Message message, Object...args) {
+    public void broadcast(Message message, Object...args) {
         plugin.broadcastWorld(worldName, plugin.getMessager().getMessage(message, args));
     }
 

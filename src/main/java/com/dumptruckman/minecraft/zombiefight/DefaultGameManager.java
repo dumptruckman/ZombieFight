@@ -49,6 +49,7 @@ class DefaultGameManager implements GameManager {
         Game game = new DefaultGame(plugin, worldName);
         gameMap.put(worldName, game);
         plugin.broadcastWorld(worldName, plugin.getMessager().getMessage(Language.JOIN_WHILE_GAME_PREPARING));
+        game.checkGameStart();
     }
 
     @Override
@@ -65,6 +66,8 @@ class DefaultGameManager implements GameManager {
 
     @Override
     public void disableWorld(String worldName) {
+        Game game = getGame(worldName);
+        game.forceEnd(false);
         getEnabledWorlds().remove(worldName);
         plugin.config().set(ZFConfig.ENABLED_WORLDS, new ArrayList<String>(getEnabledWorlds()));
         plugin.config().save();

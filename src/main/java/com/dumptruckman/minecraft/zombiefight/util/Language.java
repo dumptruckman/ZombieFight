@@ -64,6 +64,11 @@ public class Language {
     public static final Message JOIN_WHILE_GAME_STARTING = new Message("joining.game_starting",
             "A new game will be starting momentarily...");
 
+    public static final Message LEAVE_WORLD = new Message("world_change.left_world",
+            "%1 has left the game world!");
+    public static final Message JOIN_WORLD = new Message("world_change.join_world",
+            "%1 has joined the game world!");
+
     public static final Message ENOUGH_FOR_QUICK_START = new Message("game.starting.quick_start",
             "Enough players have joined to start the game immediately!");
     public static final Message ENOUGH_FOR_COUNTDOWN_START = new Message("game.starting.countdown_start",
@@ -92,6 +97,9 @@ public class Language {
             "The last human survived the final onslaught. Congratulations &6%1!");
     public static final Message APPROACHING_BORDER = new Message("game.border.approaching",
             "&cYou are approaching the border, turn back now or you will start to die!");
+
+    public static final Message FORCE_END = new Message("game.force_end",
+            "The game was ended abruptly!");
 
     public static final Message COULD_NOT_COUNTDOWN = new Message("error.could_not_countdown",
             "Could not start countdown! Game will start immediately!");
