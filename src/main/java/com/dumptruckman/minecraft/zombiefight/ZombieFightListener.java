@@ -118,7 +118,7 @@ public class ZombieFightListener implements Listener {
         }
     }
 
-    public void resetBorderDamager() {
+    void resetBorderDamager() {
         if (borderTask != -1) {
             Bukkit.getScheduler().cancelTask(borderTask);
         }
@@ -132,34 +132,6 @@ public class ZombieFightListener implements Listener {
     private Messager getMessager() {
         return plugin.getMessager();
     }
-
-
-    // Stuff for testing
-    private String[] names = new String[20];
-    @EventHandler(priority = EventPriority.LOWEST)
-    public void playerNameChange(PlayerLoginEvent event) {
-        for (int i = 0; i < names.length; i++) {
-            if (names[i] == null) {
-                CraftPlayer cPlayer = (CraftPlayer) event.getPlayer();
-                EntityPlayer ePlayer = cPlayer.getHandle();
-                ePlayer.name = i + ePlayer.name;
-                ePlayer.displayName = ePlayer.name;
-                ePlayer.listName = ePlayer.name;
-                names[i] = ePlayer.name;
-                return;
-            }
-        }
-    }
-    @EventHandler(priority = EventPriority.MONITOR)
-    public void playerNameUnchange(PlayerQuitEvent event) {
-        Player player = event.getPlayer();
-        for (int i = 0; i < names.length; i++) {
-            if (names[i] != null && names[i] == player.getName()) {
-                names[i] = null;
-            }
-        }
-    }
-
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void playerJoin(PlayerJoinEvent event) {

@@ -48,6 +48,7 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
     private LootConfig lootConfig = null;
     private boolean mobDisguise = false;
     private ZombieFightListener listener;
+    private TestModeListener testListener = new TestModeListener(this);
     private Set<Integer> countdownWarnings = new HashSet<Integer>();
     private Map<String, String> playerKits = new HashMap<String, String>();
 
@@ -67,6 +68,9 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
     public void postEnable() {
         PluginManager pm = getServer().getPluginManager();
         pm.registerEvents(listener, this);
+        if (config().get(ZFConfig.TEST_MODE)) {
+            pm.registerEvents(testListener, this);
+        }
         getCommandHandler().registerCommand(new PreGameSpawnCommand(this));
         getCommandHandler().registerCommand(new GameSpawnCommand(this));
         getCommandHandler().registerCommand(new StartGameCommand(this));

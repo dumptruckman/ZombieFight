@@ -16,6 +16,8 @@ import java.util.Arrays;
  */
 public interface ZFConfig extends BaseConfig {
 
+    ConfigEntry<Boolean> TEST_MODE = new EntryBuilder<Boolean>(Boolean.class, "test_mode").stringSerializer().def(false).defaultIfMissing().comment("# Allows same username to join multiple times for testing.  Requires server restart!").build();
+
     ListConfigEntry<String> ENABLED_WORLDS = new EntryBuilder<String>(String.class, "worlds.enabled").stringSerializer().comment("# Worlds game is enabled in.").buildList();
     ConfigEntry<Null> DATA = new EntryBuilder<Null>(Null.class, "data").comment("# Options built by the plugin.  Most of this can be set via command!").build();
     MappedConfigEntry<Location> PRE_GAME_SPAWN = new EntryBuilder<Location>(Location.class, "data.pre-game_spawn").serializer(new LocationSerializer()).comment("# The location of the pre-game spawn, per world.").buildMap();
