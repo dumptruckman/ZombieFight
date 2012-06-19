@@ -1,6 +1,6 @@
 name: ZombieFight
 main: com.dumptruckman.minecraft.zombiefight.ZombieFightPlugin
-version: maven-version-number
+version: 1.0
 author: dumptruckman
 softdepend: [MobDisguise]
 

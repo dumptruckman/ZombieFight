@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.dumptruckman.minecraft</groupId>
     <artifactId>ZombieFight</artifactId>
-    <version>dev-SNAPSHOT</version>
+    <version>1.0</version>
     <name>ZombieFight</name>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
