@@ -119,6 +119,9 @@ class DefaultGame implements Game {
         }
         @Override
         public void run() {
+            if (getStatus() != GameStatus.IN_PROGRESS) {
+                Bukkit.getScheduler().cancelTask(humanFinderTask);
+            }
             long lastHit = humanFinder - plugin.config().get(ZFConfig.HUMAN_FINDER_START);
             if (lastHit == 0) {
                 strike();
