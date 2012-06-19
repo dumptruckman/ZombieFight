@@ -133,7 +133,7 @@ public class ZombieFightListener implements Listener {
         return plugin.getMessager();
     }
 
-    /*
+
     // Stuff for testing
     private String[] names = new String[20];
     @EventHandler(priority = EventPriority.LOWEST)
@@ -159,7 +159,7 @@ public class ZombieFightListener implements Listener {
             }
         }
     }
-    */
+
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void playerJoin(PlayerJoinEvent event) {

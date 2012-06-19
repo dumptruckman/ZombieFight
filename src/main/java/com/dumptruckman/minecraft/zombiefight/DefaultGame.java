@@ -318,10 +318,10 @@ class DefaultGame implements Game {
                 player.teleport(location);
             }
         }
+        rollbackWorld(restart);
         humanPlayers.clear();
         zombiePlayers.clear();
         onlinePlayers.clear();
-        rollbackWorld(restart);
     }
 
     public void forceEnd(boolean restart) {
@@ -403,6 +403,14 @@ class DefaultGame implements Game {
         }
     }
 
+    public void endAllTasks() {
+        Bukkit.getScheduler().cancelTask(countdownTask);
+        Bukkit.getScheduler().cancelTask(lastHumanTask);
+        Bukkit.getScheduler().cancelTask(zombieLockTask);
+        Bukkit.getScheduler().cancelTask(humanFinderTask);
+        Bukkit.getScheduler().cancelTask(gameEndTask);
+    }
+
     @Override
     public void playerJoined(String playerName) {
         Location loc = plugin.config().get(ZFConfig.PRE_GAME_SPAWN.specific(worldName));
@@ -415,7 +423,7 @@ class DefaultGame implements Game {
         Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
             @Override
             public void run() {
-                plugin.getMessager().sendMessage(player, ChatColor.GRAY + "Visit the official ZombieFight website/server:"
+                plugin.getMessager().sendMessage(player, ChatColor.GRAY + "Visit the official ZombieFight website:"
                         + ChatColor.RED + "mczombies.com");
                 plugin.displayKits(player);
             }

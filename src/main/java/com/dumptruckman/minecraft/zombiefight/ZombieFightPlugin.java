@@ -100,10 +100,10 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
     public void postReload() {
         listener.resetBorderDamager();
         for (World world : Bukkit.getWorlds()) {
-            Game game = getGameManager().getGame(world.getName());
-            if (game != null) {
-                game.checkGameStart();
+            if (!getGameManager().isWorldEnabled(world.getName())) {
+                continue;
             }
+            getGameManager().newGame(world.getName());
         }
         countdownWarnings = new HashSet<Integer>(config().getList(ZFConfig.COUNTDOWN_WARNINGS));
     }
@@ -173,6 +173,7 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
         player.setFoodLevel(20);
         player.setSaturation(5F);
         player.setExhaustion(0F);
+        getMessager().normal(Language.YOU_ARE_ZOMBIE, player);
     }
 
     @Override

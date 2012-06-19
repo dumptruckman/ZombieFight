@@ -123,6 +123,8 @@ public class Language {
             "Game starting in %1 second(s)");
     public static final Message PLUGIN_RELOAD = new Message("plugin.reload",
             "Plugin reloading, games terminated.");
+    public static final Message YOU_ARE_ZOMBIE = new Message("game.you_are_zombie",
+            "&4You have become a zombie!! Brraaainnsss...");
 
     public static final Message FORCE_END = new Message("game.force_end",
             "The game was ended abruptly!");
