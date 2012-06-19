@@ -412,6 +412,12 @@ class DefaultGame implements Game {
         }
         final Location spawnLoc = loc;
         final Player player = Bukkit.getPlayerExact(playerName);
+        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
+            @Override
+            public void run() {
+                plugin.displayKits(player);
+            }
+        }, 2L);
 
         // Handle joining
         switch (getStatus()) {

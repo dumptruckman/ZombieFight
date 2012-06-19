@@ -29,4 +29,6 @@ public interface ZombieFight extends BukkitPlugin<ZFConfig>, Plugin {
     void setPlayerKit(String name, String kit);
 
     String getPlayerKit(String name);
+
+    void displayKits(Player player);
 }

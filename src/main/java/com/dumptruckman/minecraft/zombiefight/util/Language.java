@@ -50,17 +50,17 @@ public class Language {
     public static final Message CMD_ENABLE_SUCCESS = new Message("cmd.enable.success",
             "You have enabled the game for the world.");
 
-    public static final Message CMD_DISABLE_NAME = new Message("cmd.disable.name",
-            "Disables the game for the world.");
+    public static final Message CMD_KIT_NAME = new Message("cmd.kit.name",
+            "Lists kits available to you or selects a kit for the next game.");
     public static final Message CMD_KIT_LIST = new Message("cmd.kit.list",
-            "Available kits: %1");
+            "Select kit with &6/kit [kitname]", "Available kits: %1");
     public static final Message CMD_KIT_NO_ACCESS = new Message("cmd.kit.no_access",
             "You do not have access to kit: %1");
     public static final Message CMD_KIT_SUCCESS = new Message("cmd.kit.success",
             "You will begin the next game with the kit: %1");
 
-    public static final Message CMD_KIT_NAME = new Message("cmd.kit.name",
-            "Lists kits available to you or selects a kit for the next game.");
+    public static final Message CMD_DISABLE_NAME = new Message("cmd.disable.name",
+            "Disables the game for the world.");
     public static final Message CMD_DISABLE_ALREADY = new Message("cmd.disable.already_disabled",
             "The game is already disabled for the world!");
     public static final Message CMD_DISABLE_SUCCESS = new Message("cmd.disable.success",

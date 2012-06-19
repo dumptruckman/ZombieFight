@@ -34,18 +34,7 @@ public class KitCommand extends ZFCommand {
         }
         Player player = (Player) sender;
         if (args.size() == 0) {
-            String[] kits = plugin.getLootConfig().getKitNames();
-            StringBuilder kitList = new StringBuilder();
-            for (String kit : kits) {
-                if (!Perms.KIT.specific(kit).hasPermission(player)) {
-                    continue;
-                }
-                if (!kitList.toString().isEmpty()) {
-                    kitList.append(", ");
-                }
-                kitList.append(ChatColor.AQUA).append(kit).append(ChatColor.WHITE);
-            }
-            getMessager().normal(Language.CMD_KIT_LIST, sender, kitList.toString());
+            plugin.displayKits(player);
         } else {
             StringBuilder kit = new StringBuilder();
             for (String arg : args) {

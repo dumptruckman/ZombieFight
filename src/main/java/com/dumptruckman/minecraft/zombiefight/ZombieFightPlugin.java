@@ -18,8 +18,10 @@ import com.dumptruckman.minecraft.zombiefight.util.CommentedConfig;
 import com.dumptruckman.minecraft.zombiefight.util.Language;
 import com.dumptruckman.minecraft.pluginbase.plugin.AbstractBukkitPlugin;
 import com.dumptruckman.minecraft.pluginbase.plugin.command.HelpCommand;
+import com.dumptruckman.minecraft.zombiefight.util.Perms;
 import me.desmin88.mobdisguise.api.MobDisguiseAPI;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
@@ -219,5 +221,20 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
     @Override
     public String getPlayerKit(String name) {
         return playerKits.get(name);
+    }
+
+    public void displayKits(Player player) {
+        String[] kits = getLootConfig().getKitNames();
+        StringBuilder kitList = new StringBuilder();
+        for (String kit : kits) {
+            if (!Perms.KIT.specific(kit).hasPermission(player)) {
+                continue;
+            }
+            if (!kitList.toString().isEmpty()) {
+                kitList.append(", ");
+            }
+            kitList.append(ChatColor.AQUA).append(kit).append(ChatColor.WHITE);
+        }
+        getMessager().normal(Language.CMD_KIT_LIST, player, kitList.toString());
     }
 }
