@@ -218,6 +218,10 @@ class DefaultGame implements Game {
             if (player != null) {
                 player.teleport(location);
                 player.getInventory().clear();
+                player.setHealth(20);
+                player.setFoodLevel(20);
+                player.setSaturation(5F);
+                player.setExhaustion(0F);
                 String kitName = plugin.getPlayerKit(playerName);
                 if (kitName != null) {
                     LootTable kit = plugin.getLootConfig().getKit(kitName);

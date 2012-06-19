@@ -221,6 +221,38 @@ public class ZombieFightListener implements Listener {
                     event.setCancelled(true);
                 }
             }
+            if (!game.isPlaying(player.getName())) {
+                if (!Perms.CAN_ALWAYS_BREAK.hasPermission(player)) {
+                    event.setCancelled(true);
+                }
+            }
+        } else {
+            if (!Perms.CAN_ALWAYS_BREAK.hasPermission(player)) {
+                event.setCancelled(true);
+            }
+        }
+    }
+
+    @EventHandler
+    public void blockPlace(BlockPlaceEvent event) {
+        Player player = event.getPlayer();
+        World world = player.getWorld();
+        Game game = plugin.getGameManager().getGame(world.getName());
+        if (game == null) {
+            return;
+        }
+        if (game.getStatus() == GameStatus.IN_PROGRESS) {
+            if (game.isZombie(player.getName())) {
+                String firstZombie = game.getFirstZombie();
+                if (firstZombie != null && firstZombie.equals(player.getName())) {
+                    event.setCancelled(true);
+                }
+            }
+            if (!game.isPlaying(player.getName())) {
+                if (!Perms.CAN_ALWAYS_BREAK.hasPermission(player)) {
+                    event.setCancelled(true);
+                }
+            }
         } else {
             if (!Perms.CAN_ALWAYS_BREAK.hasPermission(player)) {
                 event.setCancelled(true);
