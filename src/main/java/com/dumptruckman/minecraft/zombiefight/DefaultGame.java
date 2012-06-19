@@ -415,6 +415,8 @@ class DefaultGame implements Game {
         Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
             @Override
             public void run() {
+                plugin.getMessager().sendMessage(player, ChatColor.GRAY + "Visit the official ZombieFight website/server:"
+                        + ChatColor.RED + "mczombies.com");
                 plugin.displayKits(player);
             }
         }, 2L);
