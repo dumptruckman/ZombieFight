@@ -218,6 +218,16 @@ class DefaultGame implements Game {
             if (player != null) {
                 player.teleport(location);
                 player.getInventory().clear();
+                String kitName = plugin.getPlayerKit(playerName);
+                if (kitName != null) {
+                    LootTable kit = plugin.getLootConfig().getKit(kitName);
+                    if (kit != null) {
+                        kit.addToInventory(player.getInventory());
+                    } else {
+                        plugin.getMessager().bad(Language.KIT_ERROR, player, kitName);
+                        plugin.setPlayerKit(playerName, null);
+                    }
+                }
                 fixName(player.getName());
             }
         }
@@ -562,7 +572,7 @@ class DefaultGame implements Game {
         if (onlineHumans == 1) {
             int finalHuman = plugin.config().get(ZFConfig.FINAL_HUMAN);
             broadcast(Language.ONE_HUMAN_LEFT, finalHuman);
-            LootTable reward = plugin.getLootConfig().getLootTable();
+            LootTable reward = plugin.getLootConfig().getLastHumanReward();
             if (reward != null) {
                 for (String name : humanPlayers) {
                     if (onlinePlayers.contains(name)) {

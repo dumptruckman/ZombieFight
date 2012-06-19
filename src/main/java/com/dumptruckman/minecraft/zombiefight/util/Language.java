@@ -52,6 +52,15 @@ public class Language {
 
     public static final Message CMD_DISABLE_NAME = new Message("cmd.disable.name",
             "Disables the game for the world.");
+    public static final Message CMD_KIT_LIST = new Message("cmd.kit.list",
+            "Available kits: %1");
+    public static final Message CMD_KIT_NO_ACCESS = new Message("cmd.kit.no_access",
+            "You do not have access to kit: %1");
+    public static final Message CMD_KIT_SUCCESS = new Message("cmd.kit.success",
+            "You will begin the next game with the kit: %1");
+
+    public static final Message CMD_KIT_NAME = new Message("cmd.kit.name",
+            "Lists kits available to you or selects a kit for the next game.");
     public static final Message CMD_DISABLE_ALREADY = new Message("cmd.disable.already_disabled",
             "The game is already disabled for the world!");
     public static final Message CMD_DISABLE_SUCCESS = new Message("cmd.disable.success",
@@ -103,6 +112,8 @@ public class Language {
             "Rolling back the game world.. This will take a moment and may cause lag.");
     public static final Message GAME_STARTING_IN = new Message("game.starting_in",
             "Game starting in %1 second(s)");
+    public static final Message PLUGIN_RELOAD = new Message("plugin.reload",
+            "Plugin reloading, games terminated.");
 
     public static final Message FORCE_END = new Message("game.force_end",
             "The game was ended abruptly!");
@@ -113,6 +124,8 @@ public class Language {
             "There is no world named: %1");
     public static final Message NOT_GAME_WORLD = new Message("error.not_game_world",
             "'%1' is not a game world!");
+    public static final Message KIT_ERROR = new Message("error.kit_missing",
+            "The kit '%1' could not be found!");
 
     public static void init() { }
 }

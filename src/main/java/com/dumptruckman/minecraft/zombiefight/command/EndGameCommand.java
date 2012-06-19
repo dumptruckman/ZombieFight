@@ -17,7 +17,7 @@ public class EndGameCommand extends ZFCommand {
 
     public EndGameCommand(ZombieFight plugin) {
         super(plugin);
-        this.setName(messager.getMessage(Language.CMD_END_GAME_NAME));
+        this.setName(getMessager().getMessage(Language.CMD_END_GAME_NAME));
         this.setCommandUsage("/" + plugin.getCommandPrefixes().get(0) + " end [-w <worldname>]");
         this.setArgRange(0, 2);
         for (String prefix : plugin.getCommandPrefixes()) {
@@ -34,7 +34,7 @@ public class EndGameCommand extends ZFCommand {
         World world = null;
         if (worldName == null) {
             if (!(sender instanceof Player)) {
-                messager.bad(Language.CMD_CONSOLE_REQUIRES_WORLD, sender);
+                getMessager().bad(Language.CMD_CONSOLE_REQUIRES_WORLD, sender);
                 return;
             } else {
                 world = ((Player) sender).getWorld();
@@ -43,20 +43,20 @@ public class EndGameCommand extends ZFCommand {
             world = Bukkit.getWorld(worldName);
         }
         if (world == null) {
-            messager.bad(Language.NO_WORLD, sender, worldName);
+            getMessager().bad(Language.NO_WORLD, sender, worldName);
             return;
         }
         Game game = plugin.getGameManager().getGame(world.getName());
         if (game == null) {
-            messager.bad(Language.NOT_GAME_WORLD, sender, world.getName());
+            getMessager().bad(Language.NOT_GAME_WORLD, sender, world.getName());
             return;
         }
         if (game.getStatus() == GameStatus.STARTING || game.getStatus() == GameStatus.PREPARING) {
-            messager.normal(Language.CMD_END_NOT_STARTED, sender);
+            getMessager().normal(Language.CMD_END_NOT_STARTED, sender);
             return;
         }
 
-        messager.good(Language.CMD_END_SUCCESS, sender);
+        getMessager().good(Language.CMD_END_SUCCESS, sender);
         game.endGame();
     }
 }

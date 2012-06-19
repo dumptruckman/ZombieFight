@@ -8,3 +8,6 @@ commands:
   zf:
     description: Main plugin command.
     usage: /<command>
+  kit:
+    description: Lists or selects kits.
+    usage: /kit [kit name]

@@ -25,4 +25,8 @@ public interface ZombieFight extends BukkitPlugin<ZFConfig>, Plugin {
     LootConfig getLootConfig();
 
     boolean shouldWarn(int time);
+
+    void setPlayerKit(String name, String kit);
+
+    String getPlayerKit(String name);
 }

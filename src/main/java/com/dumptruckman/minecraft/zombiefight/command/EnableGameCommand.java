@@ -16,7 +16,7 @@ public class EnableGameCommand extends ZFCommand {
 
     public EnableGameCommand(ZombieFight plugin) {
         super(plugin);
-        this.setName(messager.getMessage(Language.CMD_ENABLE_NAME));
+        this.setName(getMessager().getMessage(Language.CMD_ENABLE_NAME));
         this.setCommandUsage("/" + plugin.getCommandPrefixes().get(0) + " enable [-w <worldname>]");
         this.setArgRange(0, 2);
         for (String prefix : plugin.getCommandPrefixes()) {
@@ -33,7 +33,7 @@ public class EnableGameCommand extends ZFCommand {
         World world = null;
         if (worldName == null) {
             if (!(sender instanceof Player)) {
-                messager.bad(Language.CMD_CONSOLE_REQUIRES_WORLD, sender);
+                getMessager().bad(Language.CMD_CONSOLE_REQUIRES_WORLD, sender);
                 return;
             } else {
                 world = ((Player) sender).getWorld();
@@ -42,11 +42,11 @@ public class EnableGameCommand extends ZFCommand {
             world = Bukkit.getWorld(worldName);
         }
         if (world == null) {
-            messager.bad(Language.NO_WORLD, sender, worldName);
+            getMessager().bad(Language.NO_WORLD, sender, worldName);
             return;
         }
         if (plugin.getGameManager().isWorldEnabled(world.getName())) {
-            messager.bad(Language.CMD_ENABLE_ALREADY, sender);
+            getMessager().bad(Language.CMD_ENABLE_ALREADY, sender);
             return;
         }
         int borderRadius = plugin.config().get(ZFConfig.BORDER_RADIUS.specific(world.getName()));
@@ -54,6 +54,6 @@ public class EnableGameCommand extends ZFCommand {
         int borderWarn = plugin.config().get(ZFConfig.BORDER_WARN.specific(world.getName()));
         plugin.config().set(ZFConfig.BORDER_WARN.specific(world.getName()), borderWarn);
         plugin.getGameManager().enableWorld(world.getName());
-        messager.good(Language.CMD_ENABLE_SUCCESS, sender);
+        getMessager().good(Language.CMD_ENABLE_SUCCESS, sender);
     }
 }

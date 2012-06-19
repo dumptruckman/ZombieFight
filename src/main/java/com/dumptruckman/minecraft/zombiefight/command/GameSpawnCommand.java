@@ -14,7 +14,7 @@ public class GameSpawnCommand extends ZFCommand {
 
     public GameSpawnCommand(ZombieFight plugin) {
         super(plugin);
-        this.setName(messager.getMessage(Language.CMD_GSPAWN_NAME));
+        this.setName(getMessager().getMessage(Language.CMD_GSPAWN_NAME));
         this.setCommandUsage("/" + plugin.getCommandPrefixes().get(0) + " gspawn [set]");
         this.setArgRange(0, 1);
         for (String prefix : plugin.getCommandPrefixes()) {
@@ -28,7 +28,7 @@ public class GameSpawnCommand extends ZFCommand {
     @Override
     public void runCommand(CommandSender sender, List<String> args) {
         if (!(sender instanceof Player)) {
-            messager.bad(Language.IN_GAME_ONLY, sender);
+            getMessager().bad(Language.IN_GAME_ONLY, sender);
             return;
         }
         Player player = (Player) sender;
@@ -37,16 +37,16 @@ public class GameSpawnCommand extends ZFCommand {
                 Location loc = player.getLocation();
                 plugin.config().set(ZFConfig.GAME_SPAWN.specific(loc.getWorld().getName()), loc);
                 plugin.config().save();
-                messager.good(Language.CMD_GSPAWN_SET_SUCCESS, player);
+                getMessager().good(Language.CMD_GSPAWN_SET_SUCCESS, player);
             } else {
-                messager.bad(Language.CMD_GSPAWN_SET_NO_PERM, player);
+                getMessager().bad(Language.CMD_GSPAWN_SET_NO_PERM, player);
             }
         } else {
             Location loc = plugin.config().get(ZFConfig.GAME_SPAWN.specific(player.getWorld().getName()));
             if (loc != null) {
                 player.teleport(loc);
             } else {
-                messager.bad(Language.CMD_GSPAWN_FAIL, player);
+                getMessager().bad(Language.CMD_GSPAWN_FAIL, player);
             }
         }
     }

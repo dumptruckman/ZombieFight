@@ -2,6 +2,7 @@ package com.dumptruckman.minecraft.zombiefight.util;
 
 import com.dumptruckman.minecraft.pluginbase.permission.Perm;
 import com.dumptruckman.minecraft.pluginbase.permission.Perm.Builder;
+import org.bukkit.permissions.PermissionDefault;
 
 public class Perms {
     
@@ -20,5 +21,8 @@ public class Perms {
     public static final Perm CMD_ENABLE = new Perm.Builder(BASE_PERM + "cmd.enable").commandPermission().build();
     public static final Perm CMD_DISABLE = new Perm.Builder(BASE_PERM + "cmd.disable").commandPermission().build();
 
-    public static final Perm CAN_ALWAYS_BREAK = new Builder(BASE_PERM + "alwaysbreak").build();
+    public static final Perm ALL_KITS = new Builder(BASE_PERM + "kit.*").addToAll().def(PermissionDefault.FALSE).build();
+    public static final Perm KIT = new Builder(BASE_PERM + "kit").commandPermission().parent(ALL_KITS).build();
+
+    public static final Perm CAN_ALWAYS_BREAK = new Builder(BASE_PERM + "alwaysbreak").addToAll().build();
 }

@@ -4,10 +4,12 @@ import com.dumptruckman.minecraft.pluginbase.util.Logging;
 import com.dumptruckman.minecraft.zombiefight.api.LootConfig;
 import com.dumptruckman.minecraft.zombiefight.api.LootTable;
 import com.dumptruckman.minecraft.zombiefight.api.ZombieFight;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -16,6 +18,7 @@ class DefaultLootConfig implements LootConfig {
 
     private FileConfiguration config;
 
+    private File kitFolder;
     private File configFile;
 
     private Map<String, LootTable> cachedTables = new WeakHashMap<String, LootTable>();
@@ -23,6 +26,8 @@ class DefaultLootConfig implements LootConfig {
     DefaultLootConfig(ZombieFight plugin) {
         configFile = new File(plugin.getDataFolder(), "last_human_reward.yml");
         config = YamlConfiguration.loadConfiguration(configFile);
+        kitFolder = new File(plugin.getDataFolder(), "kits");
+        kitFolder.mkdirs();
         String nl = System.getProperty("line.separator");
         config.options().header("This is where you define loot tables for your chests to have random loot."
                 + nl + "You may also create separate yaml files for each loot table.  Just make sure the file name is the name of the table you want and placed in the loot_tables folder.  example: example_table.yml"
@@ -51,7 +56,7 @@ class DefaultLootConfig implements LootConfig {
     }
 
     @Override
-    public LootTable getLootTable() {
+    public LootTable getLastHumanReward() {
         String name = "last_human_reward";
         if (name.isEmpty()) {
             return null;
@@ -65,5 +70,42 @@ class DefaultLootConfig implements LootConfig {
         cachedTables.put(name, newTable);
         Logging.fine("Loaded loot table from config.");
         return newTable;
+    }
+
+    @Override
+    public LootTable getKit(String name) {
+        Logging.finer("Trying to load kit: " + name);
+        if (name == null || name.isEmpty()) {
+            return null;
+        }
+        if (cachedTables.containsKey(name)) {
+            Logging.finer("Loaded kit from cache...");
+            return cachedTables.get(name);
+        }
+        File kitFile = new File(kitFolder, name + ".yml");
+        if (kitFile.exists()) {
+            FileConfiguration kitConfig = YamlConfiguration.loadConfiguration(kitFile);
+            LootTable newTable = new DefaultLootTable(name, kitConfig);
+            cachedTables.put(name, newTable);
+            Logging.finer("Loaded kit from file...");
+            return newTable;
+        }
+        Logging.finer("Could not find kit...");
+        return null;
+    }
+
+    public String[] getKitNames() {
+        File[] files = kitFolder.listFiles(new FileFilter() {
+            @Override
+            public boolean accept(File pathname) {
+                return pathname.getName().endsWith(".yml");
+            }
+        });
+        String[] kits = new String[files.length];
+        for (int i = 0; i < files.length; i++) {
+            String name = files[i].getName();
+            kits[i] = name.substring(0, name.lastIndexOf(".yml"));
+        }
+        return kits;
     }
 }

@@ -4,12 +4,14 @@ import com.dumptruckman.minecraft.pluginbase.util.Logging;
 import com.dumptruckman.minecraft.zombiefight.api.Game;
 import com.dumptruckman.minecraft.zombiefight.api.GameManager;
 import com.dumptruckman.minecraft.zombiefight.api.LootConfig;
+import com.dumptruckman.minecraft.zombiefight.api.LootTable;
 import com.dumptruckman.minecraft.zombiefight.api.ZFConfig;
 import com.dumptruckman.minecraft.zombiefight.api.ZombieFight;
 import com.dumptruckman.minecraft.zombiefight.command.DisableGameCommand;
 import com.dumptruckman.minecraft.zombiefight.command.EnableGameCommand;
 import com.dumptruckman.minecraft.zombiefight.command.EndGameCommand;
 import com.dumptruckman.minecraft.zombiefight.command.GameSpawnCommand;
+import com.dumptruckman.minecraft.zombiefight.command.KitCommand;
 import com.dumptruckman.minecraft.zombiefight.command.PreGameSpawnCommand;
 import com.dumptruckman.minecraft.zombiefight.command.StartGameCommand;
 import com.dumptruckman.minecraft.zombiefight.util.CommentedConfig;
@@ -28,9 +30,11 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements ZombieFight {
@@ -42,6 +46,7 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
     private boolean mobDisguise = false;
     private ZombieFightListener listener;
     private Set<Integer> countdownWarnings = new HashSet<Integer>();
+    private Map<String, String> playerKits = new HashMap<String, String>();
 
     @Override
     protected ZFConfig newConfigInstance() throws IOException {
@@ -65,6 +70,7 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
         getCommandHandler().registerCommand(new EndGameCommand(this));
         getCommandHandler().registerCommand(new EnableGameCommand(this));
         getCommandHandler().registerCommand(new DisableGameCommand(this));
+        getCommandHandler().registerCommand(new KitCommand(this));
         Plugin plugin = pm.getPlugin("MobDisguise");
         if (plugin != null) {
             Logging.info("Hooked MobDisguise!");
@@ -78,6 +84,7 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
         for (World world : Bukkit.getWorlds()) {
             Game game = getGameManager().getGame(world.getName());
             if (game != null) {
+                game.broadcast(Language.PLUGIN_RELOAD);
                 game.forceEnd(false);
             }
         }
@@ -202,5 +209,15 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
     @Override
     public boolean shouldWarn(int time) {
         return countdownWarnings.contains(time);
+    }
+
+    @Override
+    public void setPlayerKit(String name, String kit) {
+        playerKits.put(name, kit);
+    }
+
+    @Override
+    public String getPlayerKit(String name) {
+        return playerKits.get(name);
     }
 }

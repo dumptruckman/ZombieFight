@@ -10,5 +10,9 @@ public interface LootConfig {
      *
      * @return The loot table for last human reward or null if none found.
      */
-    LootTable getLootTable();
+    LootTable getLastHumanReward();
+
+    LootTable getKit(String name);
+
+    String[] getKitNames();
 }

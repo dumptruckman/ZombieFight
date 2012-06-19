@@ -14,6 +14,7 @@ import net.minecraft.server.EntityPlayer;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.craftbukkit.entity.CraftPlayer;
@@ -53,6 +54,9 @@ import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.event.world.WorldUnloadEvent;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
+import org.bukkit.potion.PotionType;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.util.HashMap;
@@ -129,6 +133,7 @@ public class ZombieFightListener implements Listener {
         return plugin.getMessager();
     }
 
+    /*
     // Stuff for testing
     private String[] names = new String[20];
     @EventHandler(priority = EventPriority.LOWEST)
@@ -154,6 +159,7 @@ public class ZombieFightListener implements Listener {
             }
         }
     }
+    */
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void playerJoin(PlayerJoinEvent event) {
@@ -371,6 +377,15 @@ public class ZombieFightListener implements Listener {
                 event.setCancelled(true);
                 return;
             } else {
+                if (plugin.config().get(ZFConfig.ZOMBIE_HUNGER_CHANCE) > 0) {
+                    if (game.isZombie(damagee.getName())) {
+                        if (damager.getItemInHand().getType() == Material.AIR) {
+                            poisonChance(damager);
+                        }
+                    } else {
+                        poisonChance(damagee);
+                    }
+                }
                 game.humanFound();
             }
             if (game.isZombie(damager.getName())) {
@@ -378,6 +393,15 @@ public class ZombieFightListener implements Listener {
             }
         } else /*if (game.getStatus() == GameStatus.ENDED)*/ {
             event.setCancelled(true);
+        }
+    }
+
+    private void poisonChance(Player player) {
+        Random rand = new Random(System.currentTimeMillis());
+        int chance = rand.nextInt(100);
+        if (chance < plugin.config().get(ZFConfig.ZOMBIE_HUNGER_CHANCE)) {
+            player.addPotionEffect(PotionEffectType.HUNGER.createEffect((int) BukkitTools.convertSecondsToTicks(plugin.config().get(
+                    ZFConfig.ZOMBIE_HUNGER_DURATION)), plugin.config().get(ZFConfig.ZOMBIE_HUNGER_STRENGTH)));
         }
     }
 

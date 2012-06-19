@@ -15,7 +15,7 @@ public class DisableGameCommand extends ZFCommand {
 
     public DisableGameCommand(ZombieFight plugin) {
         super(plugin);
-        this.setName(messager.getMessage(Language.CMD_DISABLE_NAME));
+        this.setName(getMessager().getMessage(Language.CMD_DISABLE_NAME));
         this.setCommandUsage("/" + plugin.getCommandPrefixes().get(0) + " disable [-w <worldname>]");
         this.setArgRange(0, 2);
         for (String prefix : plugin.getCommandPrefixes()) {
@@ -32,7 +32,7 @@ public class DisableGameCommand extends ZFCommand {
         World world = null;
         if (worldName == null) {
             if (!(sender instanceof Player)) {
-                messager.bad(Language.CMD_CONSOLE_REQUIRES_WORLD, sender);
+                getMessager().bad(Language.CMD_CONSOLE_REQUIRES_WORLD, sender);
                 return;
             } else {
                 world = ((Player) sender).getWorld();
@@ -41,14 +41,14 @@ public class DisableGameCommand extends ZFCommand {
             world = Bukkit.getWorld(worldName);
         }
         if (world == null) {
-            messager.bad(Language.NO_WORLD, sender, worldName);
+            getMessager().bad(Language.NO_WORLD, sender, worldName);
             return;
         }
         if (!plugin.getGameManager().isWorldEnabled(world.getName())) {
-            messager.bad(Language.CMD_DISABLE_ALREADY, sender);
+            getMessager().bad(Language.CMD_DISABLE_ALREADY, sender);
             return;
         }
         plugin.getGameManager().disableWorld(world.getName());
-        messager.good(Language.CMD_DISABLE_SUCCESS, sender);
+        getMessager().good(Language.CMD_DISABLE_SUCCESS, sender);
     }
 }

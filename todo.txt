@@ -1,0 +1,3 @@
+Potion effects on zombie right click.. Or perhaps chance on damage.
+Poison, slow, etc
+Possible idea: when infected, if food drops too low, they change into zombie
