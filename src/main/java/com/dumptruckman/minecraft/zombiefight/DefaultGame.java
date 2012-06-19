@@ -57,7 +57,9 @@ class DefaultGame implements Game {
                 broadcast(Language.GAME_STARTING_IN, countdown);
             }
             countdown--;
-            if (countdown <= 0) {
+            if (countdown > 0) {
+                countdownTask = Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, this, 20L);
+            } else {
                 Logging.finest("Countdown task ended");
                 Bukkit.getScheduler().cancelTask(countdownTask);
                 forceStart();
@@ -75,7 +77,7 @@ class DefaultGame implements Game {
             firstZombie = null;
             broadcast(Language.ZOMBIE_RELEASE);
             zombieLockTask = -1;
-            humanFinderTask = Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, new HumanFinderTask(), 0L, 20L);
+            humanFinderTask = Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new HumanFinderTask(), 0L);
         }
     }
 
@@ -136,6 +138,9 @@ class DefaultGame implements Game {
                 beaconTick = 0;
                 humanFinder++;
             }
+            if (getStatus() == GameStatus.IN_PROGRESS) {
+                humanFinderTask = Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, this, 20L);
+            }
         }
         private void tick() {
             humanFinder++;
@@ -183,7 +188,7 @@ class DefaultGame implements Game {
             status = GameStatus.STARTING;
         }
         if (countdownTask == -1) {
-            countdownTask = Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, new CountdownTask(), 20L, 20L);
+            countdownTask = Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new CountdownTask(), 20L);
         }
         if (countdownTask == -1) {
             broadcast(Language.COULD_NOT_COUNTDOWN);
