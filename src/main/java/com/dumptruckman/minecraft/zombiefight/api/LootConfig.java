@@ -15,4 +15,6 @@ public interface LootConfig {
     LootTable getKit(String name);
 
     String[] getKitNames();
+
+    LootTable getDefaultKit();
 }

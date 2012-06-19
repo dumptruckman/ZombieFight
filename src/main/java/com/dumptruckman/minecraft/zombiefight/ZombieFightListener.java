@@ -83,7 +83,7 @@ public class ZombieFightListener implements Listener {
                     continue;
                 }
                 Game game = plugin.getGameManager().getGame(worldBorder);
-                if (game == null || game.getStatus() == GameStatus.IN_PROGRESS || game.getStatus() == GameStatus.STARTING) {
+                if (game == null || game.getStatus() == GameStatus.PREPARING || game.getStatus() == GameStatus.STARTING || game.getStatus() == GameStatus.ENDED) {
                     playersPastBorder.get(worldBorder).clear();
                     continue;
                 }

@@ -16,6 +16,7 @@ import java.util.WeakHashMap;
 
 class DefaultLootConfig implements LootConfig {
 
+    private ZombieFight plugin;
     private FileConfiguration config;
 
     private File kitFolder;
@@ -24,6 +25,7 @@ class DefaultLootConfig implements LootConfig {
     private Map<String, LootTable> cachedTables = new WeakHashMap<String, LootTable>();
 
     DefaultLootConfig(ZombieFight plugin) {
+        this.plugin = plugin;
         configFile = new File(plugin.getDataFolder(), "last_human_reward.yml");
         config = YamlConfiguration.loadConfiguration(configFile);
         kitFolder = new File(plugin.getDataFolder(), "kits");
@@ -107,5 +109,19 @@ class DefaultLootConfig implements LootConfig {
             kits[i] = name.substring(0, name.lastIndexOf(".yml"));
         }
         return kits;
+    }
+
+    @Override
+    public LootTable getDefaultKit() {
+        Logging.finer("Trying to load default kit");
+        if (cachedTables.containsKey("default")) {
+            Logging.finer("Loaded kit from cache...");
+            return cachedTables.get("default");
+        }
+        FileConfiguration kitConfig = YamlConfiguration.loadConfiguration(plugin.getResource("default.yml"));
+        LootTable newTable = new DefaultLootTable("default", kitConfig);
+        cachedTables.put("default", newTable);
+        Logging.finer("Loaded kit from file...");
+        return newTable;
     }
 }

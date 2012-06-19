@@ -75,8 +75,8 @@ public class Language {
     public static final Message CMD_DISABLE_SUCCESS = new Message("cmd.disable.success",
             "You have disabled the game for the world.");
 
-    public static final Message JOIN_WHILE_GAME_IN_PROGRESS = new Message("joining.game_in_progress",
-            "A game is in progress.  Please wait in the waiting area for the next game.");
+    public static final Message JOIN_WHILE_GAME_IN_PROGRESS = new Message("joining.game_in_progress_zombie",
+            "Game in progress... You will join the game as a zombie!");
     public static final Message JOIN_WHILE_GAME_PREPARING = new Message("joining.game_preparing",
             "A new game is setting up.  Please wait in the waiting area until enough players join to start the game.");
     public static final Message JOIN_WHILE_GAME_STARTING = new Message("joining.game_starting",
@@ -137,6 +137,8 @@ public class Language {
             "'%1' is not a game world!");
     public static final Message KIT_ERROR = new Message("error.kit_missing",
             "The kit '%1' could not be found!");
+    public static final Message KIT_ERROR_DEFAULT = new Message("error.kit_defaulted",
+            "The kit '%1' could not be found! Using default...");
 
     public static void init() { }
 }

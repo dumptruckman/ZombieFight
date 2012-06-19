@@ -236,9 +236,12 @@ class DefaultGame implements Game {
                     if (kit != null) {
                         kit.addToInventory(player.getInventory());
                     } else {
-                        plugin.getMessager().bad(Language.KIT_ERROR, player, kitName);
+                        plugin.getMessager().bad(Language.KIT_ERROR_DEFAULT, player, kitName);
                         plugin.setPlayerKit(playerName, null);
+                        plugin.getLootConfig().getDefaultKit().addToInventory(player.getInventory());
                     }
+                } else {
+                    plugin.getLootConfig().getDefaultKit().addToInventory(player.getInventory());
                 }
                 fixName(player.getName());
             }
@@ -414,11 +417,17 @@ class DefaultGame implements Game {
     @Override
     public void playerJoined(String playerName) {
         Location loc = plugin.config().get(ZFConfig.PRE_GAME_SPAWN.specific(worldName));
+        Location loc2 = plugin.config().get(ZFConfig.GAME_SPAWN.specific(worldName));
         if (loc == null) {
             Logging.fine("No pre-game spawn set, will use world spawn.");
             loc = Bukkit.getWorld(worldName).getSpawnLocation();
         }
+        if (loc2 == null) {
+            Logging.fine("No game spawn set, will use world spawn.");
+            loc2 = Bukkit.getWorld(worldName).getSpawnLocation();
+        }
         final Location spawnLoc = loc;
+        final Location gameSpawn = loc2;
         final Player player = Bukkit.getPlayerExact(playerName);
         Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
             @Override
@@ -439,12 +448,12 @@ class DefaultGame implements Game {
                         plugin.unZombifyPlayer(player.getName());
                     }
                 } else {
-                    Logging.fine("Teleporting non-game-playing player to spawn.");
-                    plugin.unZombifyPlayer(player.getName());
+                    onlinePlayers.add(playerName);
+                    makeZombie(playerName);
                     Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
                         @Override
                         public void run() {
-                            player.teleport(spawnLoc);
+                            player.teleport(gameSpawn);
                             plugin.getMessager().normal(Language.JOIN_WHILE_GAME_IN_PROGRESS, player);
                         }
                     }, 2L);
@@ -619,7 +628,9 @@ class DefaultGame implements Game {
             } else {
                 Logging.warning("Last human reward is not setup correctly!");
             }
-            lastHumanTask = Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new LastHumanTask(), BukkitTools.convertSecondsToTicks(finalHuman));
+            if (lastHumanTask == -1) {
+                lastHumanTask = Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new LastHumanTask(), BukkitTools.convertSecondsToTicks(finalHuman));
+            }
         }
     }
 
