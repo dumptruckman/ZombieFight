@@ -17,6 +17,7 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 
 import java.util.HashMap;
@@ -52,6 +53,9 @@ class DefaultGame implements Game {
         }
         @Override
         public void run() {
+            if (plugin.shouldWarn(countdown)) {
+                broadcast(Language.GAME_STARTING_IN, countdown);
+            }
             countdown--;
             if (countdown <= 0) {
                 Logging.finest("Countdown task ended");
@@ -175,7 +179,9 @@ class DefaultGame implements Game {
         if (status == GameStatus.PREPARING) {
             status = GameStatus.STARTING;
         }
-        countdownTask = Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, new CountdownTask(), 20L, 20L);
+        if (countdownTask == -1) {
+            countdownTask = Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, new CountdownTask(), 20L, 20L);
+        }
         if (countdownTask == -1) {
             broadcast(Language.COULD_NOT_COUNTDOWN);
             forceStart();
@@ -212,6 +218,7 @@ class DefaultGame implements Game {
             if (player != null) {
                 player.teleport(location);
                 player.getInventory().clear();
+                fixName(player.getName());
             }
         }
         firstZombie = randomZombie();
@@ -389,6 +396,8 @@ class DefaultGame implements Game {
                         plugin.unZombifyPlayer(player.getName());
                     }
                 } else {
+                    Logging.fine("Teleporting non-game-playing player to spawn.");
+                    plugin.unZombifyPlayer(player.getName());
                     Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
                         @Override
                         public void run() {
@@ -396,12 +405,12 @@ class DefaultGame implements Game {
                             plugin.getMessager().normal(Language.JOIN_WHILE_GAME_IN_PROGRESS, player);
                         }
                     }, 2L);
-                    plugin.unZombifyPlayer(player.getName());
                 }
                 break;
             case ENDED:
                 if (!isPlaying(player.getName())) {
                     Logging.fine("Teleporting non-game-playing player to spawn.");
+                    plugin.unZombifyPlayer(player.getName());
                     Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
                         @Override
                         public void run() {
@@ -409,7 +418,6 @@ class DefaultGame implements Game {
                             plugin.getMessager().normal(Language.JOIN_WHILE_GAME_IN_PROGRESS, player);
                         }
                     }, 2L);
-                    plugin.unZombifyPlayer(player.getName());
                 } else {
                     if (!isZombie(playerName)) {
                         plugin.unZombifyPlayer(player.getName());
@@ -442,21 +450,17 @@ class DefaultGame implements Game {
                 break;
         }
 
-        if (player != null) {
-            if (isZombie(playerName)) {
-                player.setDisplayName(ChatColor.DARK_RED + player.getDisplayName());
-            } else {
-                player.setDisplayName(ChatColor.DARK_GREEN + player.getDisplayName());
-            }
-        }
+        fixName(playerName);
 
-        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
-            @Override
-            public void run() {
-                // Handle starting game
-                checkGameStart();
-            }
-        }, 5L);
+        if (getStatus() == GameStatus.PREPARING || getStatus() == GameStatus.STARTING) {
+            Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
+                @Override
+                public void run() {
+                    // Handle starting game
+                    checkGameStart();
+                }
+            }, 5L);
+        }
     }
 
     @Override
@@ -480,6 +484,7 @@ class DefaultGame implements Game {
         humanPlayers.remove(name);
         plugin.zombifyPlayer(name);
         zombiePlayers.add(name);
+        fixName(name);
     }
 
     @Override
@@ -500,6 +505,7 @@ class DefaultGame implements Game {
                 int playersInWorld = world.getPlayers().size();
                 int minPlayers = plugin.config().get(ZFConfig.MIN_PLAYERS);
                 int maxPlayers = plugin.config().get(ZFConfig.MAX_PLAYERS);
+                Logging.finer("players: " + playersInWorld + " minPlayers: " + minPlayers + " maxPlayers: " + maxPlayers);
                 if (playersInWorld >= minPlayers && playersInWorld < maxPlayers) {
                     Logging.fine("Enough players to start countdown.");
                     broadcast(Language.ENOUGH_FOR_COUNTDOWN_START);
@@ -622,6 +628,12 @@ class DefaultGame implements Game {
     private void rollbackWorld(boolean restartAfter) {
         rollingBack = true;
         broadcast(Language.ROLLBACK);
+        World world = Bukkit.getWorld(worldName);
+        for (Entity entity : world.getEntities()) {
+            if (entity instanceof Item) {
+                entity.remove();
+            }
+        }
         for (Map.Entry<Integer, Map<Integer, Snapshot>> x : snapshots.entrySet()) {
             for (Map.Entry<Integer, Snapshot> z : x.getValue().entrySet()) {
                 Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new RollbackTask(z.getValue()));
@@ -634,6 +646,18 @@ class DefaultGame implements Game {
                     plugin.getGameManager().newGame(worldName);
                 }
             });
+        }
+    }
+
+    private void fixName(String playerName) {
+        Player player = Bukkit.getPlayerExact(playerName);
+        if (player != null) {
+            player.setDisplayName(ChatColor.stripColor(player.getDisplayName()));
+            if (isZombie(playerName)) {
+                player.setDisplayName(plugin.getMessager().getMessage(Language.ZOMBIE_NAME, player.getDisplayName()));
+            } else {
+                player.setDisplayName(plugin.getMessager().getMessage(Language.HUMAN_NAME, player.getDisplayName()));
+            }
         }
     }
 }

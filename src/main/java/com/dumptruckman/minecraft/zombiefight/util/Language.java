@@ -85,8 +85,10 @@ public class Language {
             "You have %1 seconds to run away from the zombie!");
     public static final Message PLAYER_ZOMBIFIED = new Message("game.player_zombified",
             "%1 has been turned into a zombie!");
-    public static final Message ZOMBIE_TAG = new Message("game.zombie_tag",
-            "[ZOMBIE] ");
+    public static final Message ZOMBIE_NAME = new Message("game_settings.zombie_name",
+            "&4%1&f");
+    public static final Message HUMAN_NAME = new Message("game_settings.human_name",
+            "&2%1&f");
     public static final Message ZOMBIE_RELEASE = new Message("game.zombie_released",
             "The zombie has been released!!");
     public static final Message GAME_RESETTING = new Message("game.resetting_soon",
@@ -99,6 +101,8 @@ public class Language {
             "&cYou are approaching the border, turn back now or you will start to die!");
     public static final Message ROLLBACK = new Message("game.rollback",
             "Rolling back the game world.. This will take a moment and may cause lag.");
+    public static final Message GAME_STARTING_IN = new Message("game.starting_in",
+            "Game starting in %1 second(s)");
 
     public static final Message FORCE_END = new Message("game.force_end",
             "The game was ended abruptly!");

@@ -23,4 +23,6 @@ public interface ZombieFight extends BukkitPlugin<ZFConfig>, Plugin {
     void unZombifyPlayer(String name);
 
     LootConfig getLootConfig();
+
+    boolean shouldWarn(int time);
 }

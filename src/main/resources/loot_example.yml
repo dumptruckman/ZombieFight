@@ -1,4 +1,4 @@
-# In this example, when the chest using loot_table 'justaname' restocks, there is a guaranteed diamond pickaxe with silk touch enchant,
+# In this example, there is a guaranteed diamond pickaxe with silk touch enchant,
 # there is a 50% chance for: either a diamond/iron sword with up to 2 enchants (sharpness I-V, knockback I, or fire aspect II) OR a wood sword with silk touch,
 # and a 10% chance for: a 20 stack of mossy stone blocks.
 # Further, '3' is rolled 10 times, with a 10% chance of EITHER 1 diamond or 5 gold, but not both.  (And the diamond is 5 times more likely!)

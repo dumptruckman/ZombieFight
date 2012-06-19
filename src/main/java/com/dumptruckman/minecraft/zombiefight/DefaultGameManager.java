@@ -68,14 +68,9 @@ class DefaultGameManager implements GameManager {
         plugin.config().save();
         Game game = getGame(worldName);
         World world = Bukkit.getWorld(worldName);
-        Location loc = plugin.config().get(ZFConfig.GAME_SPAWN.specific(worldName));
-        if (loc == null ) {
-            loc = world.getSpawnLocation();
-        }
         for (Player player : world.getPlayers()) {
-            player.teleport(loc);
+            game.playerJoined(player.getName());
         }
-        game.checkGameStart();
     }
 
     @Override

@@ -28,8 +28,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements ZombieFight {
 
@@ -39,6 +41,7 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
     private LootConfig lootConfig = null;
     private boolean mobDisguise = false;
     private ZombieFightListener listener;
+    private Set<Integer> countdownWarnings = new HashSet<Integer>();
 
     @Override
     protected ZFConfig newConfigInstance() throws IOException {
@@ -91,6 +94,7 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
                 game.checkGameStart();
             }
         }
+        countdownWarnings = new HashSet<Integer>(config().getList(ZFConfig.COUNTDOWN_WARNINGS));
     }
 
     @Override
@@ -152,15 +156,17 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
         }
         World world = player.getWorld();
         broadcastWorld(world.getName(), getMessager().getMessage(Language.PLAYER_ZOMBIFIED, player.getName()));
-        player.setFoodLevel(20);
-        player.setHealth(20);
         disguiseAsZombie(player);
-        reddenName(player);
-        Location loc = config().get(ZFConfig.GAME_SPAWN.specific(world.getName()));
-        if (loc == null) {
-            loc = world.getSpawnLocation();
-        }
-        player.teleport(loc);
+        //if (!player.isDead()) {
+            player.getInventory().clear();
+            player.setFoodLevel(20);
+            player.setHealth(20);
+            //Location loc = config().get(ZFConfig.GAME_SPAWN.specific(world.getName()));
+            //if (loc == null) {
+            //    loc = world.getSpawnLocation();
+            //}
+            //player.teleport(loc);
+        //}
     }
 
     @Override
@@ -172,21 +178,6 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
             return;
         }
         unDisguiseAsZombie(player);
-        unReddenName(player);
-    }
-
-    public void reddenName(Player player) {
-        /*
-        EntityPlayer ePlayer = ((CraftPlayer) player).getHandle();
-        ePlayer.name = ChatColor.RED + player.getName();
-        */
-    }
-
-    public void unReddenName(Player player) {
-        /*
-        EntityPlayer ePlayer = ((CraftPlayer) player).getHandle();
-        ePlayer.name = ChatColor.stripColor(player.getName());
-        */
     }
 
     private void disguiseAsZombie(Player player) {
@@ -206,5 +197,10 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
             lootConfig = new DefaultLootConfig(this);
         }
         return lootConfig;
+    }
+
+    @Override
+    public boolean shouldWarn(int time) {
+        return countdownWarnings.contains(time);
     }
 }

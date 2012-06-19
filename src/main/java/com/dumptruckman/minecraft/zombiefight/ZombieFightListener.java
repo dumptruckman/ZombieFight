@@ -55,28 +55,61 @@ import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.event.world.WorldUnloadEvent;
 import org.bukkit.scheduler.BukkitTask;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
 public class ZombieFightListener implements Listener {
 
     private ZombieFight plugin;
-    private Set<String> playersPastBorder = new HashSet<String>();
+    private Map<String, Set<String>> playersPastBorder = new HashMap<String, Set<String>>();
     private int borderTask = -1;
 
     private class BorderDamagerTask implements Runnable {
         @Override
         public void run() {
-            for (String name : playersPastBorder) {
-                Player player = plugin.getServer().getPlayerExact(name);
-                if (player != null) {
-                    int newHealth = player.getHealth() - plugin.config().get(ZFConfig.BORDER_DAMAGE);
-                    if (newHealth < 0) {
-                        newHealth = 0;
-                    }
-                    player.setHealth(newHealth);
+            for (String worldBorder : playersPastBorder.keySet()) {
+                World world = Bukkit.getWorld(worldBorder);
+                if (world == null) {
+                    playersPastBorder.get(worldBorder).clear();
+                    continue;
                 }
+                Game game = plugin.getGameManager().getGame(worldBorder);
+                if (game == null || game.getStatus() == GameStatus.IN_PROGRESS || game.getStatus() == GameStatus.STARTING) {
+                    playersPastBorder.get(worldBorder).clear();
+                    continue;
+                }
+                Location spawnLoc = plugin.config().get(ZFConfig.GAME_SPAWN.specific(world.getName()));
+                if (spawnLoc == null) {
+                    spawnLoc = world.getSpawnLocation();
+                }
+                List<String> playersNotPastBorder = new LinkedList<String>();
+                for (String name : playersPastBorder.get(worldBorder)) {
+                    Player player = plugin.getServer().getPlayerExact(name);
+                    if (player != null) {
+                        if (player.isDead()) {
+                            playersNotPastBorder.add(name);
+                            break;
+                        }
+                        Location loc = player.getLocation();
+                        int radius = plugin.config().get(ZFConfig.BORDER_RADIUS.specific(world.getName()));
+                        if (loc.distance(spawnLoc) < radius) {
+                            playersNotPastBorder.add(name);
+                            break;
+                        }
+                        int playerHealth = player.getHealth();
+                        int newHealth = playerHealth - plugin.config().get(ZFConfig.BORDER_DAMAGE);
+                        if (newHealth < 0) {
+                            newHealth = 0;
+                        }
+                        player.setHealth(newHealth);
+                    }
+                }
+                playersPastBorder.get(worldBorder).removeAll(playersNotPastBorder);
             }
         }
     }
@@ -97,7 +130,7 @@ public class ZombieFightListener implements Listener {
     }
 
     // Stuff for testing
-    private String[] names = new String[3];
+    private String[] names = new String[20];
     @EventHandler(priority = EventPriority.LOWEST)
     public void playerNameChange(PlayerLoginEvent event) {
         for (int i = 0; i < names.length; i++) {
@@ -287,9 +320,17 @@ public class ZombieFightListener implements Listener {
             int warnRadius = plugin.config().get(ZFConfig.BORDER_WARN.specific(world.getName()));
             double distance = loc.distance(event.getTo());
             if (distance >= radius) {
-                playersPastBorder.add(player.getName());
+                Set<String> players = playersPastBorder.get(world.getName());
+                if (players == null) {
+                    players = new HashSet<String>();
+                    playersPastBorder.put(world.getName(), players);
+                }
+                players.add(player.getName());
             } else if (distance >= radius - warnRadius) {
-                getMessager().normal(Language.APPROACHING_BORDER, player);
+                double oldDistance = loc.distance(event.getFrom());
+                if (oldDistance < distance) {
+                    getMessager().normal(Language.APPROACHING_BORDER, player);
+                }
             }
             if (distance < radius) {
                 playersPastBorder.remove(player.getName());
@@ -361,21 +402,6 @@ public class ZombieFightListener implements Listener {
         }
     }
 
-    public void playerChat(PlayerChatEvent event) {
-        if (event.isCancelled()) {
-            return;
-        }
-        Player player = event.getPlayer();
-        World world = player.getWorld();
-        Game game = plugin.getGameManager().getGame(world.getName());
-        if (game == null) {
-            return;
-        }
-        if (game.isZombie(player.getName())) {
-            event.setMessage(getMessager().getMessage(Language.ZOMBIE_TAG) + event.getMessage());
-        }
-    }
-
     @EventHandler(priority = EventPriority.HIGHEST)
     public void playerRespawn(PlayerRespawnEvent event) {
         Player player = event.getPlayer();
@@ -399,7 +425,7 @@ public class ZombieFightListener implements Listener {
             case ENDED:
                 spawnLoc = plugin.config().get(ZFConfig.GAME_SPAWN.specific(world.getName()));
                 if (spawnLoc == null) {
-                    Logging.fine("No pre-game spawn set, will use world spawn.");
+                    Logging.fine("No game spawn set, will use world spawn.");
                     spawnLoc = world.getSpawnLocation();
                 }
                 event.setRespawnLocation(spawnLoc);
