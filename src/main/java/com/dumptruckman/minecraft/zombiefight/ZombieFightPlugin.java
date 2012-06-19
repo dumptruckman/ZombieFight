@@ -166,16 +166,11 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
         World world = player.getWorld();
         broadcastWorld(world.getName(), getMessager().getMessage(Language.PLAYER_ZOMBIFIED, player.getName()));
         disguiseAsZombie(player);
-        //if (!player.isDead()) {
-            player.getInventory().clear();
-            player.setFoodLevel(20);
-            player.setHealth(20);
-            //Location loc = config().get(ZFConfig.GAME_SPAWN.specific(world.getName()));
-            //if (loc == null) {
-            //    loc = world.getSpawnLocation();
-            //}
-            //player.teleport(loc);
-        //}
+        player.getInventory().clear();
+        player.setHealth(20);
+        player.setFoodLevel(20);
+        player.setSaturation(5F);
+        player.setExhaustion(0F);
     }
 
     @Override
