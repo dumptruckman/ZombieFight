@@ -7,6 +7,7 @@ import com.dumptruckman.minecraft.zombiefight.api.LootConfig;
 import com.dumptruckman.minecraft.zombiefight.api.LootTable;
 import com.dumptruckman.minecraft.zombiefight.api.ZFConfig;
 import com.dumptruckman.minecraft.zombiefight.api.ZombieFight;
+import com.dumptruckman.minecraft.zombiefight.command.BorderCommand;
 import com.dumptruckman.minecraft.zombiefight.command.DisableGameCommand;
 import com.dumptruckman.minecraft.zombiefight.command.EnableGameCommand;
 import com.dumptruckman.minecraft.zombiefight.command.EndGameCommand;
@@ -73,6 +74,7 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
         getCommandHandler().registerCommand(new EnableGameCommand(this));
         getCommandHandler().registerCommand(new DisableGameCommand(this));
         getCommandHandler().registerCommand(new KitCommand(this));
+        getCommandHandler().registerCommand(new BorderCommand(this));
         Plugin plugin = pm.getPlugin("MobDisguise");
         if (plugin != null) {
             Logging.info("Hooked MobDisguise!");

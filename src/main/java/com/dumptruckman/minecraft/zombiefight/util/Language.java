@@ -18,6 +18,15 @@ public class Language {
     public static final Message CMD_PGSPAWN_SET_NO_PERM = new Message("cmd.pgspawn.set.no_perm",
             "You do not have the required permission to change pre-game spawn.");
 
+    public static final Message CMD_BORDER_NAME = new Message("cmd.border.name",
+            "Checks or sets a border size.");
+    public static final Message CMD_BORDER_CHECK = new Message("cmd.border.check",
+            "The border for this world is a %1 block radius.");
+    public static final Message CMD_BORDER_SET_SUCCESS = new Message("cmd.border.set.success",
+            "You have change the border for this world to: %1");
+    public static final Message CMD_BORDER_SET_FAILURE = new Message("cmd.border.set.failure",
+            "That is not a valid value for border size!");
+
     public static final Message CMD_GSPAWN_NAME = new Message("cmd.gspawn.name",
             "Warps you to the game spawn or sets one.");
     public static final Message CMD_GSPAWN_FAIL = new Message("cmd.gspawn.failure",
