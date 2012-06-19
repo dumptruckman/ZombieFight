@@ -300,17 +300,22 @@ class DefaultGame implements Game {
         }
         for (String playerName : humanPlayers) {
             Player player = plugin.getServer().getPlayerExact(playerName);
+            fixName(playerName);
             if (player != null) {
                 player.teleport(location);
             }
         }
         for (String playerName : zombiePlayers) {
+            fixName(playerName);
             Player player = plugin.getServer().getPlayerExact(playerName);
             if (player != null) {
                 plugin.unZombifyPlayer(player.getName());
                 player.teleport(location);
             }
         }
+        humanPlayers.clear();
+        zombiePlayers.clear();
+        onlinePlayers.clear();
         rollbackWorld(restart);
     }
 
