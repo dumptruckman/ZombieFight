@@ -211,9 +211,9 @@ public class DataStrings {
                     z = Double.valueOf(statValues[1]);
                 } else if (statValues[0].equals(DataStrings.LOCATION_WORLD)) {
                     world = Bukkit.getWorld(statValues[1]);
-                } else if (statValues[0].equals(DataStrings.LOCATION_PITCH)) {
-                    yaw = Float.valueOf(statValues[1]);
                 } else if (statValues[0].equals(DataStrings.LOCATION_YAW)) {
+                    yaw = Float.valueOf(statValues[1]);
+                } else if (statValues[0].equals(DataStrings.LOCATION_PITCH)) {
                     pitch = Float.valueOf(statValues[1]);
                 }
             }
