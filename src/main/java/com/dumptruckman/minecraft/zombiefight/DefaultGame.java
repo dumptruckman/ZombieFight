@@ -681,15 +681,12 @@ class DefaultGame implements Game {
     }
 
     private void rollbackWorld(boolean restartAfter) {
-        rollingBack = true;
-        broadcast(Language.ROLLBACK);
-        World world = Bukkit.getWorld(worldName);
-        for (Entity entity : world.getEntities()) {
-            if (entity instanceof Item) {
-                entity.remove();
-            }
+        if (snapshot != null) {
+            rollingBack = true;
+            broadcast(Language.ROLLBACK);
+            World world = Bukkit.getWorld(worldName);
+            getSnapshot().applySnapshot();
         }
-        getSnapshot().applySnapshot();
         if (restartAfter) {
             Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
                 @Override
