@@ -316,9 +316,12 @@ public class ZombieFightListener implements Listener {
             if (firstZombie != null) {
                 if (firstZombie.equals(player.getName())) {
                     if (!(event instanceof PlayerTeleportEvent)) {
-                        event.setCancelled(true);
-                        player.teleport(event.getFrom().getBlock().getLocation());
-                        return;
+                        if (!(fromBlock.getX() == toBlock.getX()
+                                && fromBlock.getZ() == toBlock.getZ())) {
+                            event.setCancelled(true);
+                            player.teleport(fromBlock.getLocation());
+                            return;
+                        }
                     }
                 }
             }

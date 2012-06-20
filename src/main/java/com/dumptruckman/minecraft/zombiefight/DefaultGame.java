@@ -592,6 +592,9 @@ class DefaultGame implements Game {
                 } else {
                     Logging.fine("Found a new zombie candidate: "+ newZombiePlayer.getName());
                     makeZombie(newZombiePlayer.getName());
+                    if (firstZombie != null) {
+                        firstZombie = newZombiePlayer.getName();
+                    }
                 }
             } else {
                 Logging.fine("Ending game due to only 1 or less players left.");
