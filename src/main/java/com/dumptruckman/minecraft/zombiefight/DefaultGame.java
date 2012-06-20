@@ -77,7 +77,9 @@ class DefaultGame implements Game {
             firstZombie = null;
             broadcast(Language.ZOMBIE_RELEASE);
             zombieLockTask = -1;
-            humanFinderTask = Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new HumanFinderTask(), 0L);
+            if (getStatus() == GameStatus.IN_PROGRESS) {
+                humanFinderTask = Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new HumanFinderTask(), 0L);
+            }
         }
     }
 
