@@ -1,6 +1,7 @@
 package com.dumptruckman.minecraft.zombiefight;
 
 import com.dumptruckman.minecraft.zombiefight.api.Snapshot;
+import com.dumptruckman.minecraft.zombiefight.util.BlockLocation;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
@@ -22,7 +23,7 @@ import java.util.UUID;
 class DefaultSnapshot implements Snapshot {
 
     private String worldName;
-    private Map<Block, BlockState> blocks = new HashMap<Block, BlockState>();
+    private Map<BlockLocation, BlockState> blocks = new HashMap<BlockLocation, BlockState>();
     private List<EntitySnapshot> entities = new LinkedList<EntitySnapshot>();
     private Set<UUID> entityIds = new HashSet<UUID>();
 
@@ -66,7 +67,7 @@ class DefaultSnapshot implements Snapshot {
 
     public void snapshotBlock(Block block) {
         if (!blocks.containsKey(block)) {
-            blocks.put(block, block.getState());
+            blocks.put(BlockLocation.get(block), block.getState());
         }
     }
 
@@ -75,10 +76,16 @@ class DefaultSnapshot implements Snapshot {
         if (world == null) {
             return;
         }
-        for (Map.Entry<Block, BlockState> block : blocks.entrySet()) {
-            BlockState state = block.getValue();
-            block.getKey().setTypeIdAndData(state.getTypeId(), state.getRawData(), false);
-            state.update(true);
+        for (Map.Entry<BlockLocation, BlockState> blockData : blocks.entrySet()) {
+            Block block = blockData.getKey().getBlock();
+            if (block == null) {
+                continue;
+            }
+            BlockState state = blockData.getValue();
+            block.setTypeIdAndData(state.getTypeId(), state.getRawData(), false);
+        }
+        for (Map.Entry<BlockLocation, BlockState> blockData : blocks.entrySet()) {
+            blockData.getValue().update(true);
         }
         for (Entity entity : world.getEntities()) {
             if (!(entity instanceof Player)) {
