@@ -2,51 +2,30 @@ package com.dumptruckman.minecraft.zombiefight.api;
 
 import com.dumptruckman.minecraft.pluginbase.locale.Message;
 import org.bukkit.Chunk;
+import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.entity.Player;
 
 public interface Game {
 
-    GameStatus getStatus();
+    boolean hasStarted();
 
-    void forceStart();
+    boolean hasEnded();
 
-    void countdown();
+    boolean isZombie(Player player);
 
-    void haltCountdown();
+    void playerJoined(Player player);
 
-    void endGame();
+    void playerQuit(Player player);
 
-    boolean isPlaying(String playerName);
+    boolean allowMove(Player player, Location toLoc);
 
-    boolean isZombie(String playerName);
+    boolean allowDamage(Player attacker, Player victim);
 
-    boolean hasOnlineZombies();
-
-    boolean hasOnlineHumans();
-
-    int onlinePlayerCount();
-
-    void playerQuit(String playerName);
-
-    void playerJoined(String playerName);
-
-    String randomZombie();
-
-    void makeZombie(String name);
-
-    String getFirstZombie();
-
-    String getWorld();
-
-    void checkGameStart();
-
-    void checkGameEnd();
-
-    void humanFound();
+    World getWorld();
 
     void broadcast(Message message, Object...args);
-
-    void forceEnd(boolean restart);
 
     void snapshotChunk(Chunk chunk);
 
