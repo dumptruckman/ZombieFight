@@ -46,6 +46,14 @@ class DefaultGame2 implements Game {
         return plugin.getServer().getPlayerExact(name);
     }
 
+    protected GamePlayer getGamePlayer(String name) {
+        GamePlayer gPlayer = gamePlayers.get(name);
+        if (gPlayer == null) {
+            gPlayer = new DefaultGamePlayer(plugin, name);
+        }
+        return gPlayer;
+    }
+
 
     /**
      * PUBLIC METHODS FROM Game INTERFACE
@@ -66,9 +74,14 @@ class DefaultGame2 implements Game {
 
     @Override
     public boolean isZombie(Player player) {
-        boolean ret = false;
+        if (!player.getWorld().equals(world)) {
+            return false;
+        }
         if (hasStarted()) {
-            GamePlayer gPlayer =
+            GamePlayer gPlayer = gamePlayers.get(player.getName());
+            if (gPlayer == null) {
+
+            }
         }
         return false;  //To change body of implemented methods use File | Settings | File Templates.
     }

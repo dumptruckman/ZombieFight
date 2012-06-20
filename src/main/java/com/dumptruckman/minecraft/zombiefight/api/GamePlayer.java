@@ -10,7 +10,9 @@ public interface GamePlayer {
 
     boolean isOnline();
 
-    void setOnline(boolean online);
+    void joinedGame();
 
-    void
+    void leftGame();
+
+    void makeZombie();
 }

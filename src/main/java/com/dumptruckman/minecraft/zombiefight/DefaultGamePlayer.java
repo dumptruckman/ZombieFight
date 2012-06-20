@@ -1,10 +1,13 @@
 package com.dumptruckman.minecraft.zombiefight;
 
-import org.bukkit.entity.Player;
+import com.dumptruckman.minecraft.zombiefight.api.GamePlayer;
+import com.dumptruckman.minecraft.zombiefight.api.ZombieFight;
 
-class DefaultGamePlayer {
+class DefaultGamePlayer implements GamePlayer {
 
-    DefaultGamePlayer(Player player) {
+    DefaultGamePlayer(ZombieFight plugin, String player) {
 
     }
+
+
 }
