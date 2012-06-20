@@ -2,3 +2,5 @@ Make it so locked zombies are allowed to jump so that they can fall if they log 
 Make it so if first zombie logs out, the next zombie becomes locked at start during zombie lock
 Add zombie lock countdown
 Add last human countdown
+Make it so humans drop exp which can upgrade zombies
+rollback not working?
