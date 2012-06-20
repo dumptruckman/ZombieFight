@@ -2,7 +2,7 @@ name: ZombieFight
 main: com.dumptruckman.minecraft.zombiefight.ZombieFightPlugin
 version: 1.0.8
 author: dumptruckman
-softdepend: [MobDisguise]
+depend: [MobDisguise]
 
 commands:
   zf:

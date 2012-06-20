@@ -9,6 +9,8 @@ import org.bukkit.entity.Player;
 
 public interface Game {
 
+    Location getSpawnLocation();
+
     boolean hasStarted();
 
     boolean hasEnded();
@@ -19,7 +21,7 @@ public interface Game {
 
     void playerQuit(Player player);
 
-    boolean allowMove(Player player, Location toLoc);
+    boolean allowMove(Player player, Block fromBlock, Block toBlock);
 
     boolean allowDamage(Player attacker, Player victim);
 
