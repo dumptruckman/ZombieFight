@@ -1,6 +1,5 @@
 package com.dumptruckman.minecraft.zombiefight;
 
-import com.dumptruckman.minecraft.pluginbase.util.Logging;
 import com.dumptruckman.minecraft.zombiefight.api.Snapshot;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
@@ -22,9 +21,8 @@ import java.util.UUID;
 
 class DefaultSnapshot implements Snapshot {
 
-    private int x, z;
     private String worldName;
-    private Map<Integer, Map<Integer, Map<Integer, BlockState>>> blocks = new HashMap<Integer, Map<Integer, Map<Integer, BlockState>>>();
+    private Map<Block, BlockState> blocks = new HashMap<Block, BlockState>();
     private List<EntitySnapshot> entities = new LinkedList<EntitySnapshot>();
     private Set<UUID> entityIds = new HashSet<UUID>();
 
@@ -45,11 +43,9 @@ class DefaultSnapshot implements Snapshot {
         }
     }
 
-    DefaultSnapshot(Chunk chunk) {
-        worldName = chunk.getWorld().getName();
-        x = chunk.getX();
-        z = chunk.getZ();
-        for (Entity entity : chunk.getEntities()) {
+    DefaultSnapshot(World world) {
+        worldName = world.getName();
+        for (Entity entity : world.getEntities()) {
             if (!(entity instanceof Player)) {
                 entityIds.add(entity.getUniqueId());
                 entities.add(new EntitySnapshot(entity));
@@ -57,25 +53,20 @@ class DefaultSnapshot implements Snapshot {
         }
     }
 
-    public void snapshotBlock(Block block) {
-        if (blocks.containsKey(block.getX())) {
-            Map<Integer, Map<Integer, BlockState>> yMap = blocks.get(block.getX());
-            if (yMap.containsKey(block.getY())) {
-                Map<Integer, BlockState> zMap = yMap.get(block.getY());
-                if (!zMap.containsKey(block.getZ())) {
-                    zMap.put(block.getZ(), block.getState());
+    @Override
+    public void snapshotChunk(Chunk chunk) {
+        for (Entity entity : chunk.getEntities()) {
+            if (!(entity instanceof Player)) {
+                if (entityIds.add(entity.getUniqueId())) {
+                    entities.add(new EntitySnapshot(entity));
                 }
-            } else {
-                Map<Integer, BlockState> zMap = new HashMap<Integer, BlockState>();
-                zMap.put(block.getZ(), block.getState());
-                yMap.put(block.getY(), zMap);
             }
-        } else {
-            Map<Integer, Map<Integer, BlockState>> yMap = new HashMap<Integer, Map<Integer, BlockState>>();
-            Map<Integer, BlockState> zMap = new HashMap<Integer, BlockState>();
-            zMap.put(block.getZ(), block.getState());
-            yMap.put(block.getY(), zMap);
-            blocks.put(block.getX(), yMap);
+        }
+    }
+
+    public void snapshotBlock(Block block) {
+        if (!blocks.containsKey(block)) {
+            blocks.put(block, block.getState());
         }
     }
 
@@ -84,33 +75,19 @@ class DefaultSnapshot implements Snapshot {
         if (world == null) {
             return;
         }
-        Chunk chunk = world.getChunkAt(x, z);
-        if (chunk == null) {
-            Logging.finer("Could not locate chunk!");
-            return;
-        }
-        if (!chunk.isLoaded()) {
-            chunk.load(false);
-        }
-        if (!chunk.isLoaded()) {
-            return;
+        for (Map.Entry<Block, BlockState> block : blocks.entrySet()) {
+            BlockState state = block.getValue();
+            block.getKey().setTypeIdAndData(state.getTypeId(), state.getRawData(), false);
+            state.update(true);
         }
         for (Entity entity : world.getEntities()) {
-            if (entityIds.contains(entity.getUniqueId())) {
+            if (!(entity instanceof Player)) {
                 entity.remove();
             }
         }
         for (EntitySnapshot entity : entities) {
             entity.spawn(world);
         }
-        for (Map.Entry<Integer, Map<Integer, Map<Integer, BlockState>>> xEntry : blocks.entrySet()) {
-            for (Map.Entry<Integer, Map<Integer, BlockState>> yEntry : xEntry.getValue().entrySet()) {
-                for (Map.Entry<Integer, BlockState> zEntry : yEntry.getValue().entrySet()) {
-                    BlockState state = zEntry.getValue();
-                    state.getBlock().setTypeIdAndData(state.getTypeId(), state.getRawData(), false);
-                    zEntry.getValue().update(true);
-                }
-            }
-        }
+
     }
 }

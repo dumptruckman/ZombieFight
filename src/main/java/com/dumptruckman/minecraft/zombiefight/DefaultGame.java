@@ -44,7 +44,7 @@ class DefaultGame implements Game {
     private Set<String> humanPlayers;
     private Set<String> onlinePlayers;
     private String firstZombie = "";
-    private Map<Integer, Map<Integer, Snapshot>> snapshots = new HashMap<Integer, Map<Integer, Snapshot>>();
+    private Snapshot snapshot;
     boolean rollingBack = false;
 
     private class CountdownTask implements Runnable {
@@ -209,10 +209,7 @@ class DefaultGame implements Game {
         Logging.finest("Game.forceStart() called");
         broadcast(Language.GAME_STARTING);
         Logging.finer("Snapshotting chunks before game start.");
-        Chunk[] loadedChunks = Bukkit.getWorld(worldName).getLoadedChunks();
-        for (Chunk chunk : loadedChunks) {
-            snapshotChunk(chunk);
-        }
+        startSnapshot();
         humanPlayers.addAll(plugin.getPlayersForWorld(worldName));
         onlinePlayers.addAll(humanPlayers);
         status = GameStatus.IN_PROGRESS;
@@ -643,25 +640,27 @@ class DefaultGame implements Game {
         humanFinder = 0;
     }
 
+    private void startSnapshot() {
+        snapshot = new DefaultSnapshot(Bukkit.getWorld(worldName));
+    }
+
+    private Snapshot getSnapshot() {
+        return snapshot;
+    }
+
     @Override
     public void snapshotChunk(Chunk chunk) {
         if (rollingBack) {
+            return;
+        }
+        if (getStatus() != GameStatus.IN_PROGRESS) {
             return;
         }
         if (!chunk.getWorld().getName().equals(worldName)) {
             Logging.finer("Tried to snapshot chunk for world not for this game");
             return;
         }
-        if (snapshots.containsKey(chunk.getX())) {
-            Map<Integer, Snapshot> snapshot = snapshots.get(chunk.getX());
-            if (!snapshot.containsKey(chunk.getZ())) {
-                snapshot.put(chunk.getZ(), new DefaultSnapshot(chunk));
-            }
-        } else {
-            Map<Integer, Snapshot> snapshot = new HashMap<Integer, Snapshot>();
-            snapshot.put(chunk.getZ(), new DefaultSnapshot(chunk));
-            snapshots.put(chunk.getX(), snapshot);
-        }
+        getSnapshot().snapshotChunk(chunk);
     }
 
     @Override
@@ -669,14 +668,14 @@ class DefaultGame implements Game {
         if (rollingBack) {
             return;
         }
+        if (getStatus() != GameStatus.IN_PROGRESS) {
+            return;
+        }
         if (!block.getWorld().getName().equals(worldName)) {
             Logging.finer("Tried to snapshot block for world not for this game");
             return;
         }
-        Chunk chunk = block.getChunk();
-        snapshotChunk(chunk);
-        Snapshot snapshot = snapshots.get(chunk.getX()).get(chunk.getZ());
-        snapshot.snapshotBlock(block);
+        getSnapshot().snapshotBlock(block);
     }
 
     private void rollbackWorld(boolean restartAfter) {
@@ -688,11 +687,7 @@ class DefaultGame implements Game {
                 entity.remove();
             }
         }
-        for (Map.Entry<Integer, Map<Integer, Snapshot>> x : snapshots.entrySet()) {
-            for (Map.Entry<Integer, Snapshot> z : x.getValue().entrySet()) {
-                Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new RollbackTask(z.getValue()));
-            }
-        }
+        getSnapshot().applySnapshot();
         if (restartAfter) {
             Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
                 @Override
