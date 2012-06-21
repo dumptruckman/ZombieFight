@@ -99,7 +99,7 @@ class DefaultSnapshot implements Snapshot {
             blockData.getValue().update(true);
         }
         for (Entity entity : world.getEntities()) {
-            if (entity instanceof LivingEntity && !(entity instanceof Player)) {
+            if ((entity instanceof LivingEntity && !(entity instanceof Player)) || entity instanceof Item) {
                 entity.remove();
             }
         }
