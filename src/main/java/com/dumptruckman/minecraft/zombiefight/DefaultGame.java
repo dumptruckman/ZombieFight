@@ -639,6 +639,9 @@ class DefaultGame implements Game {
     }
 
     private Snapshot getSnapshot() {
+        if (snapshot == null) {
+            startSnapshot();
+        }
         return snapshot;
     }
 
