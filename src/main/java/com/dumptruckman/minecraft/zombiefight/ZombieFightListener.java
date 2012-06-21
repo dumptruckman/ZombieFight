@@ -316,7 +316,7 @@ public class ZombieFightListener implements Listener {
         if (game.getStatus() == GameStatus.IN_PROGRESS || game.getStatus() == GameStatus.ENDED) {
             String firstZombie = game.getFirstZombie();
             if (firstZombie != null) {
-                if (firstZombie.equals(player.getName())) {
+                if (game.isZombie(player.getName())) {
                     if (!(event instanceof PlayerTeleportEvent)) {
                         if (!(fromBlock.getX() == toBlock.getX()
                                 && fromBlock.getZ() == toBlock.getZ())) {
