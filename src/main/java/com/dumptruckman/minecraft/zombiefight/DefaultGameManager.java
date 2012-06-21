@@ -29,14 +29,11 @@ class DefaultGameManager implements GameManager {
     }
 
     @Override
-    public Game getGame(String worldName) {
-        if (!getEnabledWorlds().contains(worldName)) {
-            return null;
-        }
-        Game game = gameMap.get(worldName);
+    public Game getGame(World world) {
+        Game game = gameMap.get(world.getName());
         if (game == null) {
-            game = new DefaultGame(plugin, worldName);
-            gameMap.put(worldName, game);
+            game = new DefaultGame(plugin, world);
+            gameMap.put(world.getName(), game);
         }
         return game;
     }
@@ -49,46 +46,30 @@ class DefaultGameManager implements GameManager {
     }
 
     @Override
-    public void newGame(String worldName) {
-        Game game = gameMap.get(worldName);
-        if (game != null) {
-            if (game instanceof DefaultGame) {
-                ((DefaultGame) game).endAllTasks();
-            }
-        }
-        game = new DefaultGame(plugin, worldName);
-        gameMap.put(worldName, game);
-        plugin.broadcastWorld(worldName, plugin.getMessager().getMessage(Language.JOIN_WHILE_GAME_PREPARING));
-        game.checkGameStart();
+    public boolean isWorldEnabled(World world) {
+        return getEnabledWorlds().contains(world.getName());
     }
 
     @Override
-    public boolean isWorldEnabled(String worldName) {
-        return getEnabledWorlds().contains(worldName);
-    }
-
-    @Override
-    public void enableWorld(String worldName) {
-        getEnabledWorlds().add(worldName);
+    public void enableWorld(World world) {
+        getEnabledWorlds().add(world.getName());
         plugin.config().set(ZFConfig.ENABLED_WORLDS, new ArrayList<String>(getEnabledWorlds()));
         plugin.config().save();
-        Game game = getGame(worldName);
-        World world = Bukkit.getWorld(worldName);
-        for (Player player : world.getPlayers()) {
-            game.playerJoined(player.getName());
-        }
+        getGame(world);
     }
 
     @Override
-    public void disableWorld(String worldName) {
-        Game game = getGame(worldName);
+    public void disableWorld(World world) {
+        Game game = getGame(world);
         game.forceEnd(false);
-        if (game instanceof DefaultGame) {
-            ((DefaultGame) game).endAllTasks();
-        }
-        gameMap.remove(worldName);
-        getEnabledWorlds().remove(worldName);
+        getEnabledWorlds().remove(world.getName());
         plugin.config().set(ZFConfig.ENABLED_WORLDS, new ArrayList<String>(getEnabledWorlds()));
         plugin.config().save();
+    }
+
+    @Override
+    public void unloadWorld(World world) {
+        disableWorld(world);
+        gameMap.remove(world.getName());
     }
 }

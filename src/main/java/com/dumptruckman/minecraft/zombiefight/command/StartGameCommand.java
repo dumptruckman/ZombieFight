@@ -47,22 +47,24 @@ public class StartGameCommand extends ZFCommand {
             getMessager().bad(Language.NO_WORLD, sender, worldName);
             return;
         }
-        Game game = plugin.getGameManager().getGame(world.getName());
-        if (game == null) {
+        Game game = plugin.getGameManager().getGame(world);
+        if (!game.isEnabled()) {
             getMessager().bad(Language.NOT_GAME_WORLD, sender, world.getName());
-            return;
-        }
-        if (game.getStatus() == GameStatus.IN_PROGRESS || game.getStatus() == GameStatus.ENDED) {
-            getMessager().normal(Language.CMD_START_ALREADY_STARTED, sender);
             return;
         }
 
         if (CommandHandler.hasFlag("-f", args)) {
-            getMessager().good(Language.CMD_START_FORCE_SUCCESS, sender);
-            game.forceStart();
+            if (!game.forceStart()) {
+                getMessager().normal(Language.CMD_START_ALREADY_STARTED, sender);
+            } else {
+                getMessager().good(Language.CMD_START_FORCE_SUCCESS, sender);
+            }
         } else {
-            getMessager().good(Language.CMD_START_SUCCESS, sender);
-            game.countdown();
+            if (!game.start()) {
+                getMessager().normal(Language.CMD_START_ALREADY_STARTED, sender);
+            } else {
+                getMessager().good(Language.CMD_START_SUCCESS, sender);
+            }
         }
     }
 }

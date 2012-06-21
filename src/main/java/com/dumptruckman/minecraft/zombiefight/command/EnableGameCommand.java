@@ -45,7 +45,7 @@ public class EnableGameCommand extends ZFCommand {
             getMessager().bad(Language.NO_WORLD, sender, worldName);
             return;
         }
-        if (plugin.getGameManager().isWorldEnabled(world.getName())) {
+        if (plugin.getGameManager().isWorldEnabled(world)) {
             getMessager().bad(Language.CMD_ENABLE_ALREADY, sender);
             return;
         }
@@ -53,7 +53,7 @@ public class EnableGameCommand extends ZFCommand {
         plugin.config().set(ZFConfig.BORDER_RADIUS.specific(world.getName()), borderRadius);
         int borderWarn = plugin.config().get(ZFConfig.BORDER_WARN.specific(world.getName()));
         plugin.config().set(ZFConfig.BORDER_WARN.specific(world.getName()), borderWarn);
-        plugin.getGameManager().enableWorld(world.getName());
+        plugin.getGameManager().enableWorld(world);
         getMessager().good(Language.CMD_ENABLE_SUCCESS, sender);
     }
 }

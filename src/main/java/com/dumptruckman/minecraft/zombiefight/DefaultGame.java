@@ -1,14 +1,18 @@
 package com.dumptruckman.minecraft.zombiefight;
 
 import com.dumptruckman.minecraft.pluginbase.locale.Message;
-import com.dumptruckman.minecraft.pluginbase.util.BukkitTools;
+import com.dumptruckman.minecraft.pluginbase.locale.Messager;
 import com.dumptruckman.minecraft.pluginbase.util.Logging;
 import com.dumptruckman.minecraft.zombiefight.api.Game;
-import com.dumptruckman.minecraft.zombiefight.api.GameStatus;
+import com.dumptruckman.minecraft.zombiefight.api.GamePlayer;
 import com.dumptruckman.minecraft.zombiefight.api.LootTable;
 import com.dumptruckman.minecraft.zombiefight.api.Snapshot;
 import com.dumptruckman.minecraft.zombiefight.api.ZFConfig;
 import com.dumptruckman.minecraft.zombiefight.api.ZombieFight;
+import com.dumptruckman.minecraft.zombiefight.task.GameCountdownTask;
+import com.dumptruckman.minecraft.zombiefight.task.GameEndTask;
+import com.dumptruckman.minecraft.zombiefight.task.LastHumanCountdownTask;
+import com.dumptruckman.minecraft.zombiefight.task.ZombieLockCountdownTask;
 import com.dumptruckman.minecraft.zombiefight.util.Language;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -16,644 +20,402 @@ import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
 class DefaultGame implements Game {
 
-    private GameStatus status = GameStatus.PREPARING;
     private ZombieFight plugin;
-    private String worldName;
-    private int countdown;
-    private int countdownTask = -1;
-    private int lastHumanTask = -1;
-    private int zombieLockTask = -1;
-    private int humanFinderTask = -1;
-    private int gameEndTask = -1;
-    private long humanFinder = 0;
-    private ZombieLockTask zombieLock;
-    private Set<String> zombiePlayers;
-    private Set<String> humanPlayers;
-    private Set<String> onlinePlayers;
-    private String firstZombie = "";
-    private Snapshot snapshot;
-    boolean rollingBack = false;
 
-    private class CountdownTask implements Runnable {
-        private CountdownTask() {
-            Logging.finest("Countdown task started");
+    private World world;
+
+    private Snapshot snapshot;
+
+    private Map<String, GamePlayer> gamePlayers;
+
+    boolean started;
+    boolean ended;
+    boolean reset;
+    boolean finalized;
+
+    boolean countingDown;
+    boolean zombiesLocked;
+    boolean lastHuman;
+
+    private GameCountdownTask countdownTask;
+    private ZombieLockCountdownTask zombieLockTask;
+    private LastHumanCountdownTask lastHumanTask;
+    private GameEndTask gameEndTask;
+
+    DefaultGame(ZombieFight plugin, World world) {
+        this.plugin = plugin;
+        this.world = world;
+        init();
+    }
+
+    protected final void init() {
+        if (countdownTask != null) {
+            countdownTask.kill();
         }
-        @Override
-        public void run() {
-            if (plugin.shouldWarn(countdown)) {
-                broadcast(Language.GAME_STARTING_IN, countdown);
-            }
-            countdown--;
-            if (countdown > 0) {
-                countdownTask = Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, this, 20L);
-            } else {
-                Logging.finest("Countdown task ended");
-                Bukkit.getScheduler().cancelTask(countdownTask);
+        if (zombieLockTask != null) {
+            zombieLockTask.kill();
+        }
+        if (lastHumanTask != null) {
+            lastHumanTask.kill();
+        }
+        if (gameEndTask != null) {
+            gameEndTask.kill();
+        }
+        gamePlayers = new HashMap<String, GamePlayer>();
+        started = false;
+        ended = false;
+        reset = false;
+        finalized = false;
+        countingDown = false;
+        zombiesLocked = true;
+        lastHuman = false;
+        snapshot = new DefaultSnapshot(getWorld());
+        countdownTask = new GameCountdownTask(this, plugin);
+        zombieLockTask = new ZombieLockCountdownTask(this, plugin);
+        lastHumanTask = new LastHumanCountdownTask(this, plugin);
+        gameEndTask = new GameEndTask(this, plugin);
+        for (Player player : getWorld().getPlayers()) {
+            playerJoined(player);
+        }
+    }
+
+    protected ZombieFight getPlugin() {
+        return plugin;
+    }
+
+    protected ZFConfig getConfig() {
+        return getPlugin().config();
+    }
+
+    protected Messager getMessager() {
+        return getPlugin().getMessager();
+    }
+
+    protected GamePlayer getGamePlayer(String name) {
+        GamePlayer gPlayer = gamePlayers.get(name);
+        if (gPlayer == null) {
+            gPlayer = new DefaultGamePlayer(name, getPlugin(), this);
+            gamePlayers.put(name, gPlayer);
+        }
+        return gPlayer;
+    }
+
+    protected void haltCountdown() {
+        countingDown = false;
+    }
+
+    protected void checkGameStart() {
+        if (!hasStarted()) {
+            int playersInWorld = getWorld().getPlayers().size();
+            int minPlayers = getConfig().get(ZFConfig.MIN_PLAYERS);
+            int maxPlayers = getConfig().get(ZFConfig.MAX_PLAYERS);
+            Logging.finer("players: " + playersInWorld + " minPlayers: " + minPlayers + " maxPlayers: " + maxPlayers);
+            if (playersInWorld >= minPlayers && playersInWorld < maxPlayers) {
+                Logging.fine("Enough players to start countdown.");
+                broadcast(Language.ENOUGH_FOR_COUNTDOWN_START);
+                start();
+            } else if (world.getPlayers().size() >= maxPlayers) {
+                Logging.fine("Enough players to force game start.");
+                broadcast(Language.ENOUGH_FOR_QUICK_START);
                 forceStart();
             }
         }
     }
 
-    private class ZombieLockTask implements Runnable {
-        private ZombieLockTask() {
-            Logging.finest("Zombie lock task started");
-        }
-        @Override
-        public void run() {
-            Logging.finest("Zombie lock task ended");
-            firstZombie = null;
-            broadcast(Language.ZOMBIE_RELEASE);
-            zombieLockTask = -1;
-            if (getStatus() == GameStatus.IN_PROGRESS) {
-                humanFinderTask = Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new HumanFinderTask(), 0L);
-            }
-        }
-    }
-
-    private class GameEndTask implements Runnable {
-        private GameEndTask() {
-            Logging.finest("Game end task started");
-        }
-        @Override
-        public void run() {
-            Logging.finest("Game end task ended");
-            end(true);
-        }
-    }
-
-    private class LastHumanTask implements Runnable {
-        private LastHumanTask() {
-            Logging.finest("Last human task started");
-        }
-        @Override
-        public void run() {
-            Logging.finest("Last human task ended");
-            String winner = null;
-            for (String name : humanPlayers) {
-                if (onlinePlayers.contains(name)) {
-                    Player player = plugin.getServer().getPlayerExact(name);
-                    if (player != null) {
-                        winner = player.getName();
-                        break;
-                    }
-                }
-            }
-            broadcast(Language.LAST_HUMAN_WON, winner);
-            endGame();
-        }
-    }
-
-    private class HumanFinderTask implements Runnable {
-        private long beaconTick = 0;
-        private HumanFinderTask() {
-            Logging.finest("Human finder task started");
-        }
-        @Override
-        public void run() {
-            if (getStatus() != GameStatus.IN_PROGRESS) {
-                Bukkit.getScheduler().cancelTask(humanFinderTask);
-            }
-            long lastHit = humanFinder - plugin.config().get(ZFConfig.HUMAN_FINDER_START);
-            if (lastHit == 0) {
-                strike();
-                tick();
-            } else if (lastHit > 0) {
-                if (beaconTick >= plugin.config().get(ZFConfig.HUMAN_FINDER_TICK)) {
-                    strike();
-                    beaconTick = 0;
-                }
-                tick();
+    protected void checkGameEnd() {
+        Set<GamePlayer> onlinePlayers = getOnlinePlayers();
+        List<GamePlayer> onlineZombies = new LinkedList<GamePlayer>();
+        List<GamePlayer> onlineHumans = new LinkedList<GamePlayer>();
+        for (GamePlayer player : onlinePlayers) {
+            if (player.isZombie()) {
+                onlineZombies.add(player);
             } else {
-                beaconTick = 0;
-                humanFinder++;
-            }
-            if (getStatus() == GameStatus.IN_PROGRESS) {
-                humanFinderTask = Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, this, 20L);
+                onlineHumans.add(player);
             }
         }
-        private void tick() {
-            humanFinder++;
-            beaconTick++;
-        }
-        private void strike() {
-            for (String name : humanPlayers) {
-                Player player = plugin.getServer().getPlayerExact(name);
-                if (player != null) {
-                    Location loc = player.getLocation();
-                    loc.getWorld().strikeLightningEffect(loc);
-                }
+
+        if (onlineZombies.size() < 1) {
+            Logging.finest("No zombies left online!");
+            if (onlineHumans.size() > 1) {
+                Random rand = new Random(System.currentTimeMillis());
+                int index = rand.nextInt(onlineHumans.size());
+                GamePlayer newZombie = onlineHumans.get(index);
+                Logging.fine("Found a new zombie candidate: "+ newZombie.getPlayer().getName());
+                newZombie.makeZombie();
+                onlineHumans.remove(index);
+                onlineZombies.add(newZombie);
+            } else {
+                broadcast(Language.GAME_ENDED_TOO_FEW_PLAYERS);
+                _gameOver();
+                return;
             }
         }
-    }
-
-    DefaultGame(ZombieFight plugin, String worldName) {
-        this.plugin = plugin;
-        this.worldName = worldName;
-        this.countdown = plugin.config().get(ZFConfig.COUNTDOWN_TIME);
-        zombiePlayers = new HashSet<String>(plugin.config().get(ZFConfig.MAX_PLAYERS));
-        humanPlayers = new LinkedHashSet<String>(plugin.config().get(ZFConfig.MAX_PLAYERS));
-        onlinePlayers = new LinkedHashSet<String>(plugin.config().get(ZFConfig.MAX_PLAYERS));
-    }
-
-    @Override
-    public GameStatus getStatus() {
-        return status;
-    }
-
-    @Override
-    public void countdown() {
-        if (status == GameStatus.PREPARING) {
-            status = GameStatus.STARTING;
-        }
-        if (countdownTask == -1) {
-            countdownTask = Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new CountdownTask(), 20L);
-        }
-        if (countdownTask == -1) {
-            broadcast(Language.COULD_NOT_COUNTDOWN);
-            forceStart();
-        }
-    }
-
-    @Override
-    public void forceStart() {
-        if (countdownTask != -1) {
-            Bukkit.getScheduler().cancelTask(countdownTask);
-            countdownTask = -1;
-        }
-        if (status == GameStatus.IN_PROGRESS || status == GameStatus.ENDED) {
-            Logging.finest("Game.forceStart() called while game in progress or ended");
+        if (onlineHumans.size() < 1) {
+            broadcast(Language.ALL_HUMANS_DEAD);
+            _gameOver();
             return;
         }
-        Logging.finest("Game.forceStart() called");
+        if (onlineHumans.size() == 1 && !isZombieLockPhase()) {
+            _lastHuman(onlineHumans.get(0));
+        }
+    }
+
+    protected Snapshot getSnapshot() {
+        return snapshot;
+    }
+
+    private Set<GamePlayer> getOnlinePlayers() {
+        Collection<GamePlayer> gamePlayers = this.gamePlayers.values();
+        Set<GamePlayer> onlinePlayers = new HashSet<GamePlayer>(gamePlayers.size());
+        for (GamePlayer player : gamePlayers) {
+            if (player != null && player.isOnline()) {
+                onlinePlayers.add(player);
+            }
+        }
+        return onlinePlayers;
+    }
+
+    private void _startCountdown() {
+        countingDown = true;
+        countdownTask.start();
+    }
+
+    private void _startGame() {
+        countingDown = false;
+        started = true;
+        snapshot.initialize();
         broadcast(Language.GAME_STARTING);
-        Logging.finer("Snapshotting chunks before game start.");
-        startSnapshot();
-        humanPlayers.addAll(plugin.getPlayersForWorld(worldName));
-        onlinePlayers.addAll(humanPlayers);
-        status = GameStatus.IN_PROGRESS;
-        Location location = plugin.config().get(ZFConfig.GAME_SPAWN.specific(worldName));
-        if (location == null) {
-            World world = Bukkit.getWorld(worldName);
-            location = world.getSpawnLocation();
-        }
-        for (String playerName : humanPlayers) {
-            Player player = plugin.getServer().getPlayerExact(playerName);
-            if (player != null) {
-                player.teleport(location);
-                player.getInventory().clear();
-                player.setHealth(20);
-                player.setFoodLevel(20);
-                player.setSaturation(5F);
-                player.setExhaustion(0F);
-                String kitName = plugin.getPlayerKit(playerName);
-                if (kitName != null) {
-                    LootTable kit = plugin.getLootConfig().getKit(kitName);
-                    if (kit != null) {
-                        kit.addToInventory(player.getInventory());
-                    } else {
-                        plugin.getMessager().bad(Language.KIT_ERROR_DEFAULT, player, kitName);
-                        plugin.setPlayerKit(playerName, null);
-                        plugin.getLootConfig().getDefaultKit().addToInventory(player.getInventory());
-                    }
-                } else {
-                    plugin.getLootConfig().getDefaultKit().addToInventory(player.getInventory());
-                }
-                fixName(player.getName());
-            }
-        }
-        firstZombie = randomZombie();
-        int secondsToRun = plugin.config().get(ZFConfig.ZOMBIE_LOCK);
-        broadcast(Language.RUN_FROM_ZOMBIE, secondsToRun);
-        zombieLock = new ZombieLockTask();
-        zombieLockTask = Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, zombieLock, BukkitTools.convertSecondsToTicks(secondsToRun));
-        makeZombie(firstZombie);
-        checkGameEnd();
+        zombieLockTask.start();
     }
 
-    @Override
-    public void endGame() {
-        if (lastHumanTask != -1) {
-            Bukkit.getScheduler().cancelTask(lastHumanTask);
-            lastHumanTask = -1;
+    private void _zombiesUnlocked() {
+        countingDown = false;
+        started = true;
+        zombiesLocked = false;
+        broadcast(Language.ZOMBIE_RELEASE);
+    }
+
+    private void _lastHuman(GamePlayer lastHuman) {
+        countingDown = false;
+        started = true;
+        zombiesLocked = false;
+        int finalHuman = getConfig().get(ZFConfig.LAST_HUMAN);
+        broadcast(Language.ONE_HUMAN_LEFT, finalHuman);
+        LootTable reward = plugin.getLootConfig().getLastHumanReward();
+        if (reward != null) {
+            reward.addToInventory(lastHuman.getPlayer().getInventory());
+            getMessager().normal(Language.LAST_HUMAN_REWARD, lastHuman.getPlayer());
+        } else {
+            Logging.warning("Last human reward is not setup correctly!");
         }
-        if (humanFinderTask != -1) {
-            Bukkit.getScheduler().cancelTask(humanFinderTask);
-            humanFinderTask = -1;
-        }
-        if (zombieLockTask != -1) {
-            zombieLock.run();
-            Bukkit.getScheduler().cancelTask(zombieLockTask);
-            zombieLockTask = -1;
-        }
-        if (status == GameStatus.STARTING || status == GameStatus.PREPARING) {
-            Logging.finest("Game.endGame() called while game preparing or starting");
-            return;
-        }
-        Logging.finest("Game.endGame() called");
+        lastHumanTask.setLastHuman(lastHuman);
+        lastHumanTask.start();
+    }
+
+    private void _gameOver() {
+        countingDown = false;
+        started = true;
+        zombiesLocked = false;
+        ended = true;
         broadcast(Language.GAME_ENDED);
-        status = GameStatus.ENDED;
-        int secondsToReset = plugin.config().get(ZFConfig.END_DURATION);
-        broadcast(Language.GAME_RESETTING, secondsToReset);
-        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new GameEndTask(), BukkitTools.convertSecondsToTicks(secondsToReset));
+        gameEndTask.start();
     }
 
-    private void end(boolean restart) {
-        if (lastHumanTask != -1) {
-            Bukkit.getScheduler().cancelTask(lastHumanTask);
-            lastHumanTask = -1;
-        }
-        if (humanFinderTask != -1) {
-            Bukkit.getScheduler().cancelTask(humanFinderTask);
-            humanFinderTask = -1;
-        }
-        if (gameEndTask != -1) {
-            Bukkit.getScheduler().cancelTask(gameEndTask);
-            gameEndTask = -1;
-        }
-        if (zombieLockTask != -1) {
-            zombieLock.run();
-            Bukkit.getScheduler().cancelTask(zombieLockTask);
-            zombieLockTask = -1;
-        }
-        status = GameStatus.ENDED;
-        Location location = plugin.config().get(ZFConfig.PRE_GAME_SPAWN.specific(worldName));
-        if (location == null) {
-            World world = Bukkit.getWorld(worldName);
-            location = world.getSpawnLocation();
-        }
-        for (String playerName : humanPlayers) {
-            Player player = plugin.getServer().getPlayerExact(playerName);
-            fixName(playerName);
+    private void _resetGame(boolean restart) {
+        countingDown = false;
+        started = true;
+        zombiesLocked = false;
+        ended = true;
+        reset = true;
+        for (GamePlayer gPlayer : gamePlayers.values()) {
+            gPlayer.makeHuman();
+            Player player = gPlayer.getPlayer();
             if (player != null) {
-                player.teleport(location);
+                player.teleport(getSpawnLocation());
             }
         }
-        for (String playerName : zombiePlayers) {
-            fixName(playerName);
-            Player player = plugin.getServer().getPlayerExact(playerName);
-            if (player != null) {
-                plugin.unZombifyPlayer(player.getName());
-                player.teleport(location);
-            }
-        }
-        rollbackWorld(restart);
-        humanPlayers.clear();
-        zombiePlayers.clear();
-        onlinePlayers.clear();
-    }
-
-    public void forceEnd(boolean restart) {
-        broadcast(Language.FORCE_END);
-        end(restart);
-    }
-
-    @Override
-    public boolean isPlaying(String name) {
-        return humanPlayers.contains(name) || zombiePlayers.contains(name);
-    }
-
-    @Override
-    public void haltCountdown() {
-        Logging.finest("Countdown task halted");
-        if (countdownTask != -1) {
-            Bukkit.getScheduler().cancelTask(countdownTask);
-            countdownTask = -1;
+        broadcast(Language.ROLLBACK);
+        getSnapshot().applySnapshot();
+        finalized = true;
+        if (restart) {
+            init();
         }
     }
 
-    @Override
-    public boolean isZombie(String playerName) {
-        return zombiePlayers.contains(playerName);
-    }
+    /**
+     * PUBLIC METHODS FROM Game INTERFACE
+     */
+
+    /**
+     *
+     */
 
     @Override
-    public boolean hasOnlineZombies() {
-        for (String name : zombiePlayers) {
-            Logging.finest("Does onlinePlayers contain: " + name);
-            if (onlinePlayers.contains(name)) {
-                Logging.finest("onlinePlayers contains: " + name);
-                return true;
-            }
+    public Location getSpawnLocation() {
+        Location loc;
+        if (!hasStarted() || hasReset()) {
+            loc = getConfig().get(ZFConfig.PRE_GAME_SPAWN.specific(getWorld().getName()));
+        } else {
+            loc = getConfig().get(ZFConfig.GAME_SPAWN.specific(getWorld().getName()));
         }
-        return false;
-    }
-
-    @Override
-    public boolean hasOnlineHumans() {
-        for (String name : humanPlayers) {
-            if (onlinePlayers.contains(name)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    @Override
-    public int onlinePlayerCount() {
-        return onlinePlayers.size();
-    }
-
-    @Override
-    public void playerQuit(String playerName) {
-        Logging.finer("Player quit game in world: " + worldName);
-        switch (getStatus()) {
-            case STARTING:
-                int playersInWorld = Bukkit.getWorld(worldName).getPlayers().size();
-                int minPlayers = plugin.config().get(ZFConfig.MIN_PLAYERS);
-                if (playersInWorld < minPlayers) {
-                    Logging.fine("Player quit caused countdown to halt.");
-                    broadcast(Language.TOO_FEW_PLAYERS);
-                    haltCountdown();
-                }
-                break;
-            case IN_PROGRESS:
-                if (isPlaying(playerName)) {
-                    onlinePlayers.remove(playerName);
-                    checkGameEnd();
-                }
-                break;
-            default:
-                break;
-        }
-        Player player = Bukkit.getPlayerExact(playerName);
-        if (player != null) {
-            player.setDisplayName(ChatColor.stripColor(player.getDisplayName()));
-        }
-    }
-
-    public void endAllTasks() {
-        Bukkit.getScheduler().cancelTask(countdownTask);
-        Bukkit.getScheduler().cancelTask(lastHumanTask);
-        Bukkit.getScheduler().cancelTask(zombieLockTask);
-        Bukkit.getScheduler().cancelTask(humanFinderTask);
-        Bukkit.getScheduler().cancelTask(gameEndTask);
-    }
-
-    @Override
-    public void playerJoined(String playerName) {
-        Location loc = plugin.config().get(ZFConfig.PRE_GAME_SPAWN.specific(worldName));
-        Location loc2 = plugin.config().get(ZFConfig.GAME_SPAWN.specific(worldName));
         if (loc == null) {
-            Logging.fine("No pre-game spawn set, will use world spawn.");
-            loc = Bukkit.getWorld(worldName).getSpawnLocation();
+            Logging.fine("No spawn set, will use world spawn.");
+            loc = getWorld().getSpawnLocation();
         }
-        if (loc2 == null) {
-            Logging.fine("No game spawn set, will use world spawn.");
-            loc2 = Bukkit.getWorld(worldName).getSpawnLocation();
-        }
-        final Location spawnLoc = loc;
-        final Location gameSpawn = loc2;
-        final Player player = Bukkit.getPlayerExact(playerName);
-        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
+        return loc;
+    }
+
+
+    @Override
+    public boolean isEnabled() {
+        return plugin.getGameManager().isWorldEnabled(getWorld());
+    }
+
+    @Override
+    public boolean hasStarted() {
+        return started;
+    }
+
+    @Override
+    public boolean hasEnded() {
+        return ended;
+    }
+
+    @Override
+    public boolean hasReset() {
+        return reset;
+    }
+
+    @Override
+    public boolean isZombie(Player player) {
+        return hasStarted() && getGamePlayer(player.getName()).isZombie();
+    }
+
+    @Override
+    public void playerJoined(final Player player) {
+        Logging.finer("Player joined game in world: " + getWorld().getName());
+        // Announcement
+        Bukkit.getScheduler().scheduleSyncDelayedTask(getPlugin(), new Runnable() {
             @Override
             public void run() {
-                plugin.getMessager().sendMessage(player, ChatColor.GRAY + "Visit the official ZombieFight website:"
+                getMessager().sendMessage(player, ChatColor.GRAY + "Visit the official Minecraft Zombies website: "
                         + ChatColor.RED + "mczombies.com");
-                plugin.displayKits(player);
+                getPlugin().displayKits(player);
             }
         }, 2L);
+        // Mark player as joined
+        GamePlayer gPlayer = getGamePlayer(player.getName());
+        gPlayer.joinedGame();
 
-        // Handle joining
-        switch (getStatus()) {
-            case IN_PROGRESS:
-                if (isPlaying(playerName)) {
-                    Logging.finer("Player joined game in world: " + worldName);
-                    onlinePlayers.add(playerName);
-                    if (!isZombie(playerName)) {
-                        plugin.unZombifyPlayer(player.getName());
-                    }
-                } else {
-                    onlinePlayers.add(playerName);
-                    makeZombie(playerName);
-                    Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
-                        @Override
-                        public void run() {
-                            player.teleport(gameSpawn);
-                            plugin.getMessager().normal(Language.JOIN_WHILE_GAME_IN_PROGRESS, player);
-                        }
-                    }, 2L);
-                }
-                break;
-            case ENDED:
-                if (!isPlaying(player.getName())) {
-                    Logging.fine("Teleporting non-game-playing player to spawn.");
-                    plugin.unZombifyPlayer(player.getName());
-                    Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
-                        @Override
-                        public void run() {
-                            player.teleport(spawnLoc);
-                            plugin.getMessager().normal(Language.JOIN_WHILE_GAME_IN_PROGRESS, player);
-                        }
-                    }, 2L);
-                } else {
-                    if (!isZombie(playerName)) {
-                        plugin.unZombifyPlayer(player.getName());
-                    }
-                }
-                break;
-            case PREPARING:
-                Logging.fine("Game not started, teleporting player to spawn.");
-                Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
-                    @Override
-                    public void run() {
-                        player.teleport(spawnLoc);
-                        plugin.getMessager().normal(Language.JOIN_WHILE_GAME_PREPARING, player);
-                    }
-                }, 2L);
-                plugin.unZombifyPlayer(player.getName());
-                break;
-            case STARTING:
-                Logging.fine("Game starting soon, teleporting player to spawn.");
-                Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
-                    @Override
-                    public void run() {
-                        player.teleport(spawnLoc);
-                        plugin.getMessager().normal(Language.JOIN_WHILE_GAME_STARTING, player);
-                    }
-                }, 2L);
-                plugin.unZombifyPlayer(player.getName());
-                break;
-            default:
-                break;
-        }
-
-        fixName(playerName);
-
-        if (getStatus() == GameStatus.PREPARING || getStatus() == GameStatus.STARTING) {
-            Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
+        // Inform the player
+        if (!hasStarted()) {
+            if (isCountdownPhase()) {
+                getMessager().normal(Language.JOIN_WHILE_GAME_STARTING, player);
+            } else {
+                getMessager().normal(Language.JOIN_WHILE_GAME_PREPARING, player);
+            }
+            // Check if game should start, but not right away
+            Bukkit.getScheduler().scheduleSyncDelayedTask(getPlugin(), new Runnable() {
                 @Override
                 public void run() {
                     // Handle starting game
                     checkGameStart();
                 }
-            }, 5L);
+            }, 4L);
+        } else {
+            getMessager().normal(Language.JOIN_WHILE_GAME_IN_PROGRESS, player);
+            gPlayer.makeZombie();
         }
-    }
 
-    @Override
-    public String randomZombie() {
-        Random random = new Random(System.currentTimeMillis());
-        int randPlayer = random.nextInt(humanPlayers.size());
-        int i = 0;
-        for (String name : humanPlayers) {
-            if (i == randPlayer) {
-                Logging.fine("Random zombie selected: " + name);
-                return name;
+        // Spawn the player
+        Bukkit.getScheduler().scheduleSyncDelayedTask(getPlugin(), new Runnable() {
+            @Override
+            public void run() {
+                player.teleport(getSpawnLocation());
             }
-            i++;
-        }
-        Logging.fine("Could not select random zombie.");
-        return null;
+        }, 2L);
     }
 
     @Override
-    public void makeZombie(String name) {
-        humanPlayers.remove(name);
-        plugin.zombifyPlayer(name);
-        zombiePlayers.add(name);
-        fixName(name);
-    }
+    public void playerQuit(Player player) {
+        Logging.finer("Player quit game in world: " + getWorld().getName());
 
-    @Override
-    public String getFirstZombie() {
-        return firstZombie;
-    }
-
-    @Override
-    public String getWorld() {
-        return worldName;
-    }
-
-    public void checkGameStart() {
-        switch (status) {
-            case STARTING:
-            case PREPARING:
-                World world = Bukkit.getWorld(worldName);
-                int playersInWorld = world.getPlayers().size();
-                int minPlayers = plugin.config().get(ZFConfig.MIN_PLAYERS);
-                int maxPlayers = plugin.config().get(ZFConfig.MAX_PLAYERS);
-                Logging.finer("players: " + playersInWorld + " minPlayers: " + minPlayers + " maxPlayers: " + maxPlayers);
-                if (playersInWorld >= minPlayers && playersInWorld < maxPlayers) {
-                    Logging.fine("Enough players to start countdown.");
-                    broadcast(Language.ENOUGH_FOR_COUNTDOWN_START);
-                    countdown();
-                } else if (world.getPlayers().size() >= maxPlayers) {
-                    Logging.fine("Enough players to force game start.");
-                    broadcast(Language.ENOUGH_FOR_QUICK_START);
-                    forceStart();
+        getGamePlayer(player.getName()).leftGame();
+        if (!hasStarted()) {
+            if (isCountdownPhase()) {
+                int playersInWorld = getWorld().getPlayers().size();
+                int minPlayers = getConfig().get(ZFConfig.MIN_PLAYERS);
+                if (playersInWorld < minPlayers) {
+                    Logging.fine("Player quit caused countdown to halt.");
+                    broadcast(Language.TOO_FEW_PLAYERS);
+                    haltCountdown();
                 }
-                break;
-            default:
-                break;
+            }
+        } else if (!hasEnded()) {
+            checkGameEnd();
         }
     }
 
     @Override
-    public void checkGameEnd() {
-        if (!hasOnlineZombies()) {
-            Logging.finest("No zombies left online!");
-            if (onlinePlayerCount() > 1) {
-                Player newZombiePlayer = null;
-                while (newZombiePlayer == null && onlinePlayerCount() > 1) {
-                    String newZombie = randomZombie();
-                    newZombiePlayer = plugin.getServer().getPlayerExact(newZombie);
-                    if (newZombiePlayer == null) {
-                        playerQuit(newZombie);
-                    }
-                }
-                if (newZombiePlayer == null) {
-                    Logging.fine("Could not acquire new random zombie. Ending game.");
-                    endGame();
-                    return;
-                } else {
-                    Logging.fine("Found a new zombie candidate: "+ newZombiePlayer.getName());
-                    makeZombie(newZombiePlayer.getName());
-                    if (firstZombie != null) {
-                        firstZombie = newZombiePlayer.getName();
-                    }
-                }
-            } else {
-                Logging.fine("Ending game due to only 1 or less players left.");
-                endGame();
-                return;
+    public boolean allowMove(Player player, Block fromBlock, Block toBlock) {
+        if (hasStarted() && !hasEnded() && isZombieLockPhase()) {
+            GamePlayer gPlayer = getGamePlayer(player.getName());
+            if (gPlayer.isZombie() && !(fromBlock.getX() == toBlock.getX() && fromBlock.getZ() == toBlock.getZ())) {
+                player.teleport(fromBlock.getLocation());
+                return false;
             }
         }
-        if (!hasOnlineHumans()) {
-            plugin.broadcastWorld(worldName, plugin.getMessager().getMessage(Language.ALL_HUMANS_DEAD));
-            endGame();
-            return;
-        }
-        int onlineHumans = 0;
-        for (String name : humanPlayers) {
-            if (onlinePlayers.contains(name)) {
-                onlineHumans++;
-            }
-        }
-        if (onlineHumans == 1) {
-            int finalHuman = plugin.config().get(ZFConfig.FINAL_HUMAN);
-            broadcast(Language.ONE_HUMAN_LEFT, finalHuman);
-            LootTable reward = plugin.getLootConfig().getLastHumanReward();
-            if (reward != null) {
-                for (String name : humanPlayers) {
-                    if (onlinePlayers.contains(name)) {
-                        Player player = plugin.getServer().getPlayerExact(name);
-                        if (player != null) {
-                            reward.addToInventory(player.getInventory());
-                            break;
-                        }
-                    }
-                }
-            } else {
-                Logging.warning("Last human reward is not setup correctly!");
-            }
-            if (lastHumanTask == -1) {
-                lastHumanTask = Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new LastHumanTask(), BukkitTools.convertSecondsToTicks(finalHuman));
-            }
-        }
-    }
-
-    public void broadcast(Message message, Object...args) {
-        plugin.broadcastWorld(worldName, plugin.getMessager().getMessage(message, args));
+        return true;
     }
 
     @Override
-    public void humanFound() {
-        humanFinder = 0;
-    }
-
-    private void startSnapshot() {
-        snapshot = new DefaultSnapshot(Bukkit.getWorld(worldName));
-    }
-
-    private Snapshot getSnapshot() {
-        if (snapshot == null) {
-            startSnapshot();
+    public boolean allowDamage(Player attacker, Player victim) {
+        if (!hasStarted() || hasEnded()) {
+            return false;
         }
-        return snapshot;
+        GamePlayer gAttacker = getGamePlayer(attacker.getName());
+        GamePlayer gVictim = getGamePlayer(victim.getName());
+        if (isZombieLockPhase() && gAttacker.isZombie()) {
+            return false;
+        }
+        if (gAttacker.isZombie() && gVictim.isZombie()) {
+            return false;
+        } else if (!gAttacker.isZombie() && !gVictim.isZombie()) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    @Override
+    public World getWorld() {
+        return world;
+    }
+
+    @Override
+    public void broadcast(Message message, Object... args) {
+        getPlugin().broadcastWorld(getWorld().getName(), getMessager().getMessage(message, args));
     }
 
     @Override
     public void snapshotChunk(Chunk chunk) {
-        if (rollingBack) {
+        if (!hasStarted() || hasEnded()) {
             return;
         }
-        if (getStatus() != GameStatus.IN_PROGRESS) {
-            return;
-        }
-        if (!chunk.getWorld().getName().equals(worldName)) {
+        if (!chunk.getWorld().equals(getWorld())) {
             Logging.finer("Tried to snapshot chunk for world not for this game");
             return;
         }
@@ -662,42 +424,75 @@ class DefaultGame implements Game {
 
     @Override
     public void snapshotBlock(Block block) {
-        if (rollingBack) {
+        if (!hasStarted() || hasEnded()) {
             return;
         }
-        if (getStatus() != GameStatus.IN_PROGRESS) {
-            return;
-        }
-        if (!block.getWorld().getName().equals(worldName)) {
+        if (!block.getWorld().equals(getWorld())) {
             Logging.finer("Tried to snapshot block for world not for this game");
             return;
         }
         getSnapshot().snapshotBlock(block);
     }
 
-    private void rollbackWorld(boolean restartAfter) {
-        rollingBack = true;
-        broadcast(Language.ROLLBACK);
-        getSnapshot().applySnapshot();
-        if (restartAfter) {
-            Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
-                @Override
-                public void run() {
-                    plugin.getGameManager().newGame(worldName);
-                }
-            });
+    @Override
+    public boolean start() {
+        if (finalized) {
+            init();
         }
+        if (hasStarted()) {
+            return false;
+        }
+        _startCountdown();
+        return true;
     }
 
-    private void fixName(String playerName) {
-        Player player = Bukkit.getPlayerExact(playerName);
-        if (player != null) {
-            player.setDisplayName(ChatColor.stripColor(player.getDisplayName()));
-            if (isZombie(playerName)) {
-                player.setDisplayName(plugin.getMessager().getMessage(Language.ZOMBIE_NAME, player.getDisplayName()));
-            } else {
-                player.setDisplayName(plugin.getMessager().getMessage(Language.HUMAN_NAME, player.getDisplayName()));
-            }
+    @Override
+    public boolean forceStart() {
+        if (finalized) {
+            init();
         }
+        if (hasStarted()) {
+            return false;
+        }
+        _startGame();
+        return true;
+    }
+
+    @Override
+    public boolean end() {
+        if (hasEnded()) {
+            return false;
+        }
+        _gameOver();
+        return true;
+    }
+
+    @Override
+    public boolean forceEnd(boolean restart) {
+        if (hasReset()) {
+            return false;
+        }
+        _resetGame(restart);
+        return false;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public boolean isCountdownPhase() {
+        return countingDown;
+    }
+
+    @Override
+    public boolean isZombieLockPhase() {
+        return zombiesLocked;
+    }
+
+    @Override
+    public void unlockZombies() {
+        _zombiesUnlocked();
+    }
+
+    @Override
+    public boolean isLastHumanPhase() {
+        return lastHuman;
     }
 }

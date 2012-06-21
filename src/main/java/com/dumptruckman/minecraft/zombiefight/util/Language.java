@@ -47,10 +47,12 @@ public class Language {
 
     public static final Message CMD_END_GAME_NAME = new Message("cmd.end.name",
             "Ends the game.");
-    public static final Message CMD_END_NOT_STARTED = new Message("cmd.end.not_started",
-            "The game for this world has not yet started!");
+    public static final Message CMD_END_ALREADY_ENDED = new Message("cmd.end.already_ended",
+            "The game for this world has already ended!");
     public static final Message CMD_END_SUCCESS = new Message("cmd.end.success",
             "You have ended the game.");
+    public static final Message CMD_END_BROADCAST = new Message("cmd.end.broadcast",
+            "&c%1&f ended the game by command.");
 
     public static final Message CMD_ENABLE_NAME = new Message("cmd.enable.name",
             "Enables the game for the world.");

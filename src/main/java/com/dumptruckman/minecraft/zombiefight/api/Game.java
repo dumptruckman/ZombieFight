@@ -9,6 +9,8 @@ import org.bukkit.entity.Player;
 
 public interface Game {
 
+    boolean isEnabled();
+
     Location getSpawnLocation();
 
     boolean hasStarted();

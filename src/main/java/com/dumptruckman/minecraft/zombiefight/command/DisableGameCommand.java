@@ -29,7 +29,7 @@ public class DisableGameCommand extends ZFCommand {
     @Override
     public void runCommand(CommandSender sender, List<String> args) {
         String worldName = CommandHandler.getFlag("-w", args);
-        World world = null;
+        World world;
         if (worldName == null) {
             if (!(sender instanceof Player)) {
                 getMessager().bad(Language.CMD_CONSOLE_REQUIRES_WORLD, sender);
@@ -44,11 +44,11 @@ public class DisableGameCommand extends ZFCommand {
             getMessager().bad(Language.NO_WORLD, sender, worldName);
             return;
         }
-        if (!plugin.getGameManager().isWorldEnabled(world.getName())) {
+        if (!plugin.getGameManager().isWorldEnabled(world)) {
             getMessager().bad(Language.CMD_DISABLE_ALREADY, sender);
             return;
         }
-        plugin.getGameManager().disableWorld(world.getName());
+        plugin.getGameManager().disableWorld(world);
         getMessager().good(Language.CMD_DISABLE_SUCCESS, sender);
     }
 }

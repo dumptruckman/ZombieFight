@@ -1,14 +1,16 @@
 package com.dumptruckman.minecraft.zombiefight.api;
 
+import org.bukkit.World;
+
 public interface GameManager {
 
-    Game getGame(String worldName);
+    Game getGame(World world);
 
-    void newGame(String worldName);
+    boolean isWorldEnabled(World world);
 
-    boolean isWorldEnabled(String worldName);
+    void enableWorld(World world);
 
-    void enableWorld(String worldName);
+    void disableWorld(World world);
 
-    void disableWorld(String worldName);
+    void unloadWorld(World world);
 }
