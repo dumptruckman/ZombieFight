@@ -10,10 +10,14 @@ public class LastHumanCountdownTask extends CountdownTask {
 
     private GamePlayer lastHuman;
 
-    public LastHumanCountdownTask(Game game, ZombieFight plugin, GamePlayer lastHuman) {
+    public LastHumanCountdownTask(Game game, ZombieFight plugin) {
         super(game, plugin);
         setCountdown(getConfig().get(ZFConfig.LAST_HUMAN));
         setWarnings(getConfig().getList(ZFConfig.LAST_HUMAN_WARNINGS));
+    }
+
+    public void setLastHuman(GamePlayer lastHuman) {
+        this.lastHuman = lastHuman;
     }
 
     @Override

@@ -11,6 +11,7 @@ import com.dumptruckman.minecraft.zombiefight.api.ZFConfig;
 import com.dumptruckman.minecraft.zombiefight.api.ZombieFight;
 import com.dumptruckman.minecraft.zombiefight.task.GameCountdownTask;
 import com.dumptruckman.minecraft.zombiefight.task.GameEndTask;
+import com.dumptruckman.minecraft.zombiefight.task.LastHumanCountdownTask;
 import com.dumptruckman.minecraft.zombiefight.task.ZombieLockCountdownTask;
 import com.dumptruckman.minecraft.zombiefight.util.Language;
 import org.bukkit.Bukkit;
@@ -38,25 +39,54 @@ class DefaultGame2 implements Game {
 
     private Snapshot snapshot;
 
-    private Map<String, GamePlayer> gamePlayers = new HashMap<String, GamePlayer>();
+    private Map<String, GamePlayer> gamePlayers;
 
-    boolean started = false;
-    boolean ended = false;
-    boolean reset = false;
+    boolean started;
+    boolean ended;
+    boolean reset;
+    boolean finalized;
 
-    boolean countingDown = false;
-    boolean zombiesLocked = true;
-    boolean lastHuman = false;
+    boolean countingDown;
+    boolean zombiesLocked;
+    boolean lastHuman;
 
     private GameCountdownTask countdownTask;
     private ZombieLockCountdownTask zombieLockTask;
+    private LastHumanCountdownTask lastHumanTask;
+    private GameEndTask gameEndTask;
 
     DefaultGame2(ZombieFight plugin, World world) {
         this.plugin = plugin;
         this.world = world;
+        init();
+    }
+
+    protected final void init() {
+        if (countdownTask != null) {
+            countdownTask.kill();
+        }
+        if (zombieLockTask != null) {
+            zombieLockTask.kill();
+        }
+        if (lastHumanTask != null) {
+            lastHumanTask.kill();
+        }
+        if (gameEndTask != null) {
+            gameEndTask.kill();
+        }
+        gamePlayers = new HashMap<String, GamePlayer>();
+        started = false;
+        ended = false;
+        reset = false;
+        finalized = false;
+        countingDown = false;
+        zombiesLocked = true;
+        lastHuman = false;
         snapshot = new DefaultSnapshot(getWorld());
         countdownTask = new GameCountdownTask(this, plugin);
         zombieLockTask = new ZombieLockCountdownTask(this, plugin);
+        lastHumanTask = new LastHumanCountdownTask(this, plugin);
+        gameEndTask = new GameEndTask(this, plugin);
     }
 
     protected ZombieFight getPlugin() {
@@ -155,10 +185,6 @@ class DefaultGame2 implements Game {
         return onlinePlayers;
     }
 
-    private void startSnapshot() {
-        snapshot.initialize();
-    }
-
     private void _startCountdown() {
         countingDown = true;
         countdownTask.start();
@@ -167,16 +193,22 @@ class DefaultGame2 implements Game {
     private void _startGame() {
         countingDown = false;
         started = true;
+        snapshot.initialize();
         broadcast(Language.GAME_STARTING);
         zombieLockTask.start();
     }
 
     private void _zombiesUnlocked() {
+        countingDown = false;
+        started = true;
         zombiesLocked = false;
         broadcast(Language.ZOMBIE_RELEASE);
     }
 
     private void _lastHuman(GamePlayer lastHuman) {
+        countingDown = false;
+        started = true;
+        zombiesLocked = false;
         int finalHuman = getConfig().get(ZFConfig.LAST_HUMAN);
         broadcast(Language.ONE_HUMAN_LEFT, finalHuman);
         LootTable reward = plugin.getLootConfig().getLastHumanReward();
@@ -186,15 +218,24 @@ class DefaultGame2 implements Game {
         } else {
             Logging.warning("Last human reward is not setup correctly!");
         }
+        lastHumanTask.setLastHuman(lastHuman);
+        lastHumanTask.start();
     }
 
     private void _gameOver() {
-        broadcast(Language.GAME_ENDED);
+        countingDown = false;
+        started = true;
+        zombiesLocked = false;
         ended = true;
-        new GameEndTask(this, plugin).start();
+        broadcast(Language.GAME_ENDED);
+        gameEndTask.start();
     }
 
     private void _resetGame(boolean restart) {
+        countingDown = false;
+        started = true;
+        zombiesLocked = false;
+        ended = true;
         reset = true;
         for (GamePlayer gPlayer : gamePlayers.values()) {
             gPlayer.makeHuman();
@@ -205,13 +246,9 @@ class DefaultGame2 implements Game {
         }
         broadcast(Language.ROLLBACK);
         getSnapshot().applySnapshot();
+        finalized = true;
         if (restart) {
-            Bukkit.getScheduler().scheduleSyncDelayedTask(getPlugin(), new Runnable() {
-                @Override
-                public void run() {
-                    getPlugin().getGameManager().newGame(getWorld().getName());
-                }
-            });
+            init();
         }
     }
 
@@ -391,6 +428,9 @@ class DefaultGame2 implements Game {
 
     @Override
     public boolean start() {
+        if (finalized) {
+            init();
+        }
         if (hasStarted()) {
             return false;
         }
@@ -400,6 +440,9 @@ class DefaultGame2 implements Game {
 
     @Override
     public boolean forceStart() {
+        if (finalized) {
+            init();
+        }
         if (hasStarted()) {
             return false;
         }

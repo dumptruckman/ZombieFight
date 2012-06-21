@@ -12,6 +12,7 @@ import java.util.Set;
 public abstract class CountdownTask extends GameTask {
 
     private boolean started = false;
+    private boolean dead = false;
     private int countdown = -1;
     private Set<Integer> warnings = new HashSet<Integer>();
 
@@ -29,15 +30,19 @@ public abstract class CountdownTask extends GameTask {
     }
 
     public final void start() {
-        if (!started) {
+        if (!started && !dead) {
             started = true;
             Bukkit.getScheduler().scheduleSyncDelayedTask(getPlugin(), this, 20L);
         }
     }
 
+    public final void kill() {
+        dead = true;
+    }
+
     @Override
     public final void run() {
-        if (countdown > 0 && !shouldEnd()) {
+        if (!dead && countdown > 0 && !shouldEnd()) {
             Bukkit.getScheduler().scheduleSyncDelayedTask(getPlugin(), this, 20L);
         }
         if (shouldCountdown()) {
