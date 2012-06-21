@@ -261,7 +261,7 @@ public class ZombieFightListener implements Listener {
             return;
         }
         if (game.isZombie(player.getName())) {
-            if (event.getItem().getItemStack().getTypeId() > 255) {
+            if (!event.getItem().getItemStack().getType().isBlock()) {
                 event.setCancelled(true);
             }
         }

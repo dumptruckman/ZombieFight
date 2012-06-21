@@ -159,17 +159,6 @@ class DefaultGame implements Game {
         }
     }
 
-    private class RollbackTask implements Runnable {
-        private Snapshot snapshot;
-        private RollbackTask(Snapshot snapshot) {
-            this.snapshot = snapshot;
-        }
-        @Override
-        public void run() {
-            snapshot.applySnapshot();
-        }
-    }
-
     DefaultGame(ZombieFight plugin, String worldName) {
         this.plugin = plugin;
         this.worldName = worldName;
@@ -684,12 +673,9 @@ class DefaultGame implements Game {
     }
 
     private void rollbackWorld(boolean restartAfter) {
-        if (snapshot != null) {
-            rollingBack = true;
-            broadcast(Language.ROLLBACK);
-            World world = Bukkit.getWorld(worldName);
-            getSnapshot().applySnapshot();
-        }
+        rollingBack = true;
+        broadcast(Language.ROLLBACK);
+        getSnapshot().applySnapshot();
         if (restartAfter) {
             Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
                 @Override
