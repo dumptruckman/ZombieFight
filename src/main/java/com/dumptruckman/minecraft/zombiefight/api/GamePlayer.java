@@ -15,4 +15,6 @@ public interface GamePlayer {
     void leftGame();
 
     void makeZombie();
+
+    void makeHuman();
 }

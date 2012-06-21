@@ -13,6 +13,7 @@ import org.bukkit.entity.Player;
 class DefaultGamePlayer implements GamePlayer {
 
     private ZombieFight plugin;
+    private Game game;
 
     private String name;
 
@@ -22,6 +23,7 @@ class DefaultGamePlayer implements GamePlayer {
     DefaultGamePlayer(String name, ZombieFight plugin, Game game) {
         this.name = name;
         this.plugin = plugin;
+        this.game = game;
         Player player = getPlayer();
         if (player != null && player.getWorld().equals(game.getWorld())) {
             online = true;
@@ -55,6 +57,9 @@ class DefaultGamePlayer implements GamePlayer {
 
     @Override
     public boolean isOnline() {
+        if (online && getPlayer() == null) {
+            leftGame();
+        }
         return online;
     }
 
@@ -87,6 +92,27 @@ class DefaultGamePlayer implements GamePlayer {
         zombie = true;
         Player player = getPlayer();
         if (player != null) {
+            plugin.broadcastWorld(game.getWorld().getName(), plugin.getMessager().getMessage(Language.PLAYER_ZOMBIFIED, player.getName()));
+            player.getInventory().clear();
+            player.setHealth(20);
+            player.setFoodLevel(20);
+            player.setSaturation(5F);
+            player.setExhaustion(0F);
+            fixUpPlayer(player);
+            plugin.getMessager().normal(Language.YOU_ARE_ZOMBIE, player);
+        }
+    }
+
+    @Override
+    public void makeHuman() {
+        zombie = false;
+        Player player = getPlayer();
+        if (player != null) {
+            player.getInventory().clear();
+            player.setHealth(20);
+            player.setFoodLevel(20);
+            player.setSaturation(5F);
+            player.setExhaustion(0F);
             fixUpPlayer(player);
         }
     }

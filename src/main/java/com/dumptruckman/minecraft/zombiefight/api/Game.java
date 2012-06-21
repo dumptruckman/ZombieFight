@@ -15,6 +15,8 @@ public interface Game {
 
     boolean hasEnded();
 
+    boolean hasReset();
+
     boolean isZombie(Player player);
 
     void playerJoined(Player player);
@@ -32,4 +34,20 @@ public interface Game {
     void snapshotChunk(Chunk chunk);
 
     void snapshotBlock(Block block);
+
+    boolean start();
+
+    boolean forceStart();
+
+    boolean end();
+
+    boolean forceEnd(boolean restart);
+
+    boolean isCountdownPhase();
+
+    boolean isZombieLockPhase();
+
+    void unlockZombies();
+
+    boolean isLastHumanPhase();
 }

@@ -93,14 +93,18 @@ public class Language {
             "Enough players have joined to start the countdown for game to begin!");
     public static final Message TOO_FEW_PLAYERS = new Message("game.starting.too_few_players",
             "Too many players have left.  Start countdown halted until more players join.");
-    public static final Message GAME_STARTING = new Message("game.starting.starting",
-            "The game has begun!");
-    public static final Message GAME_ENDED = new Message("game.ended.ended",
-            "The game has ended!");
+    public static final Message GAME_STARTING = new Message("game.starting.beginning",
+            "&aThe game has begun!");
+    public static final Message GAME_ENDED = new Message("game.ended.game_over",
+            "&cThe game is over!");
+    public static final Message GAME_ENDED_TOO_FEW_PLAYERS = new Message("game.ended.too_few_players",
+            "The game has ended due to too few players...");
     public static final Message ALL_HUMANS_DEAD = new Message("game.ended.all_humans_dead",
             "All humans are dead.");
     public static final Message RUN_FROM_ZOMBIE = new Message("game.run_from_zombie",
             "You have %1 seconds to run away from the zombie!");
+    public static final Message ZOMBIE_LOCK_COUNTDOWN = new Message("game.zombie_lock_countdown",
+            "Zombie releasing in %1 second(s)");
     public static final Message PLAYER_ZOMBIFIED = new Message("game.player_zombified",
             "%1 has been turned into a zombie!");
     public static final Message ZOMBIE_NAME = new Message("game_settings.zombie_name",
@@ -113,6 +117,10 @@ public class Language {
             "The game will be resetting in %1 seconds...");
     public static final Message ONE_HUMAN_LEFT = new Message("game.last_human.left",
             "Only one human remains... Can they survive the zombie horde for %1 seconds?");
+    public static final Message LAST_HUMAN_COUNTDOWN = new Message("game.last_human.countdown",
+            "&7Last human wins in &f%1&7 second(s)");
+    public static final Message LAST_HUMAN_REWARD = new Message("game.last_human.reward",
+            "&6Take these items and defend your life!");
     public static final Message LAST_HUMAN_WON = new Message("game.last_human.won",
             "The last human survived the final onslaught. Congratulations &6%1!");
     public static final Message APPROACHING_BORDER = new Message("game.border.approaching",

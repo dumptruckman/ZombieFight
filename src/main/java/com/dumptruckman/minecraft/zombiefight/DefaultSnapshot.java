@@ -56,7 +56,12 @@ class DefaultSnapshot implements Snapshot {
 
     DefaultSnapshot(World world) {
         worldName = world.getName();
-        for (Entity e : world.getEntities()) {
+
+    }
+
+    @Override
+    public void initialize() {
+        for (Entity e : Bukkit.getWorld(worldName).getEntities()) {
             snapEntity(e);
         }
     }
