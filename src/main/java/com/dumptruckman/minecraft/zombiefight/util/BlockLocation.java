@@ -16,6 +16,7 @@ public class BlockLocation {
     private int x, y, z;
     private String world;
     private int hashCode;
+    private String stringForm;
 
     private BlockLocation(Block block) {
         this.x = block.getX();
@@ -23,6 +24,7 @@ public class BlockLocation {
         this.z = block.getZ();
         this.world = block.getWorld().getName();
         hashCode = block.hashCode();
+        this.stringForm = "Block at World:" + world + " X:" + x + " Y:" + y + " Z:" + z;
     }
 
     public static BlockLocation get(Block block) {
@@ -57,5 +59,9 @@ public class BlockLocation {
             return block.x == this.x && block.y == this.y && block.z == this.z && block.world.equals(this.world);
         }
         return false;
+    }
+
+    public String toString() {
+        return stringForm;
     }
 }

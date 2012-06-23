@@ -11,6 +11,7 @@ import com.dumptruckman.minecraft.zombiefight.api.ZFConfig;
 import com.dumptruckman.minecraft.zombiefight.api.ZombieFight;
 import com.dumptruckman.minecraft.zombiefight.task.GameCountdownTask;
 import com.dumptruckman.minecraft.zombiefight.task.GameEndTask;
+import com.dumptruckman.minecraft.zombiefight.task.HumanFinderTask;
 import com.dumptruckman.minecraft.zombiefight.task.LastHumanCountdownTask;
 import com.dumptruckman.minecraft.zombiefight.task.ZombieLockCountdownTask;
 import com.dumptruckman.minecraft.zombiefight.util.Language;
@@ -54,42 +55,13 @@ class DefaultGame implements Game {
     private ZombieLockCountdownTask zombieLockTask;
     private LastHumanCountdownTask lastHumanTask;
     private GameEndTask gameEndTask;
+    private HumanFinderTask humanFinderTask;
 
     DefaultGame(ZombieFight plugin, World world) {
+        Logging.fine("Made new game object for " + world);
         this.plugin = plugin;
         this.world = world;
         init();
-    }
-
-    protected final void init() {
-        if (countdownTask != null) {
-            countdownTask.kill();
-        }
-        if (zombieLockTask != null) {
-            zombieLockTask.kill();
-        }
-        if (lastHumanTask != null) {
-            lastHumanTask.kill();
-        }
-        if (gameEndTask != null) {
-            gameEndTask.kill();
-        }
-        gamePlayers = new HashMap<String, GamePlayer>();
-        started = false;
-        ended = false;
-        reset = false;
-        finalized = false;
-        countingDown = false;
-        zombiesLocked = true;
-        lastHuman = false;
-        snapshot = new DefaultSnapshot(getWorld());
-        countdownTask = new GameCountdownTask(this, plugin);
-        zombieLockTask = new ZombieLockCountdownTask(this, plugin);
-        lastHumanTask = new LastHumanCountdownTask(this, plugin);
-        gameEndTask = new GameEndTask(this, plugin);
-        for (Player player : getWorld().getPlayers()) {
-            playerJoined(player);
-        }
     }
 
     protected ZombieFight getPlugin() {
@@ -173,6 +145,20 @@ class DefaultGame implements Game {
         }
     }
 
+    protected GamePlayer randomZombie() {
+        Random rand = new Random(System.currentTimeMillis());
+        Set<GamePlayer> onlinePlayers = getOnlinePlayers();
+        int index = rand.nextInt(onlinePlayers.size());
+        int i = 0;
+        for (GamePlayer gPlayer : onlinePlayers) {
+            if (i == index) {
+                return gPlayer;
+            }
+            i++;
+        }
+        return null;
+    }
+
     protected Snapshot getSnapshot() {
         return snapshot;
     }
@@ -189,29 +175,61 @@ class DefaultGame implements Game {
     }
 
     private void _startCountdown() {
+        Logging.fine("Game startCountdown called");
         countingDown = true;
         countdownTask.start();
     }
 
     private void _startGame() {
+        Logging.fine("Game startGame called");
         countingDown = false;
         started = true;
         snapshot.initialize();
         broadcast(Language.GAME_STARTING);
+        Logging.finest("Game started");
+        for (Player player : getWorld().getPlayers()) {
+            GamePlayer gPlayer = getGamePlayer(player.getName());
+            if (!gPlayer.isOnline()) {
+                gPlayer.joinedGame();
+            }
+            gPlayer.makeHuman();
+            player.teleport(getSpawnLocation());
+            String kitName = plugin.getPlayerKit(player.getName());
+            if (kitName != null) {
+                LootTable kit = plugin.getLootConfig().getKit(kitName);
+                if (kit != null) {
+                    kit.addToInventory(player.getInventory());
+                } else {
+                    plugin.getMessager().bad(Language.KIT_ERROR_DEFAULT, player, kitName);
+                    plugin.setPlayerKit(player.getName(), null);
+                    plugin.getLootConfig().getDefaultKit().addToInventory(player.getInventory());
+                }
+            } else {
+                plugin.getLootConfig().getDefaultKit().addToInventory(player.getInventory());
+            }
+        }
+        randomZombie().makeZombie();
+        broadcast(Language.RUN_FROM_ZOMBIE, plugin.config().get(ZFConfig.ZOMBIE_LOCK));
         zombieLockTask.start();
+        checkGameEnd();
     }
 
     private void _zombiesUnlocked() {
+        Logging.fine("Game zombiesUnlocked called");
         countingDown = false;
         started = true;
         zombiesLocked = false;
         broadcast(Language.ZOMBIE_RELEASE);
+        humanFinderTask.start();
+        checkGameEnd();
     }
 
     private void _lastHuman(GamePlayer lastHuman) {
+        Logging.fine("Game lastHuman called");
         countingDown = false;
         started = true;
         zombiesLocked = false;
+        this.lastHuman = true;
         int finalHuman = getConfig().get(ZFConfig.LAST_HUMAN);
         broadcast(Language.ONE_HUMAN_LEFT, finalHuman);
         LootTable reward = plugin.getLootConfig().getLastHumanReward();
@@ -226,18 +244,22 @@ class DefaultGame implements Game {
     }
 
     private void _gameOver() {
+        Logging.fine("Game gameOver called");
         countingDown = false;
         started = true;
         zombiesLocked = false;
+        lastHuman = false;
         ended = true;
         broadcast(Language.GAME_ENDED);
         gameEndTask.start();
     }
 
     private void _resetGame(boolean restart) {
+        Logging.fine("Game resetGame called");
         countingDown = false;
         started = true;
         zombiesLocked = false;
+        lastHuman = false;
         ended = true;
         reset = true;
         for (GamePlayer gPlayer : gamePlayers.values()) {
@@ -278,6 +300,51 @@ class DefaultGame implements Game {
         return loc;
     }
 
+    @Override
+    public final void init() {
+        Logging.fine("Game init called");
+        if (countdownTask != null) {
+            countdownTask.kill();
+        }
+        if (zombieLockTask != null) {
+            zombieLockTask.kill();
+        }
+        if (lastHumanTask != null) {
+            lastHumanTask.kill();
+        }
+        if (gameEndTask != null) {
+            gameEndTask.kill();
+        }
+        if (humanFinderTask != null) {
+            humanFinderTask.kill();
+        }
+        gamePlayers = new HashMap<String, GamePlayer>();
+        started = false;
+        ended = false;
+        reset = false;
+        finalized = false;
+        countingDown = false;
+        zombiesLocked = true;
+        lastHuman = false;
+        snapshot = new DefaultSnapshot(getWorld());
+        countdownTask = new GameCountdownTask(this, plugin);
+        zombieLockTask = new ZombieLockCountdownTask(this, plugin);
+        lastHumanTask = new LastHumanCountdownTask(this, plugin);
+        gameEndTask = new GameEndTask(this, plugin);
+        humanFinderTask = new HumanFinderTask(this, plugin);
+        List<Player> playersInWorld = getWorld().getPlayers();
+        for (Player player : playersInWorld) {
+            GamePlayer gPlayer = getGamePlayer(player.getName());
+            gPlayer.joinedGame();
+            gPlayer.makeHuman();
+        }
+        if (isEnabled()) {
+            if (playersInWorld.size() < getConfig().get(ZFConfig.MIN_PLAYERS)) {
+                broadcast(Language.JOIN_WHILE_GAME_PREPARING);
+            }
+        }
+        checkGameStart();
+    }
 
     @Override
     public boolean isEnabled() {
@@ -312,7 +379,7 @@ class DefaultGame implements Game {
             @Override
             public void run() {
                 getMessager().sendMessage(player, ChatColor.GRAY + "Visit the official Minecraft Zombies website: "
-                        + ChatColor.RED + "mczombies.com");
+                        + ChatColor.RED + "www.mczombies.com");
                 getPlugin().displayKits(player);
             }
         }, 2L);
@@ -370,6 +437,21 @@ class DefaultGame implements Game {
     }
 
     @Override
+    public void playerDied(final Player player) {
+        if (hasStarted() && !hasEnded()) {
+            if (!isZombie(player)) {
+                Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
+                    @Override
+                    public void run() {
+                        getGamePlayer(player.getName()).makeZombie();
+                        checkGameEnd();
+                    }
+                });
+            }
+        }
+    }
+
+    @Override
     public boolean allowMove(Player player, Block fromBlock, Block toBlock) {
         if (hasStarted() && !hasEnded() && isZombieLockPhase()) {
             GamePlayer gPlayer = getGamePlayer(player.getName());
@@ -396,6 +478,7 @@ class DefaultGame implements Game {
         } else if (!gAttacker.isZombie() && !gVictim.isZombie()) {
             return false;
         } else {
+            humanFinderTask.humanFound();
             return true;
         }
     }
@@ -424,7 +507,7 @@ class DefaultGame implements Game {
 
     @Override
     public void snapshotBlock(Block block) {
-        if (!hasStarted() || hasEnded()) {
+        if (!hasStarted() || hasReset()) {
             return;
         }
         if (!block.getWorld().equals(getWorld())) {
@@ -437,6 +520,7 @@ class DefaultGame implements Game {
     @Override
     public boolean start() {
         if (finalized) {
+            Logging.fine("Initializing game before starting...");
             init();
         }
         if (hasStarted()) {
@@ -449,6 +533,7 @@ class DefaultGame implements Game {
     @Override
     public boolean forceStart() {
         if (finalized) {
+            Logging.fine("Initializing game before starting...");
             init();
         }
         if (hasStarted()) {

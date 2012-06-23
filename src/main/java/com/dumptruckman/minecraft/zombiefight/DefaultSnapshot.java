@@ -1,5 +1,6 @@
 package com.dumptruckman.minecraft.zombiefight;
 
+import com.dumptruckman.minecraft.pluginbase.util.Logging;
 import com.dumptruckman.minecraft.zombiefight.api.Snapshot;
 import com.dumptruckman.minecraft.zombiefight.util.BlockLocation;
 import org.bukkit.Bukkit;
@@ -25,6 +26,7 @@ import java.util.UUID;
 class DefaultSnapshot implements Snapshot {
 
     private String worldName;
+    boolean init = false;
     private Map<BlockLocation, BlockState> blocks = new HashMap<BlockLocation, BlockState>();
     private List<EntitySnapshot> entities = new LinkedList<EntitySnapshot>();
     private Set<UUID> entityIds = new HashSet<UUID>();
@@ -64,6 +66,7 @@ class DefaultSnapshot implements Snapshot {
         for (Entity e : Bukkit.getWorld(worldName).getEntities()) {
             snapEntity(e);
         }
+        init = true;
     }
 
     @Override
@@ -88,6 +91,10 @@ class DefaultSnapshot implements Snapshot {
     }
 
     public void applySnapshot() {
+        if (!init) {
+            Logging.fine("Snapshot never initialized for world: " + worldName);
+            return;
+        }
         World world = Bukkit.getWorld(worldName);
         if (world == null) {
             return;
@@ -95,6 +102,7 @@ class DefaultSnapshot implements Snapshot {
         for (Map.Entry<BlockLocation, BlockState> blockData : blocks.entrySet()) {
             Block block = blockData.getKey().getBlock();
             if (block == null) {
+                Logging.finest("Could not locate block: " + blockData.getKey());
                 continue;
             }
             BlockState state = blockData.getValue();

@@ -4,7 +4,6 @@ import com.dumptruckman.minecraft.pluginbase.util.Logging;
 import com.dumptruckman.minecraft.zombiefight.api.Game;
 import com.dumptruckman.minecraft.zombiefight.api.GameManager;
 import com.dumptruckman.minecraft.zombiefight.api.LootConfig;
-import com.dumptruckman.minecraft.zombiefight.api.LootTable;
 import com.dumptruckman.minecraft.zombiefight.api.ZFConfig;
 import com.dumptruckman.minecraft.zombiefight.api.ZombieFight;
 import com.dumptruckman.minecraft.zombiefight.command.BorderCommand;
@@ -20,25 +19,19 @@ import com.dumptruckman.minecraft.zombiefight.util.Language;
 import com.dumptruckman.minecraft.pluginbase.plugin.AbstractBukkitPlugin;
 import com.dumptruckman.minecraft.pluginbase.plugin.command.HelpCommand;
 import com.dumptruckman.minecraft.zombiefight.util.Perms;
-import me.desmin88.mobdisguise.api.MobDisguiseAPI;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements ZombieFight {
 
@@ -46,10 +39,8 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
 
     private GameManager gameManager = null;
     private LootConfig lootConfig = null;
-    private boolean mobDisguise = false;
     private ZombieFightListener listener;
     private TestModeListener testListener = new TestModeListener(this);
-    private Set<Integer> countdownWarnings = new HashSet<Integer>();
     private Map<String, String> playerKits = new HashMap<String, String>();
 
     @Override
@@ -68,6 +59,7 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
     public void postEnable() {
         PluginManager pm = getServer().getPluginManager();
         pm.registerEvents(listener, this);
+        pm.registerEvents(new GameMonitor(this), this);
         if (config().get(ZFConfig.TEST_MODE)) {
             pm.registerEvents(testListener, this);
         }
@@ -79,19 +71,14 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
         getCommandHandler().registerCommand(new DisableGameCommand(this));
         getCommandHandler().registerCommand(new KitCommand(this));
         getCommandHandler().registerCommand(new BorderCommand(this));
-        Plugin plugin = pm.getPlugin("MobDisguise");
-        if (plugin != null) {
-            Logging.info("Hooked MobDisguise!");
-            mobDisguise = true;
-        }
         getLootConfig();
     }
 
     @Override
     public void preReload() {
         for (World world : Bukkit.getWorlds()) {
-            Game game = getGameManager().getGame(world.getName());
-            if (game != null) {
+            Game game = getGameManager().getGame(world);
+            if (game.isEnabled()) {
                 game.broadcast(Language.PLUGIN_RELOAD);
                 game.forceEnd(false);
             }
@@ -104,16 +91,13 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
     public void postReload() {
         listener.resetBorderDamager();
         for (World world : Bukkit.getWorlds()) {
-            if (!getGameManager().isWorldEnabled(world.getName())) {
-                continue;
-            }
-            getGameManager().newGame(world.getName());
+            getGameManager().getGame(world);
         }
-        countdownWarnings = new HashSet<Integer>(config().getList(ZFConfig.COUNTDOWN_WARNINGS));
     }
 
     @Override
     public void onDisable() {
+        preReload();
         getServer().getScheduler().cancelTasks(this);
         super.onDisable();
     }
@@ -151,68 +135,11 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
         }
     }
 
-    @Override
-    public Collection<String> getPlayersForWorld(String worldName) {
-        World world = Bukkit.getWorld(worldName);
-        Collection<String> players = new LinkedList<String>();
-        for (Player player : world.getPlayers()) {
-            players.add(player.getName());
-        }
-        return players;
-    }
-
-    @Override
-    public void zombifyPlayer(String name) {
-        Logging.finer("Zombifying " + name);
-        Player player = getServer().getPlayerExact(name);
-        if (player == null) {
-            Bukkit.broadcastMessage("Could not zombify: " + name);
-            return;
-        }
-        World world = player.getWorld();
-        broadcastWorld(world.getName(), getMessager().getMessage(Language.PLAYER_ZOMBIFIED, player.getName()));
-        disguiseAsZombie(player);
-        player.getInventory().clear();
-        player.setHealth(20);
-        player.setFoodLevel(20);
-        player.setSaturation(5F);
-        player.setExhaustion(0F);
-        getMessager().normal(Language.YOU_ARE_ZOMBIE, player);
-    }
-
-    @Override
-    public void unZombifyPlayer(String name) {
-        Logging.finer("Unzombifying " + name);
-        Player player = getServer().getPlayerExact(name);
-        if (player == null) {
-            Bukkit.broadcastMessage("Could not un-zombify: " + name);
-            return;
-        }
-        unDisguiseAsZombie(player);
-    }
-
-    private void disguiseAsZombie(Player player) {
-        if (mobDisguise) {
-            MobDisguiseAPI.disguisePlayer(player, "zombie");
-        }
-    }
-
-    private void unDisguiseAsZombie(Player player) {
-        if (mobDisguise) {
-            MobDisguiseAPI.undisguisePlayer(player);
-        }
-    }
-
     public LootConfig getLootConfig() {
         if (lootConfig == null) {
             lootConfig = new DefaultLootConfig(this);
         }
         return lootConfig;
-    }
-
-    @Override
-    public boolean shouldWarn(int time) {
-        return countdownWarnings.contains(time);
     }
 
     @Override

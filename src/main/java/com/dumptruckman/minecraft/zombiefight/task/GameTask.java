@@ -4,15 +4,22 @@ import com.dumptruckman.minecraft.pluginbase.locale.Messager;
 import com.dumptruckman.minecraft.zombiefight.api.Game;
 import com.dumptruckman.minecraft.zombiefight.api.ZFConfig;
 import com.dumptruckman.minecraft.zombiefight.api.ZombieFight;
+import org.bukkit.Bukkit;
 
 public abstract class GameTask implements Runnable {
 
     private Game game;
     private ZombieFight plugin;
 
-    public GameTask(Game game, ZombieFight plugin) {
+    protected boolean started = false, dead = false;
+
+    protected final long delay, repeat;
+
+    public GameTask(Game game, ZombieFight plugin, long delay, long repeat) {
         this.game = game;
         this.plugin = plugin;
+        this.delay = delay;
+        this.repeat = repeat;
     }
 
     protected Game getGame() {
@@ -27,7 +34,33 @@ public abstract class GameTask implements Runnable {
         return plugin.config();
     }
 
-    protected Messager getMesager() {
+    protected Messager getMessager() {
         return plugin.getMessager();
     }
+
+    public final void start() {
+        if (!started && !dead) {
+            started = true;
+            Bukkit.getScheduler().scheduleSyncDelayedTask(getPlugin(), this, delay);
+            onStart();
+        }
+    }
+
+    public final void kill() {
+        dead = true;
+    }
+
+    @Override
+    public void run() {
+        if (!dead && !shouldEnd()) {
+            Bukkit.getScheduler().scheduleSyncDelayedTask(getPlugin(), this, repeat);
+        }
+        onRun();
+    }
+
+    protected void onStart() { }
+
+    protected void onRun() { }
+
+    public abstract boolean shouldEnd();
 }

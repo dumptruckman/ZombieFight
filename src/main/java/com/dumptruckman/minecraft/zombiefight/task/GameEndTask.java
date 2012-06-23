@@ -13,13 +13,18 @@ public class GameEndTask extends CountdownTask {
     }
 
     @Override
+    protected void onStart() {
+        getGame().broadcast(Language.GAME_RESETTING, getConfig().get(ZFConfig.END_DURATION));
+    }
+
+    @Override
     public boolean shouldEnd() {
         return getGame().hasReset();
     }
 
     @Override
     public boolean shouldCountdown() {
-        return true;
+        return getGame().hasEnded();
     }
 
     @Override

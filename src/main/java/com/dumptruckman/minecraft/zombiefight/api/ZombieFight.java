@@ -16,15 +16,7 @@ public interface ZombieFight extends BukkitPlugin<ZFConfig>, Plugin {
 
     void broadcastWorld(String worldName, String message);
 
-    Collection<String> getPlayersForWorld(String worldName);
-
-    void zombifyPlayer(String name);
-
-    void unZombifyPlayer(String name);
-
     LootConfig getLootConfig();
-
-    boolean shouldWarn(int time);
 
     void setPlayerKit(String name, String kit);
 

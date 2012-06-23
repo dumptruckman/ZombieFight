@@ -18,7 +18,9 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.craftbukkit.entity.CraftPlayer;
+import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Projectile;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -43,6 +45,8 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.BrewEvent;
 import org.bukkit.event.inventory.FurnaceBurnEvent;
 import org.bukkit.event.inventory.FurnaceSmeltEvent;
+import org.bukkit.event.inventory.InventoryOpenEvent;
+import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerChatEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -82,8 +86,8 @@ public class ZombieFightListener implements Listener {
                     playersPastBorder.get(worldBorder).clear();
                     continue;
                 }
-                Game game = plugin.getGameManager().getGame(worldBorder);
-                if (game == null || game.getStatus() == GameStatus.PREPARING || game.getStatus() == GameStatus.STARTING || game.getStatus() == GameStatus.ENDED) {
+                Game game = plugin.getGameManager().getGame(world);
+                if (!game.isEnabled() || !game.hasStarted() || game.hasReset()) {
                     playersPastBorder.get(worldBorder).clear();
                     continue;
                 }
@@ -135,44 +139,32 @@ public class ZombieFightListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void playerJoin(PlayerJoinEvent event) {
-        final Player player = event.getPlayer();
-        final World world = player.getWorld();
-        final Game game = plugin.getGameManager().getGame(world.getName());
-        if (game == null) {
+        Logging.finest(event.getPlayer() + " joined mc");
+        Player player = event.getPlayer();
+        Game game = plugin.getGameManager().getGame(player.getWorld());
+        if (!game.isEnabled()) {
             Logging.finest("Player joined non-game world.");
             return;
         }
-        game.playerJoined(player.getName());
-    }
-
-    public void chunkLoad(ChunkLoadEvent event) {
-        Chunk chunk = event.getChunk();
-        World world = chunk.getWorld();
-        Game game = plugin.getGameManager().getGame(world.getName());
-        if (game == null) {
-            return;
-        }
-        game.snapshotChunk(chunk);
+        game.playerJoined(player);
     }
 
     @EventHandler
     public void blockDamage(BlockDamageEvent event) {
         Player player = event.getPlayer();
-        World world = player.getWorld();
-        Game game = plugin.getGameManager().getGame(world.getName());
-        if (game == null) {
+        Game game = plugin.getGameManager().getGame(player.getWorld());
+        if (!game.isEnabled()) {
             return;
         }
-        if (game.getStatus() == GameStatus.IN_PROGRESS) {
-            if (game.isZombie(player.getName())) {
-                String firstZombie = game.getFirstZombie();
-                if (firstZombie != null && firstZombie.equals(player.getName())) {
+        if (game.hasStarted() && !game.hasEnded()) {
+            if (game.isZombie(player)) {
+                if (game.isZombieLockPhase()) {
                     event.setCancelled(true);
-                    return;
-                }
-                Random rand = new Random(System.currentTimeMillis());
-                if (rand.nextInt(100) < plugin.config().get(ZFConfig.INSTA_BREAK)) {
-                    event.setInstaBreak(true);
+                } else if (event.getBlock().getType() != Material.BEDROCK){
+                    Random rand = new Random(System.currentTimeMillis());
+                    if (rand.nextInt(100) < plugin.config().get(ZFConfig.INSTA_BREAK)) {
+                        event.setInstaBreak(true);
+                    }
                 }
             }
         }
@@ -181,120 +173,95 @@ public class ZombieFightListener implements Listener {
     @EventHandler
     public void blockBreak(BlockBreakEvent event) {
         Player player = event.getPlayer();
-        World world = player.getWorld();
-        Game game = plugin.getGameManager().getGame(world.getName());
-        if (game == null) {
+        Game game = plugin.getGameManager().getGame(player.getWorld());
+        if (!game.isEnabled()) {
             return;
         }
-        if (game.getStatus() == GameStatus.IN_PROGRESS) {
-            if (game.isZombie(player.getName())) {
-                String firstZombie = game.getFirstZombie();
-                if (firstZombie != null && firstZombie.equals(player.getName())) {
-                    event.setCancelled(true);
-                }
-            }
-            if (!game.isPlaying(player.getName())) {
-                if (!Perms.CAN_ALWAYS_BREAK.hasPermission(player)) {
-                    event.setCancelled(true);
-                }
-            }
-        } else {
-            if (!Perms.CAN_ALWAYS_BREAK.hasPermission(player)) {
+        if (game.hasStarted() && !game.hasEnded()) {
+            if (game.isZombie(player) && game.isZombieLockPhase()) {
                 event.setCancelled(true);
             }
+        } else if (!Perms.CAN_ALWAYS_BREAK.hasPermission(player)) {
+            event.setCancelled(true);
         }
     }
 
     @EventHandler
     public void blockPlace(BlockPlaceEvent event) {
         Player player = event.getPlayer();
-        World world = player.getWorld();
-        Game game = plugin.getGameManager().getGame(world.getName());
-        if (game == null) {
+        Game game = plugin.getGameManager().getGame(player.getWorld());
+        if (!game.isEnabled()) {
             return;
         }
-        if (game.getStatus() == GameStatus.IN_PROGRESS) {
-            if (game.isZombie(player.getName())) {
-                String firstZombie = game.getFirstZombie();
-                if (firstZombie != null && firstZombie.equals(player.getName())) {
-                    event.setCancelled(true);
-                }
-            }
-            if (!game.isPlaying(player.getName())) {
-                if (!Perms.CAN_ALWAYS_BREAK.hasPermission(player)) {
-                    event.setCancelled(true);
-                }
-            }
-        } else {
-            if (!Perms.CAN_ALWAYS_BREAK.hasPermission(player)) {
+        if (game.hasStarted() && !game.hasEnded()) {
+            if (game.isZombie(player) && game.isZombieLockPhase()) {
                 event.setCancelled(true);
             }
+        } else if (!Perms.CAN_ALWAYS_BREAK.hasPermission(player)) {
+            event.setCancelled(true);
         }
     }
 
     @EventHandler
     public void playerChangeWorld(PlayerChangedWorldEvent event) {
+        Logging.finest(event.getPlayer() + " joined world");
         Player player = event.getPlayer();
         World fromWorld = event.getFrom();
         World toWorld = player.getWorld();
-        Game fromGame = plugin.getGameManager().getGame(fromWorld.getName());
-        Game toGame = plugin.getGameManager().getGame(toWorld.getName());
-        if (fromGame != null) {
+        Game fromGame = plugin.getGameManager().getGame(fromWorld);
+        Game toGame = plugin.getGameManager().getGame(toWorld);
+        if (fromGame.isEnabled()) {
             fromGame.broadcast(Language.LEAVE_WORLD, player.getName());
-            fromGame.playerQuit(player.getName());
+            fromGame.playerQuit(player);
         }
-        if (toGame != null) {
+        if (toGame.isEnabled()) {
             toGame.broadcast(Language.JOIN_WORLD, player.getName());
-            toGame.playerJoined(player.getName());
+            toGame.playerJoined(player);
         }
     }
 
     @EventHandler
     public void playerPickupItem(PlayerPickupItemEvent event) {
-        if (event.isCancelled()) {
-            return;
-        }
         Player player = event.getPlayer();
-        World world = player.getWorld();
-        Game game = plugin.getGameManager().getGame(world.getName());
-        if (game == null) {
+        Game game = plugin.getGameManager().getGame(player.getWorld());
+        if (!game.isEnabled()) {
             return;
         }
-        if (game.isZombie(player.getName())) {
+        if (game.isZombie(player)) {
             if (!event.getItem().getItemStack().getType().isBlock()) {
                 event.setCancelled(true);
             }
         }
     }
 
+    @EventHandler
+    public void playerOpenChest(InventoryOpenEvent event) {
+        Player player = Bukkit.getPlayerExact(event.getPlayer().getName());
+        if (player == null) {
+            return;
+        }
+        Game game = plugin.getGameManager().getGame(player.getWorld());
+        if (!game.isEnabled()) {
+            return;
+        }
+        if (game.isZombie(player) && event.getInventory().getType() != InventoryType.PLAYER) {
+            event.setCancelled(true);
+        }
+    }
+
     @EventHandler(priority = EventPriority.MONITOR)
     public void playerQuit(PlayerQuitEvent event) {
         final Player player = event.getPlayer();
-        World world = player.getWorld();
-        final Game game = plugin.getGameManager().getGame(world.getName());
-        if (game == null) {
-            Logging.finest("Player quit non-game world.");
+        final Game game = plugin.getGameManager().getGame(player.getWorld());
+        if (!game.isEnabled()) {
             return;
         }
         Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
             @Override
             public void run() {
-                game.playerQuit(player.getName());
+                game.playerQuit(player);
             }
         }, 2L);
-    }
-
-    @EventHandler(priority = EventPriority.MONITOR)
-    public void unloadWorld(WorldUnloadEvent event) {
-        if (event.isCancelled()) {
-            return;
-        }
-        World world = event.getWorld();
-        Game game = plugin.getGameManager().getGame(world.getName());
-        if (game == null) {
-            return;
-        }
-        plugin.getGameManager().disableWorld(world.getName());
     }
 
     @EventHandler
@@ -309,28 +276,23 @@ public class ZombieFightListener implements Listener {
         }
         Player player = event.getPlayer();
         World world = player.getWorld();
-        Game game = plugin.getGameManager().getGame(world.getName());
-        if (game == null) {
+        Game game = plugin.getGameManager().getGame(world);
+        if (!game.isEnabled()) {
             return;
         }
-        if (game.getStatus() == GameStatus.IN_PROGRESS || game.getStatus() == GameStatus.ENDED) {
-            String firstZombie = game.getFirstZombie();
-            if (firstZombie != null) {
-                if (game.isZombie(player.getName())) {
-                    if (!(event instanceof PlayerTeleportEvent)) {
-                        if (!(fromBlock.getX() == toBlock.getX()
-                                && fromBlock.getZ() == toBlock.getZ())) {
-                            event.setCancelled(true);
-                            player.teleport(fromBlock.getLocation());
-                            return;
-                        }
-                    }
+        if (game.isZombie(player) && game.isZombieLockPhase()) {
+            if (!(event instanceof PlayerTeleportEvent)) {
+                if (!(fromBlock.getX() == toBlock.getX()
+                        && fromBlock.getZ() == toBlock.getZ())) {
+                    event.setCancelled(true);
+                    player.teleport(fromBlock.getLocation());
+                    return;
                 }
             }
-            Location loc = plugin.config().get(ZFConfig.GAME_SPAWN.specific(world.getName()));
-            if (loc == null) {
-                loc = world.getSpawnLocation();
-            }
+        }
+        if (game.hasStarted() && !game.hasReset()) {
+            // TODO clean this up
+            Location loc = game.getSpawnLocation();
             int radius = plugin.config().get(ZFConfig.BORDER_RADIUS.specific(world.getName()));
             int warnRadius = plugin.config().get(ZFConfig.BORDER_WARN.specific(world.getName()));
             double distance = loc.distance(event.getTo());
@@ -358,49 +320,49 @@ public class ZombieFightListener implements Listener {
         if (event.isCancelled()) {
             return;
         }
+        Player attacker = null;
         if (!(event.getDamager() instanceof Player)) {
-            return;
+            if (event.getDamager() instanceof Projectile) {
+                Projectile proj = (Projectile) event.getDamager();
+                if (proj.getShooter() instanceof Player) {
+                    attacker = (Player) proj.getShooter();
+                } else {
+                    return;
+                }
+            } else {
+                return;
+            }
+        }
+        if (attacker == null) {
+            attacker = (Player) event.getDamager();
         }
         if (!(event.getEntity() instanceof Player)) {
             return;
         }
-        Player damager = (Player) event.getDamager();
-        Player damagee = (Player) event.getEntity();
-        World world = damager.getWorld();
-        Game game = plugin.getGameManager().getGame(world.getName());
-        if (game == null) {
+        Player victim = (Player) event.getEntity();
+        Game game = plugin.getGameManager().getGame( attacker.getWorld());
+        if (!game.isEnabled()) {
             return;
         }
-        if (game.getStatus() == GameStatus.IN_PROGRESS) {
-            String firstZombie = game.getFirstZombie();
-            if (firstZombie != null && (firstZombie.equals(damager.getName()) || firstZombie.equals(damagee.getName()))) {
-                event.setCancelled(true);
-                return;
-            }
-            if (game.isZombie(damager.getName()) && game.isZombie(damagee.getName())) {
-                // Zombies no hurt zombies.
-                event.setCancelled(true);
-                return;
-            } else if (!game.isZombie(damager.getName()) && !game.isZombie(damagee.getName())) {
-                // Humans no hurt humans.
-                event.setCancelled(true);
-                return;
-            } else {
-                if (plugin.config().get(ZFConfig.ZOMBIE_HUNGER_CHANCE) > 0) {
-                    if (game.isZombie(damagee.getName())) {
-                        if (damager.getItemInHand().getType() == Material.AIR) {
-                            poisonChance(damager);
-                        }
-                    } else {
-                        poisonChance(damagee);
+        boolean allow = game.allowDamage(attacker, victim);
+        if (!allow) {
+            event.setCancelled(true);
+            return;
+        }
+        if (game.hasStarted() && !game.hasEnded()) {
+            if (plugin.config().get(ZFConfig.ZOMBIE_HUNGER_CHANCE) > 0) {
+                if (game.isZombie(victim)) {
+                    if (attacker.getItemInHand().getType() == Material.AIR) {
+                        poisonChance(attacker);
                     }
+                } else {
+                    poisonChance(victim);
                 }
-                game.humanFound();
             }
-            if (game.isZombie(damager.getName())) {
+            if (game.isZombie(attacker)) {
                 event.setDamage(event.getDamage() + plugin.config().get(ZFConfig.ZOMBIE_DAMAGE));
             }
-        } else /*if (game.getStatus() == GameStatus.ENDED)*/ {
+        } else {
             event.setCancelled(true);
         }
     }
@@ -423,13 +385,12 @@ public class ZombieFightListener implements Listener {
             return;
         }
         Player player = (Player) event.getEntity();
-        World world = player.getWorld();
-        Game game = plugin.getGameManager().getGame(world.getName());
-        if (game == null) {
+        Game game = plugin.getGameManager().getGame(player.getWorld());
+        if (!game.isEnabled()) {
             return;
         }
-        if (game.getStatus() == GameStatus.IN_PROGRESS) {
-            if (game.isZombie(player.getName())) {
+        if (game.hasStarted() && !game.hasReset()) {
+            if (game.isZombie(player)) {
                 event.setCancelled(true);
             }
         }
@@ -438,222 +399,20 @@ public class ZombieFightListener implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST)
     public void playerRespawn(PlayerRespawnEvent event) {
         Player player = event.getPlayer();
-        World world = player.getWorld();
-        Game game = plugin.getGameManager().getGame(world.getName());
-        if (game == null) {
+        Game game = plugin.getGameManager().getGame(player.getWorld());
+        if (!game.isEnabled()) {
             return;
         }
-        Location spawnLoc;
-        switch (game.getStatus()) {
-            case PREPARING:
-            case STARTING:
-                spawnLoc = plugin.config().get(ZFConfig.PRE_GAME_SPAWN.specific(world.getName()));
-                if (spawnLoc == null) {
-                    Logging.fine("No pre-game spawn set, will use world spawn.");
-                    spawnLoc = world.getSpawnLocation();
-                }
-                event.setRespawnLocation(spawnLoc);
-                break;
-            case IN_PROGRESS:
-            case ENDED:
-                spawnLoc = plugin.config().get(ZFConfig.GAME_SPAWN.specific(world.getName()));
-                if (spawnLoc == null) {
-                    Logging.fine("No game spawn set, will use world spawn.");
-                    spawnLoc = world.getSpawnLocation();
-                }
-                event.setRespawnLocation(spawnLoc);
-                break;
-            default:
-                break;
-        }
+        event.setRespawnLocation(game.getSpawnLocation());
     }
 
     @EventHandler
     public void playerDeath(PlayerDeathEvent event) {
         final Player player = event.getEntity();
-        World world = player.getWorld();
-        final Game game = plugin.getGameManager().getGame(world.getName());
-        if (game == null) {
+        final Game game = plugin.getGameManager().getGame(player.getWorld());
+        if (!game.isEnabled()) {
             return;
         }
-        if (game.getStatus() == GameStatus.IN_PROGRESS) {
-            if (!game.isZombie(player.getName())) {
-                Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
-                    @Override
-                    public void run() {
-                        game.makeZombie(player.getName());
-                        game.checkGameEnd();
-                    }
-                });
-            }
-        }
-    }
-
-    @EventHandler(priority = EventPriority.MONITOR)
-    public void blockMonitor(BlockBreakEvent event) {
-        if (event.isCancelled()) {
-            return;
-        }
-        Game game = plugin.getGameManager().getGame(event.getBlock().getWorld().getName());
-        if (game == null) {
-            return;
-        }
-        game.snapshotBlock(event.getBlock());
-    }
-
-    @EventHandler(priority = EventPriority.MONITOR)
-    public void blockMonitor(BlockBurnEvent event) {
-        if (event.isCancelled()) {
-            return;
-        }
-        Game game = plugin.getGameManager().getGame(event.getBlock().getWorld().getName());
-        if (game == null) {
-            return;
-        }
-        game.snapshotBlock(event.getBlock());
-    }
-
-    @EventHandler(priority = EventPriority.MONITOR)
-    public void blockMonitor(BlockDispenseEvent event) {
-        if (event.isCancelled()) {
-            return;
-        }
-        Game game = plugin.getGameManager().getGame(event.getBlock().getWorld().getName());
-        if (game == null) {
-            return;
-        }
-        game.snapshotBlock(event.getBlock());
-    }
-
-    @EventHandler(priority = EventPriority.MONITOR)
-    public void blockMonitor(BlockFadeEvent event) {
-        if (event.isCancelled()) {
-            return;
-        }
-        Game game = plugin.getGameManager().getGame(event.getBlock().getWorld().getName());
-        if (game == null) {
-            return;
-        }
-        game.snapshotBlock(event.getBlock());
-    }
-
-    @EventHandler(priority = EventPriority.MONITOR)
-    public void blockMonitor(BlockFromToEvent event) {
-        if (event.isCancelled()) {
-            return;
-        }
-        Game game = plugin.getGameManager().getGame(event.getBlock().getWorld().getName());
-        if (game == null) {
-            return;
-        }
-        game.snapshotBlock(event.getBlock());
-    }
-
-    @EventHandler(priority = EventPriority.MONITOR)
-    public void blockMonitor(BlockGrowEvent event) {
-        if (event.isCancelled()) {
-            return;
-        }
-        Game game = plugin.getGameManager().getGame(event.getBlock().getWorld().getName());
-        if (game == null) {
-            return;
-        }
-        game.snapshotBlock(event.getBlock());
-    }
-
-    @EventHandler(priority = EventPriority.MONITOR)
-    public void blockMonitor(BlockIgniteEvent event) {
-        if (event.isCancelled()) {
-            return;
-        }
-        Game game = plugin.getGameManager().getGame(event.getBlock().getWorld().getName());
-        if (game == null) {
-            return;
-        }
-        game.snapshotBlock(event.getBlock());
-    }
-
-    @EventHandler(priority = EventPriority.MONITOR)
-    public void blockMonitor(BlockPhysicsEvent event) {
-        if (event.isCancelled()) {
-            return;
-        }
-        Game game = plugin.getGameManager().getGame(event.getBlock().getWorld().getName());
-        if (game == null) {
-            return;
-        }
-        game.snapshotBlock(event.getBlock());
-    }
-
-    @EventHandler(priority = EventPriority.MONITOR)
-    public void blockMonitor(BlockPlaceEvent event) {
-        if (event.isCancelled()) {
-            return;
-        }
-        Game game = plugin.getGameManager().getGame(event.getBlock().getWorld().getName());
-        if (game == null) {
-            return;
-        }
-        game.snapshotBlock(event.getBlock());
-    }
-
-    @EventHandler(priority = EventPriority.MONITOR)
-    public void blockMonitor(BrewEvent event) {
-        if (event.isCancelled()) {
-            return;
-        }
-        Game game = plugin.getGameManager().getGame(event.getBlock().getWorld().getName());
-        if (game == null) {
-            return;
-        }
-        game.snapshotBlock(event.getBlock());
-    }
-
-    @EventHandler(priority = EventPriority.MONITOR)
-    public void blockMonitor(FurnaceBurnEvent event) {
-        if (event.isCancelled()) {
-            return;
-        }
-        Game game = plugin.getGameManager().getGame(event.getBlock().getWorld().getName());
-        if (game == null) {
-            return;
-        }
-        game.snapshotBlock(event.getBlock());
-    }
-
-    @EventHandler(priority = EventPriority.MONITOR)
-    public void blockMonitor(FurnaceSmeltEvent event) {
-        if (event.isCancelled()) {
-            return;
-        }
-        Game game = plugin.getGameManager().getGame(event.getBlock().getWorld().getName());
-        if (game == null) {
-            return;
-        }
-        game.snapshotBlock(event.getBlock());
-    }
-
-    @EventHandler(priority = EventPriority.MONITOR)
-    public void blockMonitor(LeavesDecayEvent event) {
-        if (event.isCancelled()) {
-            return;
-        }
-        Game game = plugin.getGameManager().getGame(event.getBlock().getWorld().getName());
-        if (game == null) {
-            return;
-        }
-        game.snapshotBlock(event.getBlock());
-    }
-
-    @EventHandler(priority = EventPriority.MONITOR)
-    public void blockMonitor(SignChangeEvent event) {
-        if (event.isCancelled()) {
-            return;
-        }
-        Game game = plugin.getGameManager().getGame(event.getBlock().getWorld().getName());
-        if (game == null) {
-            return;
-        }
-        game.snapshotBlock(event.getBlock());
+        game.playerDied(player);
     }
 }

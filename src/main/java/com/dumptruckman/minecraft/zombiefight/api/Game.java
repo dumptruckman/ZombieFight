@@ -13,6 +13,8 @@ public interface Game {
 
     Location getSpawnLocation();
 
+    void init();
+
     boolean hasStarted();
 
     boolean hasEnded();
@@ -24,6 +26,8 @@ public interface Game {
     void playerJoined(Player player);
 
     void playerQuit(Player player);
+
+    void playerDied(Player player);
 
     boolean allowMove(Player player, Block fromBlock, Block toBlock);
 

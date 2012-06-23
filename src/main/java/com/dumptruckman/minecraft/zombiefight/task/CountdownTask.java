@@ -11,13 +11,11 @@ import java.util.Set;
 
 public abstract class CountdownTask extends GameTask {
 
-    private boolean started = false;
-    private boolean dead = false;
     private int countdown = -1;
     private Set<Integer> warnings = new HashSet<Integer>();
 
     public CountdownTask(Game game, ZombieFight plugin) {
-        super(game, plugin);
+        super(game, plugin, 20L, 20L);
         warnings = new HashSet<Integer>();
     }
 
@@ -29,16 +27,7 @@ public abstract class CountdownTask extends GameTask {
         this.warnings.addAll(warnings);
     }
 
-    public final void start() {
-        if (!started && !dead) {
-            started = true;
-            Bukkit.getScheduler().scheduleSyncDelayedTask(getPlugin(), this, 20L);
-        }
-    }
 
-    public final void kill() {
-        dead = true;
-    }
 
     @Override
     public final void run() {
@@ -53,13 +42,8 @@ public abstract class CountdownTask extends GameTask {
                 countdownWarning(countdown);
             }
         }
+        onRun();
     }
-
-    public void onStart() {
-
-    }
-
-    public abstract boolean shouldEnd();
 
     public abstract boolean shouldCountdown();
 
