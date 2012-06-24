@@ -7,6 +7,7 @@ import com.dumptruckman.minecraft.zombiefight.api.LootConfig;
 import com.dumptruckman.minecraft.zombiefight.api.ZFConfig;
 import com.dumptruckman.minecraft.zombiefight.api.ZombieFight;
 import com.dumptruckman.minecraft.zombiefight.command.BorderCommand;
+import com.dumptruckman.minecraft.zombiefight.command.CleanupCommand;
 import com.dumptruckman.minecraft.zombiefight.command.DisableGameCommand;
 import com.dumptruckman.minecraft.zombiefight.command.EnableGameCommand;
 import com.dumptruckman.minecraft.zombiefight.command.EndGameCommand;
@@ -29,9 +30,11 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements ZombieFight {
 
@@ -42,6 +45,7 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
     private ZombieFightListener listener;
     private TestModeListener testListener = new TestModeListener(this);
     private Map<String, String> playerKits = new HashMap<String, String>();
+    private Set<String> cleaners = new HashSet<String>();
 
     @Override
     protected ZFConfig newConfigInstance() throws IOException {
@@ -71,6 +75,7 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
         getCommandHandler().registerCommand(new DisableGameCommand(this));
         getCommandHandler().registerCommand(new KitCommand(this));
         getCommandHandler().registerCommand(new BorderCommand(this));
+        getCommandHandler().registerCommand(new CleanupCommand(this));
         getLootConfig();
     }
 
@@ -165,5 +170,19 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
             kitList.append(ChatColor.AQUA).append(kit).append(ChatColor.WHITE);
         }
         getMessager().normal(Language.CMD_KIT_LIST, player, kitList.toString());
+    }
+
+    @Override
+    public boolean isCleaner(Player player) {
+        return cleaners.contains(player.getName());
+    }
+
+    @Override
+    public void setCleaner(Player player, boolean cleaning) {
+        if (cleaning) {
+            cleaners.add(player.getName());
+        } else {
+            cleaners.remove(player.getName());
+        }
     }
 }

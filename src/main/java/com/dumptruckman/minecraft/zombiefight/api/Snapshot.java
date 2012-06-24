@@ -1,7 +1,7 @@
 package com.dumptruckman.minecraft.zombiefight.api;
 
 import org.bukkit.Chunk;
-import org.bukkit.block.Block;
+import org.bukkit.block.BlockState;
 
 public interface Snapshot {
 
@@ -9,7 +9,7 @@ public interface Snapshot {
 
     void snapshotChunk(Chunk chunk);
 
-    void snapshotBlock(Block block);
+    void snapshotBlock(BlockState block);
 
     void applySnapshot();
 }

@@ -21,6 +21,7 @@ import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockState;
 import org.bukkit.entity.Player;
 
 import java.util.Collection;
@@ -140,7 +141,7 @@ class DefaultGame implements Game {
             _gameOver();
             return;
         }
-        if (onlineHumans.size() == 1 && !isZombieLockPhase()) {
+        if (onlineHumans.size() == 1 && !isZombieLockPhase() && !isLastHumanPhase()) {
             _lastHuman(onlineHumans.get(0));
         }
     }
@@ -465,14 +466,11 @@ class DefaultGame implements Game {
 
     @Override
     public boolean allowDamage(Player attacker, Player victim) {
-        if (!hasStarted() || hasEnded()) {
+        if (!hasStarted() || hasEnded() || isZombieLockPhase()) {
             return false;
         }
         GamePlayer gAttacker = getGamePlayer(attacker.getName());
         GamePlayer gVictim = getGamePlayer(victim.getName());
-        if (isZombieLockPhase() && gAttacker.isZombie()) {
-            return false;
-        }
         if (gAttacker.isZombie() && gVictim.isZombie()) {
             return false;
         } else if (!gAttacker.isZombie() && !gVictim.isZombie()) {
@@ -506,7 +504,7 @@ class DefaultGame implements Game {
     }
 
     @Override
-    public void snapshotBlock(Block block) {
+    public void snapshotBlock(BlockState block) {
         if (!hasStarted() || hasReset()) {
             return;
         }
@@ -558,7 +556,7 @@ class DefaultGame implements Game {
             return false;
         }
         _resetGame(restart);
-        return false;  //To change body of implemented methods use File | Settings | File Templates.
+        return true;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override

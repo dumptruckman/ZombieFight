@@ -5,6 +5,7 @@ import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockState;
 import org.bukkit.entity.Player;
 
 public interface Game {
@@ -39,7 +40,7 @@ public interface Game {
 
     void snapshotChunk(Chunk chunk);
 
-    void snapshotBlock(Block block);
+    void snapshotBlock(BlockState block);
 
     boolean start();
 

@@ -27,7 +27,7 @@ class DefaultSnapshot implements Snapshot {
 
     private String worldName;
     boolean init = false;
-    private Map<BlockLocation, BlockState> blocks = new HashMap<BlockLocation, BlockState>();
+    private Map<BlockLocation, BlockState> blocks;
     private List<EntitySnapshot> entities = new LinkedList<EntitySnapshot>();
     private Set<UUID> entityIds = new HashSet<UUID>();
 
@@ -58,7 +58,7 @@ class DefaultSnapshot implements Snapshot {
 
     DefaultSnapshot(World world) {
         worldName = world.getName();
-
+        blocks = new HashMap<BlockLocation, BlockState>();
     }
 
     @Override
@@ -84,9 +84,10 @@ class DefaultSnapshot implements Snapshot {
         }
     }
 
-    public void snapshotBlock(Block block) {
-        if (!blocks.containsKey(block)) {
-            blocks.put(BlockLocation.get(block), block.getState());
+    public void snapshotBlock(BlockState block) {
+        BlockLocation blockLoc = BlockLocation.get(block.getBlock());
+        if (!blocks.containsKey(blockLoc)) {
+            blocks.put(blockLoc, block);
         }
     }
 

@@ -32,16 +32,27 @@ class DefaultGamePlayer implements GamePlayer {
 
     private void fixUpPlayer(Player player) {
         player.setDisplayName(ChatColor.stripColor(player.getDisplayName()));
+        player.setPlayerListName(ChatColor.stripColor(player.getPlayerListName()));
         if (isZombie()) {
             if (!MobDisguiseAPI.isDisguised(player)) {
                 MobDisguiseAPI.disguisePlayer(player, "zombie");
             }
             player.setDisplayName(plugin.getMessager().getMessage(Language.ZOMBIE_NAME, player.getDisplayName()));
+            int length = player.getDisplayName().length();
+            if (length > 16) {
+                length = 16;
+            }
+            player.setPlayerListName(player.getDisplayName().substring(0, length - 1));
         } else {
             if (MobDisguiseAPI.isDisguised(player)) {
                 MobDisguiseAPI.undisguisePlayer(player);
             }
             player.setDisplayName(plugin.getMessager().getMessage(Language.HUMAN_NAME, player.getDisplayName()));
+            int length = player.getDisplayName().length();
+            if (length > 16) {
+                length = 16;
+            }
+            player.setPlayerListName(player.getDisplayName().substring(0, length - 1));
         }
     }
 

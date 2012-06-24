@@ -23,6 +23,8 @@ public class Perms {
     public static final Perm CMD_ENABLE = new Perm.Builder(BASE_PERM + "cmd.enable").commandPermission().build();
     public static final Perm CMD_DISABLE = new Perm.Builder(BASE_PERM + "cmd.disable").commandPermission().build();
 
+    public static final Perm CMD_CLEANUP = new Perm.Builder(BASE_PERM + "cmd.cleanup").commandPermission().build();
+
     public static final Perm ALL_KITS = new Builder(BASE_PERM + "kit.*").addToAll().def(PermissionDefault.FALSE).build();
     public static final Perm KIT = new Builder(BASE_PERM + "kit").commandPermission().parent(ALL_KITS).build();
 

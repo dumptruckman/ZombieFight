@@ -4,14 +4,12 @@ import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
+import java.util.WeakHashMap;
 
 public class BlockLocation {
 
-    private static Map<BlockLocation, BlockLocation> storedLocs = new HashMap<BlockLocation,BlockLocation>();
+    private static Map<Integer, BlockLocation> storedLocs = new WeakHashMap<Integer, BlockLocation>();
 
     private int x, y, z;
     private String world;
@@ -28,11 +26,11 @@ public class BlockLocation {
     }
 
     public static BlockLocation get(Block block) {
-        if (storedLocs.containsKey(block)) {
-            return storedLocs.get(block);
+        if (storedLocs.containsKey(block.hashCode())) {
+            return storedLocs.get(block.hashCode());
         }
         BlockLocation blockLoc = new BlockLocation(block);
-        storedLocs.put(blockLoc, blockLoc);
+        storedLocs.put(block.hashCode(), blockLoc);
         return blockLoc;
     }
 
@@ -51,10 +49,7 @@ public class BlockLocation {
 
     @Override
     public boolean equals(Object o) {
-        if (o instanceof Block) {
-            Block block = (Block) o;
-            return block.getX() == x && block.getY() == y && block.getZ() == z && block.getWorld().getName().equals(world);
-        } else if (o instanceof BlockLocation) {
+        if (o instanceof BlockLocation) {
             BlockLocation block = (BlockLocation) o;
             return block.x == this.x && block.y == this.y && block.z == this.z && block.world.equals(this.world);
         }

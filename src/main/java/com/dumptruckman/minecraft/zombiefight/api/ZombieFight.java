@@ -23,4 +23,8 @@ public interface ZombieFight extends BukkitPlugin<ZFConfig>, Plugin {
     String getPlayerKit(String name);
 
     void displayKits(Player player);
+
+    boolean isCleaner(Player player);
+
+    void setCleaner(Player player, boolean cleaning);
 }

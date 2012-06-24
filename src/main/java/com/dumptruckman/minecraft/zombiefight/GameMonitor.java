@@ -1,10 +1,18 @@
 package com.dumptruckman.minecraft.zombiefight;
 
+import com.dumptruckman.minecraft.pluginbase.util.Logging;
 import com.dumptruckman.minecraft.zombiefight.api.Game;
 import com.dumptruckman.minecraft.zombiefight.api.ZombieFight;
+import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockState;
+import org.bukkit.block.BrewingStand;
+import org.bukkit.block.Chest;
+import org.bukkit.block.Dispenser;
+import org.bukkit.block.Furnace;
+import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -20,11 +28,14 @@ import org.bukkit.event.block.BlockPhysicsEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.block.LeavesDecayEvent;
 import org.bukkit.event.block.SignChangeEvent;
+import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.inventory.BrewEvent;
 import org.bukkit.event.inventory.FurnaceBurnEvent;
 import org.bukkit.event.inventory.FurnaceSmeltEvent;
+import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.event.world.WorldUnloadEvent;
+import org.bukkit.inventory.InventoryHolder;
 
 public class GameMonitor implements Listener {
 
@@ -52,75 +63,112 @@ public class GameMonitor implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void blockMonitor(BlockBreakEvent event) {
-        handleBlockEvent(event.getBlock(), event);
+        if (plugin.isCleaner(event.getPlayer())) {
+            return;
+        }
+        handleBlockEvent(event.getBlock().getState(), event);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void blockMonitor(BlockBurnEvent event) {
-        handleBlockEvent(event.getBlock(), event);
+        handleBlockEvent(event.getBlock().getState(), event);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void blockMonitor(BlockDispenseEvent event) {
-        handleBlockEvent(event.getBlock(), event);
+        handleBlockEvent(event.getBlock().getState(), event);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void blockMonitor(BlockFadeEvent event) {
-        handleBlockEvent(event.getBlock(), event);
+        handleBlockEvent(event.getBlock().getState(), event);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void blockMonitor(BlockFromToEvent event) {
-        handleBlockEvent(event.getBlock(), event);
+        handleBlockEvent(event.getBlock().getState(), event);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void blockMonitor(BlockGrowEvent event) {
-        handleBlockEvent(event.getBlock(), event);
+        handleBlockEvent(event.getBlock().getState(), event);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void blockMonitor(BlockIgniteEvent event) {
-        handleBlockEvent(event.getBlock(), event);
+        handleBlockEvent(event.getBlock().getState(), event);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void blockMonitor(BlockPhysicsEvent event) {
-        handleBlockEvent(event.getBlock(), event);
+        handleBlockEvent(event.getBlock().getState(), event);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void blockMonitor(BlockPlaceEvent event) {
-        handleBlockEvent(event.getBlock(), event);
+        if (plugin.isCleaner(event.getPlayer())) {
+            return;
+        }
+        handleBlockEvent(event.getBlockReplacedState(), event);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void blockMonitor(BrewEvent event) {
-        handleBlockEvent(event.getBlock(), event);
+        handleBlockEvent(event.getBlock().getState(), event);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void blockMonitor(FurnaceBurnEvent event) {
-        handleBlockEvent(event.getBlock(), event);
+        handleBlockEvent(event.getBlock().getState(), event);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void blockMonitor(FurnaceSmeltEvent event) {
-        handleBlockEvent(event.getBlock(), event);
+        handleBlockEvent(event.getBlock().getState(), event);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void blockMonitor(LeavesDecayEvent event) {
-        handleBlockEvent(event.getBlock(), event);
+        handleBlockEvent(event.getBlock().getState(), event);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void blockMonitor(SignChangeEvent event) {
-        handleBlockEvent(event.getBlock(), event);
+        if (plugin.isCleaner(event.getPlayer())) {
+            return;
+        }
+        handleBlockEvent(event.getBlock().getState(), event);
     }
 
-    private void handleBlockEvent(Block block, Cancellable event) {
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void inventoryMonitor(InventoryOpenEvent event) {
+        Player player = Bukkit.getPlayerExact(event.getPlayer().getName());
+        if (player != null && plugin.isCleaner(player)) {
+            return;
+        }
+        InventoryHolder holder = event.getInventory().getHolder();
+        if (holder instanceof Chest) {
+            handleBlockEvent((Chest) holder, event);
+        } else if (holder instanceof Dispenser) {
+            handleBlockEvent((Dispenser) holder, event);
+        } else if (holder instanceof BrewingStand) {
+            handleBlockEvent((BrewingStand) holder, event);
+        } else if (holder instanceof Furnace) {
+            handleBlockEvent((Furnace) holder, event);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void explosionMonitor(EntityExplodeEvent event) {
+        if (event.isCancelled()) {
+            return;
+        }
+        for (Block block : event.blockList()) {
+            handleBlockEvent(block.getState(), event);
+        }
+    }
+
+    private void handleBlockEvent(BlockState block, Cancellable event) {
         if (event.isCancelled()) {
             return;
         }

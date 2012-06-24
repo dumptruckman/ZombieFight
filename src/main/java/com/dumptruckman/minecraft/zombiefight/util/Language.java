@@ -61,6 +61,13 @@ public class Language {
     public static final Message CMD_ENABLE_SUCCESS = new Message("cmd.enable.success",
             "You have enabled the game for the world.");
 
+    public static final Message CMD_CLEANUP_NAME = new Message("cmd.cleanup.name",
+            "Allows user to clean up during a game.");
+    public static final Message CMD_CLEANUP_DISABLE = new Message("cmd.cleanup.disable",
+            "You have disabled cleanup mode.");
+    public static final Message CMD_CLEANUP_ENABLE = new Message("cmd.cleanup.enable",
+            "You have enabled cleanup mode.  Type again to disable.");
+
     public static final Message CMD_KIT_NAME = new Message("cmd.kit.name",
             "Lists kits available to you or selects a kit for the next game.");
     public static final Message CMD_KIT_LIST = new Message("cmd.kit.list",
