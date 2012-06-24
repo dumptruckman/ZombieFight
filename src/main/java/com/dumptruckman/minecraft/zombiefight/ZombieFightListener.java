@@ -315,32 +315,29 @@ public class ZombieFightListener implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(priority =  EventPriority.HIGHEST)
     public void playerDamage(EntityDamageByEntityEvent event) {
         if (event.isCancelled()) {
             return;
         }
         Player attacker = null;
-        if (!(event.getDamager() instanceof Player)) {
-            if (event.getDamager() instanceof Projectile) {
-                Projectile proj = (Projectile) event.getDamager();
-                if (proj.getShooter() instanceof Player) {
-                    attacker = (Player) proj.getShooter();
-                } else {
-                    return;
-                }
+        if (event.getDamager() instanceof Player) {
+            attacker = (Player) event.getDamager();
+        } else if (event.getDamager() instanceof Projectile) {
+            Projectile proj = (Projectile) event.getDamager();
+            if (proj.getShooter() instanceof Player) {
+                attacker = (Player) proj.getShooter();
             } else {
                 return;
             }
-        }
-        if (attacker == null) {
-            attacker = (Player) event.getDamager();
+        } else {
+            return;
         }
         if (!(event.getEntity() instanceof Player)) {
             return;
         }
         Player victim = (Player) event.getEntity();
-        Game game = plugin.getGameManager().getGame( attacker.getWorld());
+        Game game = plugin.getGameManager().getGame(attacker.getWorld());
         if (!game.isEnabled()) {
             return;
         }
@@ -414,5 +411,12 @@ public class ZombieFightListener implements Listener {
             return;
         }
         game.playerDied(player);
+    }
+
+    @EventHandler
+    public void lightningFire(BlockIgniteEvent event) {
+        if (event.getCause() == BlockIgniteEvent.IgniteCause.LIGHTNING) {
+            event.setCancelled(true);
+        }
     }
 }

@@ -9,28 +9,29 @@ import java.util.WeakHashMap;
 
 public class BlockLocation {
 
-    private static Map<Integer, BlockLocation> storedLocs = new WeakHashMap<Integer, BlockLocation>();
+    private static Map<String, BlockLocation> storedLocs = new WeakHashMap<String, BlockLocation>();
 
     private int x, y, z;
     private String world;
     private int hashCode;
     private String stringForm;
 
-    private BlockLocation(Block block) {
+    private BlockLocation(Block block, String stringForm) {
         this.x = block.getX();
         this.y = block.getY();
         this.z = block.getZ();
         this.world = block.getWorld().getName();
         hashCode = block.hashCode();
-        this.stringForm = "Block at World:" + world + " X:" + x + " Y:" + y + " Z:" + z;
+        this.stringForm = stringForm;
     }
 
     public static BlockLocation get(Block block) {
-        if (storedLocs.containsKey(block.hashCode())) {
-            return storedLocs.get(block.hashCode());
+        String stringForm = "Block at World:" + block.getWorld().getName() + " X:" + block.getX() + " Y:" + block.getY() + " Z:" + block.getZ();
+        if (storedLocs.containsKey(stringForm)) {
+            return storedLocs.get(stringForm);
         }
-        BlockLocation blockLoc = new BlockLocation(block);
-        storedLocs.put(block.hashCode(), blockLoc);
+        BlockLocation blockLoc = new BlockLocation(block, stringForm);
+        storedLocs.put(stringForm, blockLoc);
         return blockLoc;
     }
 

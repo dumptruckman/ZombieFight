@@ -1,9 +1,14 @@
 package com.dumptruckman.minecraft.zombiefight.task;
 
+import com.dumptruckman.minecraft.pluginbase.util.Logging;
 import com.dumptruckman.minecraft.zombiefight.api.Game;
 import com.dumptruckman.minecraft.zombiefight.api.ZFConfig;
 import com.dumptruckman.minecraft.zombiefight.api.ZombieFight;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
 
 public class HumanFinderTask extends GameTask {
@@ -45,7 +50,7 @@ public class HumanFinderTask extends GameTask {
     private void strike() {
         for (Player player : getGame().getWorld().getPlayers()) {
             if (!getGame().isZombie(player)) {
-                Location loc = player.getLocation();
+                Location loc = player.getLocation().getBlock().getRelative(BlockFace.UP).getLocation();
                 loc.getWorld().strikeLightningEffect(loc);
             }
         }

@@ -116,10 +116,10 @@ public class Language {
             "Zombie releasing in %1 second(s)");
     public static final Message PLAYER_ZOMBIFIED = new Message("game.player_zombified",
             "%1 has been turned into a zombie!");
-    public static final Message ZOMBIE_NAME = new Message("game_settings.zombie_name",
-            "&4%1&f");
-    public static final Message HUMAN_NAME = new Message("game_settings.human_name",
-            "&2%1&f");
+    public static final Message ZOMBIE_NAME = new Message("game_settings.zombie_name_change",
+            "&4%1");
+    public static final Message HUMAN_NAME = new Message("game_settings.human_name_change",
+            "&2%1");
     public static final Message ZOMBIE_RELEASE = new Message("game.zombie_released",
             "The zombie has been released!!");
     public static final Message GAME_RESETTING = new Message("game.resetting_soon",

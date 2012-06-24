@@ -211,6 +211,7 @@ class DefaultGame implements Game {
         }
         randomZombie().makeZombie();
         broadcast(Language.RUN_FROM_ZOMBIE, plugin.config().get(ZFConfig.ZOMBIE_LOCK));
+        zombiesLocked = true;
         zombieLockTask.start();
         checkGameEnd();
     }
@@ -466,7 +467,7 @@ class DefaultGame implements Game {
 
     @Override
     public boolean allowDamage(Player attacker, Player victim) {
-        if (!hasStarted() || hasEnded() || isZombieLockPhase()) {
+        if (isZombieLockPhase() || !hasStarted() || hasEnded()) {
             return false;
         }
         GamePlayer gAttacker = getGamePlayer(attacker.getName());

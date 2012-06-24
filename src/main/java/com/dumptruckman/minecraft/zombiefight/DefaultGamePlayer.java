@@ -8,7 +8,9 @@ import com.dumptruckman.minecraft.zombiefight.util.Language;
 import me.desmin88.mobdisguise.api.MobDisguiseAPI;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 
 class DefaultGamePlayer implements GamePlayer {
 
@@ -37,22 +39,24 @@ class DefaultGamePlayer implements GamePlayer {
             if (!MobDisguiseAPI.isDisguised(player)) {
                 MobDisguiseAPI.disguisePlayer(player, "zombie");
             }
-            player.setDisplayName(plugin.getMessager().getMessage(Language.ZOMBIE_NAME, player.getDisplayName()));
-            int length = player.getDisplayName().length();
+            String name = plugin.getMessager().getMessage(Language.ZOMBIE_NAME, player.getDisplayName());
+            player.setDisplayName(name + ChatColor.WHITE);
+            int length = name.length();
             if (length > 16) {
                 length = 16;
             }
-            player.setPlayerListName(player.getDisplayName().substring(0, length - 1));
+            player.setPlayerListName(name.substring(0, length - 1));
         } else {
             if (MobDisguiseAPI.isDisguised(player)) {
                 MobDisguiseAPI.undisguisePlayer(player);
             }
-            player.setDisplayName(plugin.getMessager().getMessage(Language.HUMAN_NAME, player.getDisplayName()));
-            int length = player.getDisplayName().length();
+            String name = plugin.getMessager().getMessage(Language.HUMAN_NAME, player.getDisplayName());
+            player.setDisplayName(name + ChatColor.WHITE);
+            int length = name.length();
             if (length > 16) {
                 length = 16;
             }
-            player.setPlayerListName(player.getDisplayName().substring(0, length - 1));
+            player.setPlayerListName(name.substring(0, length - 1));
         }
     }
 
@@ -101,16 +105,17 @@ class DefaultGamePlayer implements GamePlayer {
     @Override
     public void makeZombie() {
         zombie = true;
-        Player player = getPlayer();
+        final Player player = getPlayer();
         if (player != null) {
-            plugin.broadcastWorld(game.getWorld().getName(), plugin.getMessager().getMessage(Language.PLAYER_ZOMBIFIED, player.getName()));
-            player.getInventory().clear();
-            player.setHealth(20);
-            player.setFoodLevel(20);
-            player.setSaturation(5F);
-            player.setExhaustion(0F);
+            resetPlayer(player);
             fixUpPlayer(player);
-            plugin.getMessager().normal(Language.YOU_ARE_ZOMBIE, player);
+            Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
+                @Override
+                public void run() {
+                    plugin.broadcastWorld(game.getWorld().getName(), plugin.getMessager().getMessage(Language.PLAYER_ZOMBIFIED, player.getName()));
+                    plugin.getMessager().normal(Language.YOU_ARE_ZOMBIE, player);
+                }
+            }, 3L);
         }
     }
 
@@ -119,12 +124,21 @@ class DefaultGamePlayer implements GamePlayer {
         zombie = false;
         Player player = getPlayer();
         if (player != null) {
-            player.getInventory().clear();
-            player.setHealth(20);
-            player.setFoodLevel(20);
-            player.setSaturation(5F);
-            player.setExhaustion(0F);
+            resetPlayer(player);
             fixUpPlayer(player);
         }
+    }
+
+    private void resetPlayer(Player player) {
+        player.getInventory().clear();
+        ItemStack[] armor = player.getInventory().getArmorContents();
+        for (ItemStack item : armor) {
+            item.setType(Material.AIR);
+        }
+        player.getInventory().setArmorContents(armor);
+        player.setHealth(20);
+        player.setFoodLevel(20);
+        player.setSaturation(5F);
+        player.setExhaustion(0F);
     }
 }

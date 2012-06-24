@@ -26,10 +26,10 @@ import java.util.UUID;
 class DefaultSnapshot implements Snapshot {
 
     private String worldName;
-    boolean init = false;
+    boolean init;
     private Map<BlockLocation, BlockState> blocks;
-    private List<EntitySnapshot> entities = new LinkedList<EntitySnapshot>();
-    private Set<UUID> entityIds = new HashSet<UUID>();
+    private List<EntitySnapshot> entities;
+    private Set<UUID> entityIds;
 
     private static class EntitySnapshot {
         private int x, y, z;
@@ -59,6 +59,9 @@ class DefaultSnapshot implements Snapshot {
     DefaultSnapshot(World world) {
         worldName = world.getName();
         blocks = new HashMap<BlockLocation, BlockState>();
+        entities = new LinkedList<EntitySnapshot>();
+        entityIds = new HashSet<UUID>();
+        init = false;
     }
 
     @Override

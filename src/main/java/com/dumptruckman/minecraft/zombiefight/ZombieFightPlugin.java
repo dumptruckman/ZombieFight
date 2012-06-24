@@ -1,6 +1,7 @@
 package com.dumptruckman.minecraft.zombiefight;
 
 import com.dumptruckman.minecraft.pluginbase.util.Logging;
+import com.dumptruckman.minecraft.zombiefight.api.Disguiser;
 import com.dumptruckman.minecraft.zombiefight.api.Game;
 import com.dumptruckman.minecraft.zombiefight.api.GameManager;
 import com.dumptruckman.minecraft.zombiefight.api.LootConfig;
@@ -42,6 +43,7 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
 
     private GameManager gameManager = null;
     private LootConfig lootConfig = null;
+    private Disguiser disguiser = null;
     private ZombieFightListener listener;
     private TestModeListener testListener = new TestModeListener(this);
     private Map<String, String> playerKits = new HashMap<String, String>();
@@ -90,6 +92,7 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
         }
         gameManager = null;
         lootConfig = null;
+        disguiser = null;
     }
 
     @Override
@@ -184,5 +187,13 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
         } else {
             cleaners.remove(player.getName());
         }
+    }
+
+    @Override
+    public Disguiser getDisguiser() {
+        if (disguiser == null) {
+            disguiser = new DefaultDisguiser(this);
+        }
+        return disguiser;
     }
 }
