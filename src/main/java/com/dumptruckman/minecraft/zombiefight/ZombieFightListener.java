@@ -148,9 +148,9 @@ public class ZombieFightListener implements Listener {
         game.playerJoined(player);
         if (game.hasStarted()) {
             if (game.isZombie(player)) {
-                game.broadcast(Language.PLAYER_JOINED_AS_ZOMBIE, player.getName());
+                event.setJoinMessage(getMessager().getMessage(Language.PLAYER_JOINED_AS_ZOMBIE, player.getName()));
             } else {
-                game.broadcast(Language.PLAYER_JOINED_AS_HUMAN, player.getName());
+                event.setJoinMessage(getMessager().getMessage(Language.PLAYER_JOINED_AS_HUMAN, player.getName()));
             }
         }
     }

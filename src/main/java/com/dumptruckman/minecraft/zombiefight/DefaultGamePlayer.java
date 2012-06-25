@@ -110,7 +110,7 @@ class DefaultGamePlayer implements GamePlayer {
     }
 
     @Override
-    public void makeZombie() {
+    public void makeZombie(final boolean broadcast) {
         zombie = true;
         final Player player = getPlayer();
         if (player != null) {
@@ -119,7 +119,9 @@ class DefaultGamePlayer implements GamePlayer {
             Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
                 @Override
                 public void run() {
-                    plugin.broadcastWorld(game.getWorld().getName(), plugin.getMessager().getMessage(Language.PLAYER_ZOMBIFIED, player.getName()));
+                    if (broadcast) {
+                        plugin.broadcastWorld(game.getWorld().getName(), plugin.getMessager().getMessage(Language.PLAYER_ZOMBIFIED, player.getName()));
+                    }
                     plugin.getMessager().normal(Language.YOU_ARE_ZOMBIE, player);
                 }
             }, 3L);

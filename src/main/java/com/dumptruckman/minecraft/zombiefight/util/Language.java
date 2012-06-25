@@ -116,10 +116,10 @@ public class Language {
             "&7Zombie releasing in &f%1&7...");
     public static final Message PLAYER_ZOMBIFIED = new Message("game.player_zombified",
             "&4&l%1 has been turned into a zombie!");
-    public static final Message PLAYER_JOINED_AS_ZOMBIE = new Message("game.player_joined.as_zombie",
-            "%1 has joined the game...&4 as a ZOMBIE!");
-    public static final Message PLAYER_JOINED_AS_HUMAN = new Message("game.player_joined.as_human",
-            "%1 has joined the game...&2 as a human!");
+    public static final Message PLAYER_JOINED_AS_ZOMBIE = new Message("game.player_joined.zombie",
+            "&e%1 joined the game...&4 as a ZOMBIE!");
+    public static final Message PLAYER_JOINED_AS_HUMAN = new Message("game.player_joined.human",
+            "&e%1 joined the game...&2 as a human!");
     public static final Message ZOMBIE_NAME = new Message("game_settings.zombie_name_change",
             "&4%1");
     public static final Message HUMAN_NAME = new Message("game_settings.human_name_change",

@@ -14,7 +14,7 @@ public interface GamePlayer {
 
     void leftGame();
 
-    void makeZombie();
+    void makeZombie(boolean broadcast);
 
     void makeHuman();
 }

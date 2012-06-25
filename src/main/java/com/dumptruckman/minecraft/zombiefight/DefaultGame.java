@@ -130,7 +130,7 @@ class DefaultGame implements Game {
                 int index = rand.nextInt(onlineHumans.size());
                 GamePlayer newZombie = onlineHumans.get(index);
                 Logging.fine("Found a new zombie candidate: "+ newZombie.getPlayer().getName());
-                newZombie.makeZombie();
+                newZombie.makeZombie(true);
                 onlineHumans.remove(index);
                 onlineZombies.add(newZombie);
             } else {
@@ -216,7 +216,7 @@ class DefaultGame implements Game {
         }
         GamePlayer gPlayer = randomZombie();
         if (gPlayer != null) {
-            gPlayer.makeZombie();
+            gPlayer.makeZombie(true);
         } else {
             Logging.warning("Game started with NO PLAYERS!");
         }
@@ -432,7 +432,7 @@ class DefaultGame implements Game {
                 }
             }, 4L);
             if (!gPlayer.isZombie()) {
-                gPlayer.makeZombie();
+                gPlayer.makeZombie(false);
             }
         }
 
@@ -474,7 +474,7 @@ class DefaultGame implements Game {
                 Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
                     @Override
                     public void run() {
-                        getGamePlayer(player.getName()).makeZombie();
+                        getGamePlayer(player.getName()).makeZombie(true);
                         checkGameEnd();
                     }
                 });
