@@ -139,7 +139,6 @@ public class ZombieFightListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void playerJoin(PlayerJoinEvent event) {
-        Logging.finest(event.getPlayer() + " joined mc");
         Player player = event.getPlayer();
         Game game = plugin.getGameManager().getGame(player.getWorld());
         if (!game.isEnabled()) {
@@ -147,6 +146,13 @@ public class ZombieFightListener implements Listener {
             return;
         }
         game.playerJoined(player);
+        if (game.hasStarted()) {
+            if (game.isZombie(player)) {
+                game.broadcast(Language.PLAYER_JOINED_AS_ZOMBIE, player.getName());
+            } else {
+                game.broadcast(Language.PLAYER_JOINED_AS_HUMAN, player.getName());
+            }
+        }
     }
 
     @EventHandler

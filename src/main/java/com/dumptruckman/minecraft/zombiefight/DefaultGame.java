@@ -15,6 +15,7 @@ import com.dumptruckman.minecraft.zombiefight.task.HumanFinderTask;
 import com.dumptruckman.minecraft.zombiefight.task.LastHumanCountdownTask;
 import com.dumptruckman.minecraft.zombiefight.task.ZombieLockCountdownTask;
 import com.dumptruckman.minecraft.zombiefight.util.Language;
+import com.dumptruckman.minecraft.zombiefight.util.TimeTools;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
@@ -98,7 +99,9 @@ class DefaultGame implements Game {
             Logging.finer("players: " + playersInWorld + " minPlayers: " + minPlayers + " maxPlayers: " + maxPlayers);
             if (playersInWorld >= minPlayers && playersInWorld < maxPlayers) {
                 Logging.fine("Enough players to start countdown.");
-                broadcast(Language.ENOUGH_FOR_COUNTDOWN_START);
+                if (!isCountdownPhase()) {
+                    broadcast(Language.ENOUGH_FOR_COUNTDOWN_START);
+                }
                 start();
             } else if (world.getPlayers().size() >= maxPlayers) {
                 Logging.fine("Enough players to force game start.");
@@ -149,13 +152,15 @@ class DefaultGame implements Game {
     protected GamePlayer randomZombie() {
         Random rand = new Random(System.currentTimeMillis());
         Set<GamePlayer> onlinePlayers = getOnlinePlayers();
-        int index = rand.nextInt(onlinePlayers.size());
-        int i = 0;
-        for (GamePlayer gPlayer : onlinePlayers) {
-            if (i == index) {
-                return gPlayer;
+        if (onlinePlayers.size() > 0) {
+            int index = rand.nextInt(onlinePlayers.size());
+            int i = 0;
+            for (GamePlayer gPlayer : onlinePlayers) {
+                if (i == index) {
+                    return gPlayer;
+                }
+                i++;
             }
-            i++;
         }
         return null;
     }
@@ -209,8 +214,13 @@ class DefaultGame implements Game {
                 plugin.getLootConfig().getDefaultKit().addToInventory(player.getInventory());
             }
         }
-        randomZombie().makeZombie();
-        broadcast(Language.RUN_FROM_ZOMBIE, plugin.config().get(ZFConfig.ZOMBIE_LOCK));
+        GamePlayer gPlayer = randomZombie();
+        if (gPlayer != null) {
+            gPlayer.makeZombie();
+        } else {
+            Logging.warning("Game started with NO PLAYERS!");
+        }
+        broadcast(Language.RUN_FROM_ZOMBIE, TimeTools.toLongForm(plugin.config().get(ZFConfig.ZOMBIE_LOCK)));
         zombiesLocked = true;
         zombieLockTask.start();
         checkGameEnd();
@@ -233,7 +243,7 @@ class DefaultGame implements Game {
         zombiesLocked = false;
         this.lastHuman = true;
         int finalHuman = getConfig().get(ZFConfig.LAST_HUMAN);
-        broadcast(Language.ONE_HUMAN_LEFT, finalHuman);
+        broadcast(Language.ONE_HUMAN_LEFT, TimeTools.toLongForm(finalHuman));
         LootTable reward = plugin.getLootConfig().getLastHumanReward();
         if (reward != null) {
             reward.addToInventory(lastHuman.getPlayer().getInventory());
@@ -392,9 +402,19 @@ class DefaultGame implements Game {
         // Inform the player
         if (!hasStarted()) {
             if (isCountdownPhase()) {
-                getMessager().normal(Language.JOIN_WHILE_GAME_STARTING, player);
+                Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
+                    @Override
+                    public void run() {
+                        getMessager().normal(Language.JOIN_WHILE_GAME_STARTING, player);
+                    }
+                }, 4L);
             } else {
-                getMessager().normal(Language.JOIN_WHILE_GAME_PREPARING, player);
+                Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
+                    @Override
+                    public void run() {
+                        getMessager().normal(Language.JOIN_WHILE_GAME_PREPARING, player);
+                    }
+                }, 4L);
             }
             // Check if game should start, but not right away
             Bukkit.getScheduler().scheduleSyncDelayedTask(getPlugin(), new Runnable() {
@@ -405,8 +425,15 @@ class DefaultGame implements Game {
                 }
             }, 4L);
         } else {
-            getMessager().normal(Language.JOIN_WHILE_GAME_IN_PROGRESS, player);
-            gPlayer.makeZombie();
+            Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
+                @Override
+                public void run() {
+                    getMessager().normal(Language.JOIN_WHILE_GAME_IN_PROGRESS, player);
+                }
+            }, 4L);
+            if (!gPlayer.isZombie()) {
+                gPlayer.makeZombie();
+            }
         }
 
         // Spawn the player
@@ -429,7 +456,9 @@ class DefaultGame implements Game {
                 int minPlayers = getConfig().get(ZFConfig.MIN_PLAYERS);
                 if (playersInWorld < minPlayers) {
                     Logging.fine("Player quit caused countdown to halt.");
-                    broadcast(Language.TOO_FEW_PLAYERS);
+                    if (isCountdownPhase()) {
+                        broadcast(Language.TOO_FEW_PLAYERS);
+                    }
                     haltCountdown();
                 }
             }

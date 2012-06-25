@@ -5,6 +5,7 @@ import com.dumptruckman.minecraft.zombiefight.api.GamePlayer;
 import com.dumptruckman.minecraft.zombiefight.api.ZFConfig;
 import com.dumptruckman.minecraft.zombiefight.api.ZombieFight;
 import com.dumptruckman.minecraft.zombiefight.util.Language;
+import com.dumptruckman.minecraft.zombiefight.util.TimeTools;
 
 public class LastHumanCountdownTask extends CountdownTask {
 
@@ -32,7 +33,7 @@ public class LastHumanCountdownTask extends CountdownTask {
 
     @Override
     public void countdownWarning(int warning) {
-        getGame().broadcast(Language.LAST_HUMAN_COUNTDOWN, warning);
+        getGame().broadcast(Language.LAST_HUMAN_COUNTDOWN, TimeTools.toLongForm(warning));
     }
 
     @Override

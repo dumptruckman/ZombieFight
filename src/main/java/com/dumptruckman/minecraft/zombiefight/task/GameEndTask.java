@@ -4,6 +4,7 @@ import com.dumptruckman.minecraft.zombiefight.api.Game;
 import com.dumptruckman.minecraft.zombiefight.api.ZFConfig;
 import com.dumptruckman.minecraft.zombiefight.api.ZombieFight;
 import com.dumptruckman.minecraft.zombiefight.util.Language;
+import com.dumptruckman.minecraft.zombiefight.util.TimeTools;
 
 public class GameEndTask extends CountdownTask {
 
@@ -14,7 +15,7 @@ public class GameEndTask extends CountdownTask {
 
     @Override
     protected void onStart() {
-        getGame().broadcast(Language.GAME_RESETTING, getConfig().get(ZFConfig.END_DURATION));
+        getGame().broadcast(Language.GAME_RESETTING, TimeTools.toLongForm(getConfig().get(ZFConfig.END_DURATION)));
     }
 
     @Override

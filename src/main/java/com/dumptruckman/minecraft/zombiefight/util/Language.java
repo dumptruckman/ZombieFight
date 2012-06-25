@@ -85,11 +85,11 @@ public class Language {
             "You have disabled the game for the world.");
 
     public static final Message JOIN_WHILE_GAME_IN_PROGRESS = new Message("joining.game_in_progress_zombie",
-            "Game in progress... You will join the game as a zombie!");
+            "&8Game in progress... &l&cYou will join the game as a zombie!");
     public static final Message JOIN_WHILE_GAME_PREPARING = new Message("joining.game_preparing",
-            "A new game is setting up.  Please wait in the waiting area until enough players join to start the game.");
+            "&8A new game is setting up.  Please wait in the waiting area until enough players join to start the game.");
     public static final Message JOIN_WHILE_GAME_STARTING = new Message("joining.game_starting",
-            "A new game will be starting momentarily...");
+            "&8A new game will be starting momentarily...");
 
     public static final Message LEAVE_WORLD = new Message("world_change.left_world",
             "%1 has left the game world!");
@@ -97,57 +97,56 @@ public class Language {
             "%1 has joined the game world!");
 
     public static final Message ENOUGH_FOR_QUICK_START = new Message("game.starting.quick_start",
-            "Enough players have joined to start the game immediately!");
+            "&bEnough players have joined to start the game immediately!");
     public static final Message ENOUGH_FOR_COUNTDOWN_START = new Message("game.starting.countdown_start",
-            "Enough players have joined to start the countdown for game to begin!");
+            "&bEnough players have joined to start the countdown for game to begin!");
     public static final Message TOO_FEW_PLAYERS = new Message("game.starting.too_few_players",
-            "Too many players have left.  Start countdown halted until more players join.");
+            "&7Too many players have left.  Start countdown halted until more players join.");
     public static final Message GAME_STARTING = new Message("game.starting.beginning",
-            "&aThe game has begun!");
+            "&a&lThe game has begun!");
     public static final Message GAME_ENDED = new Message("game.ended.game_over",
-            "&cThe game is over!");
+            "&4&lThe game is over!");
     public static final Message GAME_ENDED_TOO_FEW_PLAYERS = new Message("game.ended.too_few_players",
-            "The game has ended due to too few players...");
+            "&8The game has ended due to too few players...");
     public static final Message ALL_HUMANS_DEAD = new Message("game.ended.all_humans_dead",
-            "All humans are dead.");
+            "&cAll humans are dead.");
     public static final Message RUN_FROM_ZOMBIE = new Message("game.run_from_zombie",
-            "You have %1 seconds to run away from the zombie!");
+            "&7You have &f%1&7 to run away from the zombie!");
     public static final Message ZOMBIE_LOCK_COUNTDOWN = new Message("game.zombie_lock_countdown",
-            "Zombie releasing in %1 second(s)");
+            "&7Zombie releasing in &f%1&7...");
     public static final Message PLAYER_ZOMBIFIED = new Message("game.player_zombified",
-            "%1 has been turned into a zombie!");
+            "&4&l%1 has been turned into a zombie!");
+    public static final Message PLAYER_JOINED_AS_ZOMBIE = new Message("game.player_joined.as_zombie",
+            "%1 has joined the game...&4 as a ZOMBIE!");
+    public static final Message PLAYER_JOINED_AS_HUMAN = new Message("game.player_joined.as_human",
+            "%1 has joined the game...&2 as a human!");
     public static final Message ZOMBIE_NAME = new Message("game_settings.zombie_name_change",
             "&4%1");
     public static final Message HUMAN_NAME = new Message("game_settings.human_name_change",
             "&2%1");
     public static final Message ZOMBIE_RELEASE = new Message("game.zombie_released",
-            "The zombie has been released!!");
+            "&c&lThe zombie has been released!!");
     public static final Message GAME_RESETTING = new Message("game.resetting_soon",
-            "The game will be resetting in %1 seconds...");
+            "&7The game will be resetting in &f%1&7...");
     public static final Message ONE_HUMAN_LEFT = new Message("game.last_human.left",
-            "Only one human remains... Can they survive the zombie horde for %1 seconds?");
+            "&bOnly one human remains... Can they survive the zombie horde for &7%1&b?");
     public static final Message LAST_HUMAN_COUNTDOWN = new Message("game.last_human.countdown",
-            "&7Last human wins in &f%1&7 second(s)");
+            "&7Last human wins in &f%1&7...");
     public static final Message LAST_HUMAN_REWARD = new Message("game.last_human.reward",
-            "&6Take these items and defend your life!");
+            "&6&lTake these items and defend your life, you are the last human!");
     public static final Message LAST_HUMAN_WON = new Message("game.last_human.won",
-            "The last human survived the final onslaught. Congratulations &6%1!");
+            "&aThe last human survived the final onslaught. Congratulations &6%1!");
     public static final Message APPROACHING_BORDER = new Message("game.border.approaching",
             "&cYou are approaching the border, turn back now or you will start to die!");
     public static final Message ROLLBACK = new Message("game.rollback",
-            "Rolling back the game world.. This will take a moment and may cause lag.");
+            "&8Rolling back the game world.. This will take a moment and may cause lag.");
     public static final Message GAME_STARTING_IN = new Message("game.starting_in",
-            "Game starting in %1 second(s)");
+            "&7Game starting in &f%1&7...");
     public static final Message PLUGIN_RELOAD = new Message("plugin.reload",
-            "Plugin reloading, games terminated.");
+            "&cPlugin reloading, games terminated.");
     public static final Message YOU_ARE_ZOMBIE = new Message("game.you_are_zombie",
-            "&4You have become a zombie!! Brraaainnsss...");
+            "&4&lYou have become a zombie!! &oBrraaainnsss...");
 
-    public static final Message FORCE_END = new Message("game.force_end",
-            "The game was ended abruptly!");
-
-    public static final Message COULD_NOT_COUNTDOWN = new Message("error.could_not_countdown",
-            "Could not start countdown! Game will start immediately!");
     public static final Message NO_WORLD = new Message("error.no_world",
             "There is no world named: %1");
     public static final Message NOT_GAME_WORLD = new Message("error.not_game_world",

@@ -139,7 +139,6 @@ class DefaultGamePlayer implements GamePlayer {
     private void resetPlayer(Player player) {
         ItemStack[] armor = player.getInventory().getArmorContents();
         for (int i = 0; i < armor.length; i++) {
-            Logging.fine(armor[i].toString());
             armor[i] = new ItemStack(Material.AIR);
         }
         player.getInventory().setArmorContents(armor);

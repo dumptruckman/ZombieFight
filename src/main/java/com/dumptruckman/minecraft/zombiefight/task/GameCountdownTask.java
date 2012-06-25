@@ -4,6 +4,7 @@ import com.dumptruckman.minecraft.zombiefight.api.Game;
 import com.dumptruckman.minecraft.zombiefight.api.ZFConfig;
 import com.dumptruckman.minecraft.zombiefight.api.ZombieFight;
 import com.dumptruckman.minecraft.zombiefight.util.Language;
+import com.dumptruckman.minecraft.zombiefight.util.TimeTools;
 
 public class GameCountdownTask extends CountdownTask {
 
@@ -25,7 +26,7 @@ public class GameCountdownTask extends CountdownTask {
 
     @Override
     public void countdownWarning(int warning) {
-        getGame().broadcast(Language.GAME_STARTING_IN, warning);
+        getGame().broadcast(Language.GAME_STARTING_IN, TimeTools.toLongForm(warning));
     }
 
     @Override
