@@ -18,6 +18,7 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.craftbukkit.entity.CraftPlayer;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
@@ -25,6 +26,7 @@ import org.bukkit.event.Cancellable;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockBurnEvent;
 import org.bukkit.event.block.BlockDamageEvent;
@@ -49,6 +51,7 @@ import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerChatEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
@@ -423,6 +426,78 @@ public class ZombieFightListener implements Listener {
     public void lightningFire(BlockIgniteEvent event) {
         if (event.getCause() == BlockIgniteEvent.IgniteCause.LIGHTNING) {
             event.setCancelled(true);
+        }
+    }
+
+    public void abilityUse(PlayerInteractEvent event) {
+        if (event.getAction() != Action.RIGHT_CLICK_AIR
+                && event.getAction() != Action.RIGHT_CLICK_BLOCK) {
+            Logging.fine("is not right-click");
+            return;
+        }
+        if (event.getClickedBlock() != null) {
+            Logging.fine("cannot use on block");
+            return;
+        }
+        Player player = event.getPlayer();
+        Game game = plugin.getGameManager().getGame(player.getWorld());
+        if (!game.isEnabled()) {
+            return;
+        }
+        if (!game.isZombie(player)) {
+            return;
+        }
+        double r = plugin.config().get(ZFConfig.SMELL_RANGE);
+        Location closestPlayer = null;
+        double distance = 0;
+        int count = 0;
+        Location location = player.getLocation();
+        for (Entity entity : player.getNearbyEntities(r, r, r)) {
+            if (entity instanceof Player) {
+                Player currentPlayer = (Player) entity;
+                if (!game.isZombie(currentPlayer)) {
+                    count++;
+                    Location currentLocation = currentPlayer.getLocation();
+                    double currentDistance = location.distance(currentLocation);
+                    if (closestPlayer == null || currentDistance < distance) {
+                        closestPlayer = currentLocation;
+                        distance = currentDistance;
+                    }
+                }
+            }
+        }
+        if (closestPlayer != null) {
+            double yaw = 0.0D;
+            double distX = closestPlayer.getX() - location.getX();
+            double distY = closestPlayer.getY() - location.getY() /*+ location.height / 2.1D*/;
+            double distZ = closestPlayer.getZ() - location.getZ();
+
+            if (distZ > 0.0D && distX > 0.0D) yaw = Math.toDegrees(-Math.atan(distX / distZ));
+            else if (distZ > 0.0D && distX < 0.0D) yaw = Math.toDegrees(-Math.atan(distX / distZ));
+            else if (distZ < 0.0D && distX > 0.0D) yaw = -90D + Math.toDegrees(Math.atan(distZ / distX));
+            else if (distZ < 0.0D && distX < 0.0D) yaw = 90D + Math.toDegrees(Math.atan(distZ / distX));
+
+            double pitch = -Math.toDegrees(Math.atan(distY / distance));
+            location = player.getLocation();
+            player.teleport(new Location(location.getWorld(), location.getX(), location.getY(), location.getZ(), (float) yaw, (float) pitch));
+            Logging.fine("Should be viewing human");
+            /*
+            double yaw = 0;
+            double pitch;
+
+            Location loc = locations.get(0), pl = player.getLocation();
+
+            double xDiff = pl.getX() - loc.getX();
+            double yDiff = pl.getY() - loc.getY();
+            double zDiff = pl.getZ() - loc.getZ();
+            double DistanceXZ = Math.sqrt(xDiff * xDiff + zDiff * zDiff);
+            double DistanceY = Math.sqrt(DistanceXZ * DistanceXZ + yDiff * yDiff);
+            yaw = (Math.acos(xDiff / DistanceXZ) * 180 / Math.PI);
+            pitch = (Math.acos(yDiff / DistanceY) * 180 / Math.PI) - 90;
+            if (zDiff < 0.0) {
+                yaw = yaw + (Math.abs(180 - yaw) * 2);
+            }
+             */
         }
     }
 }

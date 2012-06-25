@@ -43,4 +43,5 @@ public interface ZFConfig extends BaseConfig {
     ConfigEntry<Integer> INSTA_BREAK = new EntryBuilder<Integer>(Integer.class, "game_settings.zombie.insta_break_chance").def(30).defaultIfMissing().stringSerializer().comment("# Percent chance for zombie to instantly break blocks on hit.").build();
     ConfigEntry<Integer> HUMAN_FINDER_START = new EntryBuilder<Integer>(Integer.class, "game_settings.human_finder.start_after").def(60).defaultIfMissing().stringSerializer().comment("# How long (in seconds) after a zombie last attacks a human (or vice versa) that lightning beacons will start locating humans.").build();
     ConfigEntry<Integer> HUMAN_FINDER_TICK = new EntryBuilder<Integer>(Integer.class, "game_settings.human_finder.period").def(20).defaultIfMissing().stringSerializer().comment("# How often lightning beacons will appear once they start (until zombies hit humans)").build();
+    ConfigEntry<Integer> SMELL_RANGE = new EntryBuilder<Integer>(Integer.class, "game_settings.zombie.ability.smell.radius").def(75).defaultIfMissing().stringSerializer().comment("# The radius for how far zombies can smell humans").build();
 }
