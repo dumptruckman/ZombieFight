@@ -90,6 +90,9 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
                 game.forceEnd(false);
             }
         }
+        if (disguiser != null) {
+            disguiser.terminate();
+        }
         gameManager = null;
         lootConfig = null;
         disguiser = null;
@@ -97,6 +100,7 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
 
     @Override
     public void postReload() {
+        disguiser = new DefaultDisguiser(this);
         listener.resetBorderDamager();
         for (World world : Bukkit.getWorlds()) {
             getGameManager().getGame(world);
@@ -191,9 +195,6 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
 
     @Override
     public Disguiser getDisguiser() {
-        if (disguiser == null) {
-            disguiser = new DefaultDisguiser(this);
-        }
         return disguiser;
     }
 }

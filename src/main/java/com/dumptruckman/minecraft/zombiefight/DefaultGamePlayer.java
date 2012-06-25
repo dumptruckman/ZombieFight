@@ -9,6 +9,7 @@ import me.desmin88.mobdisguise.api.MobDisguiseAPI;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
@@ -39,24 +40,30 @@ class DefaultGamePlayer implements GamePlayer {
             if (!MobDisguiseAPI.isDisguised(player)) {
                 MobDisguiseAPI.disguisePlayer(player, "zombie");
             }
+            /*if (!plugin.getDisguiser().isDisguised(player)) {
+                plugin.getDisguiser().disguise(player, EntityType.ZOMBIE);
+            }*/
             String name = plugin.getMessager().getMessage(Language.ZOMBIE_NAME, player.getDisplayName());
             player.setDisplayName(name + ChatColor.WHITE);
             int length = name.length();
             if (length > 16) {
-                length = 16;
+                length = 15;
             }
-            player.setPlayerListName(name.substring(0, length - 1));
+            player.setPlayerListName(name.substring(0, length));
         } else {
             if (MobDisguiseAPI.isDisguised(player)) {
                 MobDisguiseAPI.undisguisePlayer(player);
             }
+            /*if (plugin.getDisguiser().isDisguised(player)) {
+                plugin.getDisguiser().undisguise(player);
+            }*/
             String name = plugin.getMessager().getMessage(Language.HUMAN_NAME, player.getDisplayName());
             player.setDisplayName(name + ChatColor.WHITE);
             int length = name.length();
             if (length > 16) {
-                length = 16;
+                length = 15;
             }
-            player.setPlayerListName(name.substring(0, length - 1));
+            player.setPlayerListName(name.substring(0, length));
         }
     }
 
@@ -130,12 +137,13 @@ class DefaultGamePlayer implements GamePlayer {
     }
 
     private void resetPlayer(Player player) {
-        player.getInventory().clear();
         ItemStack[] armor = player.getInventory().getArmorContents();
-        for (ItemStack item : armor) {
-            item.setType(Material.AIR);
+        for (int i = 0; i < armor.length; i++) {
+            Logging.fine(armor[i].toString());
+            armor[i] = new ItemStack(Material.AIR);
         }
         player.getInventory().setArmorContents(armor);
+        player.getInventory().clear();
         player.setHealth(20);
         player.setFoodLevel(20);
         player.setSaturation(5F);
