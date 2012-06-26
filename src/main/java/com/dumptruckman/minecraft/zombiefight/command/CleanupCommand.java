@@ -1,13 +1,8 @@
 package com.dumptruckman.minecraft.zombiefight.command;
 
-import com.dumptruckman.minecraft.pluginbase.util.commandhandler.CommandHandler;
-import com.dumptruckman.minecraft.zombiefight.api.Game;
-import com.dumptruckman.minecraft.zombiefight.api.ZFConfig;
 import com.dumptruckman.minecraft.zombiefight.api.ZombieFight;
 import com.dumptruckman.minecraft.zombiefight.util.Language;
 import com.dumptruckman.minecraft.zombiefight.util.Perms;
-import org.bukkit.Bukkit;
-import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 

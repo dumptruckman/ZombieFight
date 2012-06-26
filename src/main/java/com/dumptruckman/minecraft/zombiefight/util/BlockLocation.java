@@ -4,9 +4,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 
-import java.util.Map;
-import java.util.WeakHashMap;
-
 public class BlockLocation {
 
     private int x, y, z;

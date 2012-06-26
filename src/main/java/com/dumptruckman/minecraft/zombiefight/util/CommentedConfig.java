@@ -1,8 +1,8 @@
 package com.dumptruckman.minecraft.zombiefight.util;
 
-import com.dumptruckman.minecraft.zombiefight.api.ZFConfig;
 import com.dumptruckman.minecraft.pluginbase.config.AbstractYamlConfig;
 import com.dumptruckman.minecraft.pluginbase.plugin.BukkitPlugin;
+import com.dumptruckman.minecraft.zombiefight.api.ZFConfig;
 
 import java.io.File;
 import java.io.IOException;

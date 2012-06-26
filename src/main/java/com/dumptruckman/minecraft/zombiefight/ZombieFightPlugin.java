@@ -1,5 +1,7 @@
 package com.dumptruckman.minecraft.zombiefight;
 
+import com.dumptruckman.minecraft.pluginbase.plugin.AbstractBukkitPlugin;
+import com.dumptruckman.minecraft.pluginbase.plugin.command.HelpCommand;
 import com.dumptruckman.minecraft.pluginbase.util.Logging;
 import com.dumptruckman.minecraft.zombiefight.api.Disguiser;
 import com.dumptruckman.minecraft.zombiefight.api.Game;
@@ -18,8 +20,6 @@ import com.dumptruckman.minecraft.zombiefight.command.PreGameSpawnCommand;
 import com.dumptruckman.minecraft.zombiefight.command.StartGameCommand;
 import com.dumptruckman.minecraft.zombiefight.util.CommentedConfig;
 import com.dumptruckman.minecraft.zombiefight.util.Language;
-import com.dumptruckman.minecraft.pluginbase.plugin.AbstractBukkitPlugin;
-import com.dumptruckman.minecraft.pluginbase.plugin.command.HelpCommand;
 import com.dumptruckman.minecraft.zombiefight.util.Perms;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;

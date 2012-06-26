@@ -2,7 +2,6 @@ package com.dumptruckman.minecraft.zombiefight.command;
 
 import com.dumptruckman.minecraft.pluginbase.util.commandhandler.CommandHandler;
 import com.dumptruckman.minecraft.zombiefight.api.Game;
-import com.dumptruckman.minecraft.zombiefight.api.GameStatus;
 import com.dumptruckman.minecraft.zombiefight.api.ZombieFight;
 import com.dumptruckman.minecraft.zombiefight.util.Language;
 import com.dumptruckman.minecraft.zombiefight.util.Perms;

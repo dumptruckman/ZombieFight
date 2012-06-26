@@ -1,7 +1,6 @@
 package com.dumptruckman.minecraft.zombiefight.task;
 
 import com.dumptruckman.minecraft.zombiefight.api.Game;
-import com.dumptruckman.minecraft.zombiefight.api.ZFConfig;
 import com.dumptruckman.minecraft.zombiefight.api.ZombieFight;
 import org.bukkit.Bukkit;
 

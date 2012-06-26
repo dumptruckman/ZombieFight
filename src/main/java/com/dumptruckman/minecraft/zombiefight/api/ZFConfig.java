@@ -8,7 +8,6 @@ import com.dumptruckman.minecraft.pluginbase.config.MappedConfigEntry;
 import com.dumptruckman.minecraft.pluginbase.util.Null;
 import org.bukkit.Location;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 
 /**

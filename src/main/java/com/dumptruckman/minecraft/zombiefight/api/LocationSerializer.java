@@ -2,7 +2,6 @@ package com.dumptruckman.minecraft.zombiefight.api;
 
 import com.dumptruckman.minecraft.pluginbase.config.EntrySerializer;
 import org.bukkit.Location;
-import org.bukkit.inventory.ItemStack;
 
 class LocationSerializer implements EntrySerializer<Location> {
 

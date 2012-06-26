@@ -4,7 +4,6 @@ import com.dumptruckman.minecraft.pluginbase.util.Logging;
 import com.dumptruckman.minecraft.zombiefight.api.LootConfig;
 import com.dumptruckman.minecraft.zombiefight.api.LootTable;
 import com.dumptruckman.minecraft.zombiefight.api.ZombieFight;
-import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
