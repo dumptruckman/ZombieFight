@@ -27,4 +27,6 @@ public interface ZombieFight extends BukkitPlugin<ZFConfig>, Plugin {
     void setCleaner(Player player, boolean cleaning);
 
     Disguiser getDisguiser();
+
+    StatsDatabase getStats();
 }

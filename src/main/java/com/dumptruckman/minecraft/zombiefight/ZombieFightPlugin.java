@@ -7,6 +7,7 @@ import com.dumptruckman.minecraft.zombiefight.api.Disguiser;
 import com.dumptruckman.minecraft.zombiefight.api.Game;
 import com.dumptruckman.minecraft.zombiefight.api.GameManager;
 import com.dumptruckman.minecraft.zombiefight.api.LootConfig;
+import com.dumptruckman.minecraft.zombiefight.api.StatsDatabase;
 import com.dumptruckman.minecraft.zombiefight.api.ZFConfig;
 import com.dumptruckman.minecraft.zombiefight.api.ZombieFight;
 import com.dumptruckman.minecraft.zombiefight.command.BorderCommand;
@@ -48,6 +49,7 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
     private TestModeListener testListener = new TestModeListener(this);
     private Map<String, String> playerKits = new HashMap<String, String>();
     private Set<String> cleaners = new HashSet<String>();
+    private StatsDatabase statsDatabase = null;
 
     @Override
     protected ZFConfig newConfigInstance() throws IOException {
@@ -96,19 +98,24 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
         gameManager = null;
         lootConfig = null;
         disguiser = null;
+        statsDatabase = null;
     }
 
     @Override
     public void postReload() {
         disguiser = new DefaultDisguiser(this);
         listener.resetBorderDamager();
+        if (!getDB().connect(this)) {
+            Logging.warning("Could not connect to database, stats will not be loaded or tracked!");
+        }
+        statsDatabase = new DefaultStatsDatabase(this);
         for (World world : Bukkit.getWorlds()) {
             getGameManager().getGame(world);
         }
     }
 
     @Override
-    public void onDisable() {
+    public void preDisable() {
         preReload();
         getServer().getScheduler().cancelTasks(this);
         super.onDisable();
@@ -196,5 +203,10 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
     @Override
     public Disguiser getDisguiser() {
         return disguiser;
+    }
+
+    @Override
+    public StatsDatabase getStats() {
+        return statsDatabase;
     }
 }
