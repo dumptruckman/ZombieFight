@@ -51,6 +51,7 @@ import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerChatEvent;
+import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
@@ -61,6 +62,11 @@ import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.event.world.WorldUnloadEvent;
+import org.bukkit.inventory.InventoryHolder;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.material.Button;
+import org.bukkit.material.Lever;
+import org.bukkit.material.Openable;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.potion.PotionType;
@@ -429,14 +435,10 @@ public class ZombieFightListener implements Listener {
         }
     }
 
+    @EventHandler
     public void abilityUse(PlayerInteractEvent event) {
         if (event.getAction() != Action.RIGHT_CLICK_AIR
                 && event.getAction() != Action.RIGHT_CLICK_BLOCK) {
-            Logging.fine("is not right-click");
-            return;
-        }
-        if (event.getClickedBlock() != null) {
-            Logging.fine("cannot use on block");
             return;
         }
         Player player = event.getPlayer();
@@ -445,6 +447,19 @@ public class ZombieFightListener implements Listener {
             return;
         }
         if (!game.isZombie(player)) {
+            return;
+        }
+        if (event.getItem() == null) {
+            return;
+        }
+        ItemStack itemInHand = event.getItem();
+        if (itemInHand.getType() != Material.COMPASS) {
+            return;
+        }
+        Block clicked = event.getClickedBlock();
+        if (clicked != null
+                && (clicked instanceof Openable || clicked instanceof InventoryHolder
+                || clicked instanceof Lever || clicked instanceof Button)) {
             return;
         }
         double r = plugin.config().get(ZFConfig.SMELL_RANGE);
@@ -467,6 +482,11 @@ public class ZombieFightListener implements Listener {
             }
         }
         if (closestPlayer != null) {
+            if (count == 1) {
+                plugin.getMessager().normal(Language.ZOMBIE_SMELL_ONE, player);
+            } else {
+                plugin.getMessager().normal(Language.ZOMBIE_SMELL_MANY, player);
+            }
             double yaw = 0.0D;
             double distX = closestPlayer.getX() - location.getX();
             double distY = closestPlayer.getY() - location.getY() /*+ location.height / 2.1D*/;
@@ -479,8 +499,8 @@ public class ZombieFightListener implements Listener {
 
             double pitch = -Math.toDegrees(Math.atan(distY / distance));
             location = player.getLocation();
+            player.setCompassTarget(closestPlayer);
             player.teleport(new Location(location.getWorld(), location.getX(), location.getY(), location.getZ(), (float) yaw, (float) pitch));
-            Logging.fine("Should be viewing human");
             /*
             double yaw = 0;
             double pitch;
@@ -498,6 +518,8 @@ public class ZombieFightListener implements Listener {
                 yaw = yaw + (Math.abs(180 - yaw) * 2);
             }
              */
+        } else {
+            plugin.getMessager().normal(Language.ZOMBIE_SMELL_NONE, player);
         }
     }
 }

@@ -111,11 +111,15 @@ class DefaultGamePlayer implements GamePlayer {
 
     @Override
     public void makeZombie(final boolean broadcast) {
+        if (zombie) {
+            return;
+        }
         zombie = true;
         final Player player = getPlayer();
         if (player != null) {
             resetPlayer(player);
             fixUpPlayer(player);
+            player.getInventory().addItem(new ItemStack(Material.COMPASS));
             Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
                 @Override
                 public void run() {
