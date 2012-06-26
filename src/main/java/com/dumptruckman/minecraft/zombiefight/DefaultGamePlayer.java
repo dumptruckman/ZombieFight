@@ -3,6 +3,7 @@ package com.dumptruckman.minecraft.zombiefight;
 import com.dumptruckman.minecraft.pluginbase.util.Logging;
 import com.dumptruckman.minecraft.zombiefight.api.Game;
 import com.dumptruckman.minecraft.zombiefight.api.GamePlayer;
+import com.dumptruckman.minecraft.zombiefight.api.ZFConfig;
 import com.dumptruckman.minecraft.zombiefight.api.ZombieFight;
 import com.dumptruckman.minecraft.zombiefight.util.Language;
 import me.desmin88.mobdisguise.api.MobDisguiseAPI;
@@ -12,6 +13,8 @@ import org.bukkit.Material;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 
 class DefaultGamePlayer implements GamePlayer {
 
@@ -50,6 +53,8 @@ class DefaultGamePlayer implements GamePlayer {
                 length = 15;
             }
             player.setPlayerListName(name.substring(0, length));
+            game.addZombieItems(player.getInventory());
+            //player.addPotionEffect(PotionEffectType.FAST_DIGGING.createEffect(Integer.MAX_VALUE, plugin.config().get(ZFConfig.ZOMBIE_BREAK_SPEED_STRENGTH)));
         } else {
             if (MobDisguiseAPI.isDisguised(player)) {
                 MobDisguiseAPI.undisguisePlayer(player);
@@ -119,7 +124,6 @@ class DefaultGamePlayer implements GamePlayer {
         if (player != null) {
             resetPlayer(player);
             fixUpPlayer(player);
-            player.getInventory().addItem(new ItemStack(Material.COMPASS));
             Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
                 @Override
                 public void run() {
@@ -153,5 +157,8 @@ class DefaultGamePlayer implements GamePlayer {
         player.setFoodLevel(20);
         player.setSaturation(5F);
         player.setExhaustion(0F);
+        for (PotionEffect effect : player.getActivePotionEffects()) {
+            player.removePotionEffect(effect.getType());
+        }
     }
 }

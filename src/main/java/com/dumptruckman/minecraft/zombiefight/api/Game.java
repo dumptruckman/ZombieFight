@@ -7,6 +7,7 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.Inventory;
 
 public interface Game {
 
@@ -57,4 +58,6 @@ public interface Game {
     void unlockZombies();
 
     boolean isLastHumanPhase();
+
+    void addZombieItems(Inventory inventory);
 }

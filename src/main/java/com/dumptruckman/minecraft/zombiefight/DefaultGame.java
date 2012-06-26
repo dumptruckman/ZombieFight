@@ -20,10 +20,14 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -424,6 +428,8 @@ class DefaultGame implements Game {
                     checkGameStart();
                 }
             }, 4L);
+            // Spawn the player
+            delayedSpawn(player);
         } else {
             Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
                 @Override
@@ -431,12 +437,16 @@ class DefaultGame implements Game {
                     getMessager().normal(Language.JOIN_WHILE_GAME_IN_PROGRESS, player);
                 }
             }, 4L);
+
             if (!gPlayer.isZombie()) {
                 gPlayer.makeZombie(false);
+                // Spawn the player
+                delayedSpawn(player);
             }
         }
+    }
 
-        // Spawn the player
+    private void delayedSpawn(final Player player) {
         Bukkit.getScheduler().scheduleSyncDelayedTask(getPlugin(), new Runnable() {
             @Override
             public void run() {
@@ -607,5 +617,22 @@ class DefaultGame implements Game {
     @Override
     public boolean isLastHumanPhase() {
         return lastHuman;
+    }
+
+    @Override
+    public void addZombieItems(Inventory inventory) {
+        if (inventory.contains(Material.COMPASS)) {
+            return;
+        }
+        inventory.addItem(new ItemStack(Material.COMPASS));
+        ItemStack item = new ItemStack(Material.IRON_PICKAXE);
+        item.addUnsafeEnchantment(Enchantment.DURABILITY, 100);
+        inventory.addItem(item);
+        item = new ItemStack(Material.IRON_SPADE);
+        item.addUnsafeEnchantment(Enchantment.DURABILITY, 100);
+        inventory.addItem(item);
+        item = new ItemStack(Material.IRON_AXE);
+        item.addUnsafeEnchantment(Enchantment.DURABILITY, 100);
+        inventory.addItem(item);
     }
 }

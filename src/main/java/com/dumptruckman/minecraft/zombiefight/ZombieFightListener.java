@@ -51,6 +51,7 @@ import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerChatEvent;
+import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -74,6 +75,7 @@ import org.bukkit.scheduler.BukkitTask;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -175,11 +177,6 @@ public class ZombieFightListener implements Listener {
             if (game.isZombie(player)) {
                 if (game.isZombieLockPhase()) {
                     event.setCancelled(true);
-                } else if (event.getBlock().getType() != Material.BEDROCK){
-                    Random rand = new Random(System.currentTimeMillis());
-                    if (rand.nextInt(100) < plugin.config().get(ZFConfig.INSTA_BREAK)) {
-                        event.setInstaBreak(true);
-                    }
                 }
             }
         }
@@ -194,7 +191,7 @@ public class ZombieFightListener implements Listener {
         }
         if (game.hasStarted() && !game.hasEnded()) {
             if (game.isZombie(player) && game.isZombieLockPhase()) {
-                event.setCancelled(true);
+                //event.setCancelled(true);
             }
         } else if (!Perms.CAN_ALWAYS_BREAK.hasPermission(player)) {
             event.setCancelled(true);
@@ -416,16 +413,47 @@ public class ZombieFightListener implements Listener {
             return;
         }
         event.setRespawnLocation(game.getSpawnLocation());
+        if (game.isZombie(player)) {
+            game.addZombieItems(player.getInventory());
+        }
     }
 
     @EventHandler
     public void playerDeath(PlayerDeathEvent event) {
-        final Player player = event.getEntity();
-        final Game game = plugin.getGameManager().getGame(player.getWorld());
+        Player player = event.getEntity();
+        Game game = plugin.getGameManager().getGame(player.getWorld());
         if (!game.isEnabled()) {
             return;
         }
         game.playerDied(player);
+        if (game.isZombie(player)) {
+            Iterator<ItemStack> it = event.getDrops().iterator();
+            while (it.hasNext()) {
+                ItemStack item = it.next();
+                if (!item.getType().isBlock()) {
+                    it.remove();
+                }
+            }
+        }
+    }
+
+    @EventHandler
+    public void playerDropItem(PlayerDropItemEvent event) {
+        final Player player = event.getPlayer();
+        Game game = plugin.getGameManager().getGame(player.getWorld());
+        if (!game.isEnabled()) {
+            return;
+        }
+        if (game.isZombie(player)) {
+            if (!event.getItemDrop().getItemStack().getType().isBlock()) {
+                event.setCancelled(true);
+                Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
+                    public void run() {
+                        player.updateInventory();
+                    }
+                }, 1L);
+            }
+        }
     }
 
     @EventHandler
