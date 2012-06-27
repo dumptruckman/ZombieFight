@@ -86,6 +86,7 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
     @Override
     public void preReload() {
         for (World world : Bukkit.getWorlds()) {
+            Logging.finest("Shutting down games for world " + world);
             Game game = getGameManager().getGame(world);
             if (game.isEnabled()) {
                 game.broadcast(Language.PLUGIN_RELOAD);
@@ -118,7 +119,6 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
     public void preDisable() {
         preReload();
         getServer().getScheduler().cancelTasks(this);
-        super.onDisable();
     }
 
     @Override
