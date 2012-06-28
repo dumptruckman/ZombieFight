@@ -28,6 +28,11 @@ class DefaultStatsDatabase implements StatsDatabase {
                 Logging.severe("Could not create players table!");
             }
         }
+        if (!getDB().checkTable(QueryGen.PLAYER_TYPE_TABLE)) {
+            if (!getDB().createTable(QueryGen.createPlayerTypeTable())) {
+                Logging.severe("Could not create player type table!");
+            }
+        }
         if (!getDB().checkTable(QueryGen.GAMES_TABLE)) {
             if (!getDB().createTable(QueryGen.createGamesTable())) {
                 Logging.severe("Could not create games table!");

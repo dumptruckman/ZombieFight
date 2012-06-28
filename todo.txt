@@ -1,2 +1,3 @@
 Make it so humans drop exp which can upgrade zombies
 Add new zombie types: Skeletons (shoots arrow scorpion hook), Creepers (explode), Spiders (shoots arrows that spawn web)
+Ban zombies who leave during lock period.
