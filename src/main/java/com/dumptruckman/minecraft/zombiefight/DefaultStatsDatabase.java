@@ -23,14 +23,14 @@ class DefaultStatsDatabase implements StatsDatabase {
         if (!getDB().isConnected()) {
             return;
         }
-        if (!getDB().checkTable(QueryGen.PLAYERS_TABLE)) {
-            if (!getDB().createTable(QueryGen.createPlayersTable())) {
-                Logging.severe("Could not create players table!");
-            }
-        }
         if (!getDB().checkTable(QueryGen.PLAYER_TYPE_TABLE)) {
             if (!getDB().createTable(QueryGen.createPlayerTypeTable())) {
                 Logging.severe("Could not create player type table!");
+            }
+        }
+        if (!getDB().checkTable(QueryGen.PLAYERS_TABLE)) {
+            if (!getDB().createTable(QueryGen.createPlayersTable())) {
+                Logging.severe("Could not create players table!");
             }
         }
         if (!getDB().checkTable(QueryGen.GAMES_TABLE)) {
@@ -41,6 +41,11 @@ class DefaultStatsDatabase implements StatsDatabase {
         if (!getDB().checkTable(QueryGen.STATS_TABLE)) {
             if (!getDB().createTable(QueryGen.createStatsTable())) {
                 Logging.severe("Could not create stats table!");
+            }
+        }
+        if (!getDB().checkTable(QueryGen.TYPE_HISTORY_TABLE)) {
+            if (!getDB().createTable(QueryGen.createTypeHistoryTable())) {
+                Logging.severe("Could not create type history table!");
             }
         }
         if (!getDB().checkTable(QueryGen.KILLS_TABLE)) {
