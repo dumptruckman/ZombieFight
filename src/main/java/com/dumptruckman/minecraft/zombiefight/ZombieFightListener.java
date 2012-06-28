@@ -59,6 +59,7 @@ public class ZombieFightListener implements Listener {
     private ZombieFight plugin;
     private Map<String, Set<String>> playersPastBorder = new HashMap<String, Set<String>>();
     private int borderTask = -1;
+    private Map<Player, Game> playersMoved;
 
     private class BorderDamagerTask implements Runnable {
         @Override
@@ -114,6 +115,7 @@ public class ZombieFightListener implements Listener {
 
     public ZombieFightListener(ZombieFight plugin) {
         this.plugin = plugin;
+        playersMoved = new HashMap<Player, Game>(Bukkit.getMaxPlayers());
     }
 
     private Messager getMessager() {
@@ -248,6 +250,20 @@ public class ZombieFightListener implements Listener {
         }, 2L);
     }
 
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void playerTracking(PlayerMoveEvent event) {
+        Player player = event.getPlayer();
+        if (!playersMoved.containsKey(player)) {
+            return;
+        }
+        Game game = playersMoved.get(player);
+        playersMoved.remove(player);
+        if (event.isCancelled()) {
+            return;
+        }
+        game.handleMove(player, event.getTo());
+    }
+
     @EventHandler
     public void playerMove(PlayerMoveEvent event) {
         if (event.isCancelled()) {
@@ -264,6 +280,7 @@ public class ZombieFightListener implements Listener {
         if (!game.isEnabled()) {
             return;
         }
+        playersMoved.put(player, game);
         if (game.isZombie(player) && game.isZombieLockPhase()) {
             if (!(event instanceof PlayerTeleportEvent)) {
                 if (!(fromBlock.getX() == toBlock.getX()
@@ -341,6 +358,15 @@ public class ZombieFightListener implements Listener {
                 }
             }
             if (game.isZombie(attacker)) {
+                // TODO Make this better
+                ItemStack itemInHand = attacker.getItemInHand();
+                if (itemInHand.getType() == Material.IRON_AXE) {
+                    event.setDamage(event.getDamage() - 4);
+                } else if (itemInHand.getType() == Material.IRON_PICKAXE) {
+                    event.setDamage(event.getDamage() - 3);
+                }  else if (itemInHand.getType() == Material.IRON_SPADE) {
+                    event.setDamage(event.getDamage() - 2);
+                }
                 event.setDamage(event.getDamage() + plugin.config().get(ZFConfig.ZOMBIE_DAMAGE));
             }
         } else {
@@ -437,23 +463,12 @@ public class ZombieFightListener implements Listener {
 
     @EventHandler
     public void abilityUse(PlayerInteractEvent event) {
-        if (event.getAction() != Action.RIGHT_CLICK_AIR
-                && event.getAction() != Action.RIGHT_CLICK_BLOCK) {
+        if (event.getItem() == null) {
             return;
         }
         Player player = event.getPlayer();
         Game game = plugin.getGameManager().getGame(player.getWorld());
         if (!game.isEnabled()) {
-            return;
-        }
-        if (!game.isZombie(player)) {
-            return;
-        }
-        if (event.getItem() == null) {
-            return;
-        }
-        ItemStack itemInHand = event.getItem();
-        if (itemInHand.getType() != Material.COMPASS) {
             return;
         }
         Block clicked = event.getClickedBlock();
@@ -462,64 +477,12 @@ public class ZombieFightListener implements Listener {
                 || clicked instanceof Lever || clicked instanceof Button)) {
             return;
         }
-        double r = plugin.config().get(ZFConfig.SMELL_RANGE);
-        Location closestPlayer = null;
-        double distance = 0;
-        int count = 0;
-        Location location = player.getLocation();
-        for (Entity entity : player.getNearbyEntities(r, r, r)) {
-            if (entity instanceof Player) {
-                Player currentPlayer = (Player) entity;
-                if (!game.isZombie(currentPlayer)) {
-                    count++;
-                    Location currentLocation = currentPlayer.getLocation();
-                    double currentDistance = location.distance(currentLocation);
-                    if (closestPlayer == null || currentDistance < distance) {
-                        closestPlayer = currentLocation;
-                        distance = currentDistance;
-                    }
-                }
-            }
-        }
-        if (closestPlayer != null) {
-            if (count == 1) {
-                plugin.getMessager().normal(Language.ZOMBIE_SMELL_ONE, player);
-            } else {
-                plugin.getMessager().normal(Language.ZOMBIE_SMELL_MANY, player);
-            }
-            double yaw = 0.0D;
-            double distX = closestPlayer.getX() - location.getX();
-            double distY = closestPlayer.getY() - location.getY() /*+ location.height / 2.1D*/;
-            double distZ = closestPlayer.getZ() - location.getZ();
-
-            if (distZ > 0.0D && distX > 0.0D) yaw = Math.toDegrees(-Math.atan(distX / distZ));
-            else if (distZ > 0.0D && distX < 0.0D) yaw = Math.toDegrees(-Math.atan(distX / distZ));
-            else if (distZ < 0.0D && distX > 0.0D) yaw = -90D + Math.toDegrees(Math.atan(distZ / distX));
-            else if (distZ < 0.0D && distX < 0.0D) yaw = 90D + Math.toDegrees(Math.atan(distZ / distX));
-
-            double pitch = -Math.toDegrees(Math.atan(distY / distance));
-            location = player.getLocation();
-            player.setCompassTarget(closestPlayer);
-            player.teleport(new Location(location.getWorld(), location.getX(), location.getY(), location.getZ(), (float) yaw, (float) pitch));
-            /*
-            double yaw = 0;
-            double pitch;
-
-            Location loc = locations.get(0), pl = player.getLocation();
-
-            double xDiff = pl.getX() - loc.getX();
-            double yDiff = pl.getY() - loc.getY();
-            double zDiff = pl.getZ() - loc.getZ();
-            double DistanceXZ = Math.sqrt(xDiff * xDiff + zDiff * zDiff);
-            double DistanceY = Math.sqrt(DistanceXZ * DistanceXZ + yDiff * yDiff);
-            yaw = (Math.acos(xDiff / DistanceXZ) * 180 / Math.PI);
-            pitch = (Math.acos(yDiff / DistanceY) * 180 / Math.PI) - 90;
-            if (zDiff < 0.0) {
-                yaw = yaw + (Math.abs(180 - yaw) * 2);
-            }
-             */
-        } else {
-            plugin.getMessager().normal(Language.ZOMBIE_SMELL_NONE, player);
+        if (event.getAction() == Action.LEFT_CLICK_BLOCK
+                || event.getAction() == Action.LEFT_CLICK_AIR) {
+            game.leftClickAbilityUse(player, event.getItem());
+        } else if (event.getAction() == Action.RIGHT_CLICK_BLOCK
+                || event.getAction() == Action.RIGHT_CLICK_AIR) {
+            game.rightClickAbilityUse(player, event.getItem());
         }
     }
 }

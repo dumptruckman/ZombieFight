@@ -25,6 +25,7 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -504,6 +505,17 @@ class DefaultGame implements Game {
         return true;
     }
 
+    public void handleMove(Player player, Location toLoc) {
+        if (!isZombie(player)) {
+            for (GamePlayer gPlayer : getOnlinePlayers()) {
+                Player zombie = gPlayer.getPlayer();
+                if (gPlayer.isZombie() && zombie != null && gPlayer.isTracking(player)) {
+                    zombie.setCompassTarget(toLoc);
+                }
+            }
+        }
+    }
+
     @Override
     public boolean allowDamage(Player attacker, Player victim) {
         if (isZombieLockPhase() || !hasStarted() || hasEnded()) {
@@ -634,5 +646,88 @@ class DefaultGame implements Game {
         item = new ItemStack(Material.IRON_AXE);
         item.addUnsafeEnchantment(Enchantment.DURABILITY, 100);
         inventory.addItem(item);
+    }
+
+    @Override
+    public void rightClickAbilityUse(Player player, ItemStack item) {
+        if (isZombie(player) && item.getType() == Material.COMPASS) {
+            rightClickCompass(player);
+        }
+    }
+
+    @Override
+    public void leftClickAbilityUse(Player player, ItemStack item) {
+        if (isZombie(player) && item.getType() == Material.COMPASS) {
+            leftClickCompass(player);
+        }
+    }
+
+    private void leftClickCompass(Player player) {
+        Location location = player.getLocation();
+        Player closestHuman = null;
+        Location closestLocation = null;
+        double distance = 0;
+        for (Player human : getWorld().getPlayers()) {
+            if (!isZombie(human) && !human.equals(player)) {
+                Location currentLocation = human.getLocation();
+                double currentDistance = location.distance(currentLocation);
+                if (closestLocation == null || currentDistance < distance) {
+                    closestHuman = human;
+                    closestLocation = currentLocation;
+                    distance = currentDistance;
+                }
+            }
+        }
+        GamePlayer gPlayer = getGamePlayer(player.getName());
+        if (closestHuman == null || gPlayer.isTracking(closestHuman)) {
+            return;
+        } else {
+            player.setCompassTarget(closestLocation);
+            gPlayer.setTrackedPlayer(closestHuman);
+            getMessager().normal(Language.ZOMBIE_SMELL_LOCK, player);
+        }
+    }
+
+    private void rightClickCompass(Player player) {
+        GamePlayer gPlayer = getGamePlayer(player.getName());
+        Player trackedPlayer = gPlayer.getTrackedPlayer();
+        if (trackedPlayer == null || isZombie(trackedPlayer)) {
+            getMessager().normal(Language.ZOMBIE_SMELL_NOT_LOCKED, player);
+            return;
+        }
+        Location location = player.getLocation();
+        Location trackedLocation = trackedPlayer.getLocation();
+        double yaw = 0.0D;
+        double distX = trackedLocation.getX() - location.getX();
+        double distY = trackedLocation.getY() - location.getY()/* + trackedPlayer.getEyeHeight() / 2.1D*/;
+        double distZ = trackedLocation.getZ() - location.getZ();
+
+        if (distZ > 0.0D && distX > 0.0D) yaw = Math.toDegrees(-Math.atan(distX / distZ));
+        else if (distZ > 0.0D && distX < 0.0D) yaw = Math.toDegrees(-Math.atan(distX / distZ));
+        else if (distZ < 0.0D && distX > 0.0D) yaw = -90D + Math.toDegrees(Math.atan(distZ / distX));
+        else if (distZ < 0.0D && distX < 0.0D) yaw = 90D + Math.toDegrees(Math.atan(distZ / distX));
+
+        double distance = location.distance(trackedLocation);
+        double pitch = -Math.toDegrees(Math.atan(distY / distance));
+        location = player.getLocation();
+        player.teleport(new Location(location.getWorld(), location.getX(), location.getY(), location.getZ(), (float) yaw, (float) pitch));
+        getMessager().normal(Language.ZOMBIE_SMELL_FACE, player);
+        /*
+        double yaw = 0;
+        double pitch;
+
+        Location loc = locations.get(0), pl = player.getLocation();
+
+        double xDiff = pl.getX() - loc.getX();
+        double yDiff = pl.getY() - loc.getY();
+        double zDiff = pl.getZ() - loc.getZ();
+        double DistanceXZ = Math.sqrt(xDiff * xDiff + zDiff * zDiff);
+        double DistanceY = Math.sqrt(DistanceXZ * DistanceXZ + yDiff * yDiff);
+        yaw = (Math.acos(xDiff / DistanceXZ) * 180 / Math.PI);
+        pitch = (Math.acos(yDiff / DistanceY) * 180 / Math.PI) - 90;
+        if (zDiff < 0.0) {
+            yaw = yaw + (Math.abs(180 - yaw) * 2);
+        }
+         */
     }
 }

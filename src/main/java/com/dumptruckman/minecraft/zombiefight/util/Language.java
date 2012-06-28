@@ -147,12 +147,12 @@ public class Language {
     public static final Message YOU_ARE_ZOMBIE = new Message("game.you_are_zombie",
             "&4&lYou have become a zombie!! &oBrraaainnsss...");
 
-    public static final Message ZOMBIE_SMELL_ONE = new Message("game.zombie.ability.smell.one",
-            "&7&oYou smell a nearby human...");
-    public static final Message ZOMBIE_SMELL_MANY = new Message("game.zombie.ability.smell.many",
-            "&7&oYou smell some nearby humans...");
-    public static final Message ZOMBIE_SMELL_NONE = new Message("game.zombie.ability.smell.none",
-            "&7&oYou cannot smell any humans nearby.  You must be closer.");
+    public static final Message ZOMBIE_SMELL_LOCK = new Message("game.zombie.ability.smell.lock",
+            "&7&oYou catch the scent of a human...");
+    public static final Message ZOMBIE_SMELL_FACE = new Message("game.zombie.ability.smell.face",
+            "&7&oYou turn to face the human scent...");
+    public static final Message ZOMBIE_SMELL_NOT_LOCKED = new Message("game.zombie.ability.smell.not_locked",
+            "&8&oYou are not following a human's scent... (Left-click)");
 
     public static final Message NO_WORLD = new Message("error.no_world",
             "There is no world named: %1");

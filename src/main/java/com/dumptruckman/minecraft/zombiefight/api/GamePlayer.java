@@ -17,4 +17,10 @@ public interface GamePlayer {
     void makeZombie(boolean broadcast);
 
     void makeHuman();
+
+    Player getTrackedPlayer();
+
+    void setTrackedPlayer(Player player);
+
+    boolean isTracking(Player player);
 }

@@ -8,6 +8,7 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
 
 public interface Game {
 
@@ -32,6 +33,8 @@ public interface Game {
     void playerDied(Player player);
 
     boolean allowMove(Player player, Block fromBlock, Block toBlock);
+
+    void handleMove(Player player, Location toLoc);
 
     boolean allowDamage(Player attacker, Player victim);
 
@@ -60,4 +63,8 @@ public interface Game {
     boolean isLastHumanPhase();
 
     void addZombieItems(Inventory inventory);
+
+    void rightClickAbilityUse(Player player, ItemStack item);
+
+    void leftClickAbilityUse(Player player, ItemStack item);
 }

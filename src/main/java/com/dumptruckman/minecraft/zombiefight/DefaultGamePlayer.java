@@ -23,6 +23,8 @@ class DefaultGamePlayer implements GamePlayer {
     boolean online = false;
     boolean zombie = false;
 
+    private String trackedPlayer = "";
+
     DefaultGamePlayer(String name, ZombieFight plugin, Game game) {
         this.name = name;
         this.plugin = plugin;
@@ -157,5 +159,20 @@ class DefaultGamePlayer implements GamePlayer {
         for (PotionEffect effect : player.getActivePotionEffects()) {
             player.removePotionEffect(effect.getType());
         }
+    }
+
+    @Override
+    public Player getTrackedPlayer() {
+        return Bukkit.getPlayerExact(trackedPlayer);
+    }
+
+    @Override
+    public void setTrackedPlayer(Player player) {
+        trackedPlayer = player.getName();
+    }
+
+    @Override
+    public boolean isTracking(Player player) {
+        return player.getName().equals(trackedPlayer);
     }
 }
