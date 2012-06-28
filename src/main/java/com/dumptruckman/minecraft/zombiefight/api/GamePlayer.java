@@ -6,6 +6,8 @@ public interface GamePlayer {
 
     Player getPlayer();
 
+    String getName();
+
     boolean isZombie();
 
     boolean isOnline();

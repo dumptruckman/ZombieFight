@@ -106,10 +106,10 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
     public void postReload() {
         disguiser = new DefaultDisguiser(this);
         listener.resetBorderDamager();
-        /*if (!getDB().connect(this)) {
-            Logging.warning("Could not connect to database, stats will not be loaded or tracked!");
-        }*/
         statsDatabase = new DefaultStatsDatabase(this);
+        if (!statsDatabase.connect()) {
+            Logging.warning("Could not connect to database, stats will not be loaded or tracked!");
+        }
         for (World world : Bukkit.getWorlds()) {
             getGameManager().getGame(world);
         }

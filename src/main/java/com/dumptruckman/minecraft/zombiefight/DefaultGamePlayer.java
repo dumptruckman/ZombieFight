@@ -77,6 +77,11 @@ class DefaultGamePlayer implements GamePlayer {
     }
 
     @Override
+    public String getName() {
+        return name;
+    }
+
+    @Override
     public boolean isZombie() {
         return zombie;
     }

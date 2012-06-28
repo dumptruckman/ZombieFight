@@ -25,11 +25,11 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.enchantments.Enchantment;
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
+import java.sql.Timestamp;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -49,14 +49,16 @@ class DefaultGame implements Game {
 
     private Map<String, GamePlayer> gamePlayers;
 
-    boolean started;
-    boolean ended;
-    boolean reset;
-    boolean finalized;
+    private Timestamp startTime;
 
-    boolean countingDown;
-    boolean zombiesLocked;
-    boolean lastHuman;
+    private boolean started;
+    private boolean ended;
+    private boolean reset;
+    private boolean finalized;
+
+    private boolean countingDown;
+    private boolean zombiesLocked;
+    private boolean lastHuman;
 
     private GameCountdownTask countdownTask;
     private ZombieLockCountdownTask zombieLockTask;
@@ -228,6 +230,8 @@ class DefaultGame implements Game {
         broadcast(Language.RUN_FROM_ZOMBIE, TimeTools.toLongForm(plugin.config().get(ZFConfig.ZOMBIE_LOCK)));
         zombiesLocked = true;
         zombieLockTask.start();
+        startTime = new Timestamp(System.currentTimeMillis());
+        plugin.getStats().gameStarted(this);
         checkGameEnd();
     }
 
@@ -729,5 +733,15 @@ class DefaultGame implements Game {
             yaw = yaw + (Math.abs(180 - yaw) * 2);
         }
          */
+    }
+
+    @Override
+    public Set<GamePlayer> getGamePlayers() {
+        return new HashSet<GamePlayer>(gamePlayers.values());
+    }
+
+    @Override
+    public Timestamp getStartTime() {
+        return startTime;
     }
 }
