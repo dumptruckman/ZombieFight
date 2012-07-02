@@ -1,14 +1,26 @@
 package com.dumptruckman.minecraft.zombiefight.api;
 
-import org.bukkit.entity.Player;
+import org.bukkit.World;
+
+import java.sql.Timestamp;
 
 public interface StatsDatabase {
 
     boolean connect();
 
-    void gameStarted(Game game);
+    int newGame(Timestamp createTime, World world);
 
-    void playerJoinedGame(Player player, Game game);
+    void gameStarted(Game game, Timestamp startTime);
+
+    void gameEnded(Game game, Timestamp endTime);
+
+    void playerJoinedGame(Game game, GamePlayer player);
 
     int getPlayer(String player);
+
+    void playerUpdate(GamePlayer player);
+
+    void playerKilled(GamePlayer killer, GamePlayer victim, Game game, Timestamp time, int weapon);
+
+    void playerTypeChange(Game game, GamePlayer player, PlayerType type);
 }

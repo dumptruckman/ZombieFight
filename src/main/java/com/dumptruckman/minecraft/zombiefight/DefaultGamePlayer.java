@@ -3,6 +3,7 @@ package com.dumptruckman.minecraft.zombiefight;
 import com.dumptruckman.minecraft.pluginbase.util.Logging;
 import com.dumptruckman.minecraft.zombiefight.api.Game;
 import com.dumptruckman.minecraft.zombiefight.api.GamePlayer;
+import com.dumptruckman.minecraft.zombiefight.api.PlayerType;
 import com.dumptruckman.minecraft.zombiefight.api.ZombieFight;
 import com.dumptruckman.minecraft.zombiefight.util.Language;
 import me.desmin88.mobdisguise.api.MobDisguiseAPI;
@@ -21,7 +22,8 @@ class DefaultGamePlayer implements GamePlayer {
     private String name;
 
     private boolean online = false;
-    private boolean zombie = false;
+
+    private PlayerType playerType = PlayerType.HUMAN;
 
     private int id;
 
@@ -91,7 +93,12 @@ class DefaultGamePlayer implements GamePlayer {
 
     @Override
     public boolean isZombie() {
-        return zombie;
+        return playerType != PlayerType.HUMAN;
+    }
+
+    @Override
+    public PlayerType getType() {
+        return playerType;
     }
 
     @Override
@@ -128,10 +135,10 @@ class DefaultGamePlayer implements GamePlayer {
 
     @Override
     public void makeZombie(final boolean broadcast) {
-        if (zombie) {
+        if (isZombie()) {
             return;
         }
-        zombie = true;
+        playerType = PlayerType.ZOMBIE;
         final Player player = getPlayer();
         if (player != null) {
             resetPlayer(player);
@@ -146,15 +153,23 @@ class DefaultGamePlayer implements GamePlayer {
                 }
             }, 3L);
         }
+        plugin.getStats().playerUpdate(this);
+        if (game.hasStarted() && !game.hasEnded()) {
+            plugin.getStats().playerTypeChange(game, this, PlayerType.ZOMBIE);
+        }
     }
 
     @Override
     public void makeHuman() {
-        zombie = false;
+        playerType = PlayerType.HUMAN;
         Player player = getPlayer();
         if (player != null) {
             resetPlayer(player);
             fixUpPlayer(player);
+        }
+        plugin.getStats().playerUpdate(this);
+        if (game.hasStarted() && !game.hasEnded()) {
+            plugin.getStats().playerTypeChange(game, this, PlayerType.HUMAN);
         }
     }
 

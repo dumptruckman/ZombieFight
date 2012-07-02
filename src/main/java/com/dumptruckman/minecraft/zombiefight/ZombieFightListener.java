@@ -13,7 +13,6 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
 import org.bukkit.event.EventHandler;
@@ -423,7 +422,7 @@ public class ZombieFightListener implements Listener {
         if (!game.isEnabled()) {
             return;
         }
-        game.playerDied(player);
+        game.playerDied(player, player.getKiller());
         if (game.isZombie(player)) {
             Iterator<ItemStack> it = event.getDrops().iterator();
             while (it.hasNext()) {

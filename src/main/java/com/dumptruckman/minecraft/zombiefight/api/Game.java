@@ -10,7 +10,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
-import java.sql.Timestamp;
 import java.util.Set;
 
 public interface Game {
@@ -35,7 +34,7 @@ public interface Game {
 
     void playerQuit(Player player);
 
-    void playerDied(Player player);
+    void playerDied(Player player, Player killer);
 
     boolean allowMove(Player player, Block fromBlock, Block toBlock);
 
@@ -74,6 +73,4 @@ public interface Game {
     void leftClickAbilityUse(Player player, ItemStack item);
 
     Set<GamePlayer> getGamePlayers();
-
-    Timestamp getStartTime();
 }

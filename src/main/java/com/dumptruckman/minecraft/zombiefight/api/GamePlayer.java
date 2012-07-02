@@ -12,6 +12,8 @@ public interface GamePlayer {
 
     boolean isZombie();
 
+    PlayerType getType();
+
     boolean isOnline();
 
     void joinedGame();

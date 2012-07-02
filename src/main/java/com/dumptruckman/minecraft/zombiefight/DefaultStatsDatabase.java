@@ -4,22 +4,21 @@ import com.dumptruckman.minecraft.pluginbase.database.SQLDatabase;
 import com.dumptruckman.minecraft.pluginbase.util.Logging;
 import com.dumptruckman.minecraft.zombiefight.api.Game;
 import com.dumptruckman.minecraft.zombiefight.api.GamePlayer;
+import com.dumptruckman.minecraft.zombiefight.api.PlayerType;
 import com.dumptruckman.minecraft.zombiefight.api.StatsDatabase;
 import com.dumptruckman.minecraft.zombiefight.api.ZombieFight;
-import org.bukkit.entity.Player;
+import org.bukkit.World;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.sql.Timestamp;
+import java.util.Set;
 
 class DefaultStatsDatabase implements StatsDatabase {
     private ZombieFight plugin;
 
     DefaultStatsDatabase(ZombieFight plugin) {
         this.plugin = plugin;
-        this.checkTables();
-        this.updateDB();
     }
 
     synchronized SQLDatabase getDB() {
@@ -33,6 +32,16 @@ class DefaultStatsDatabase implements StatsDatabase {
         if (!getDB().checkTable(QueryGen.PLAYER_TYPE_TABLE)) {
             if (!getDB().createTable(QueryGen.createPlayerTypeTable())) {
                 Logging.severe("Could not create player type table!");
+            }
+        }
+        for (PlayerType type : PlayerType.values()) {
+            getDB().query(QueryGen.addPlayerType(type));
+            ResultSet result = getDB().query(QueryGen.getPlayerTypeId(type));
+            try {
+                result.next();
+                type.setId(result.getInt("id"));
+            } catch (SQLException ignore) {
+                Logging.warning("Could not set PlayerType id");
             }
         }
         if (!getDB().checkTable(QueryGen.PLAYERS_TABLE)) {
@@ -71,7 +80,15 @@ class DefaultStatsDatabase implements StatsDatabase {
 
     @Override
     public boolean connect() {
-        return getDB().connect(plugin);
+        if (getDB().isConnected()) {
+            return false;
+        }
+        boolean ret = getDB().connect(plugin);
+        if (ret) {
+            this.checkTables();
+            this.updateDB();
+        }
+        return ret;
     }
 
     @Override
@@ -87,22 +104,90 @@ class DefaultStatsDatabase implements StatsDatabase {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return -1;  //To change body of implemented methods use File | Settings | File Templates.
+        return -1;
     }
 
     @Override
-    public void gameStarted(Game game) {
-        getDB().query(QueryGen.createGame(game.getStartTime()));
-        for (GamePlayer player : game.getGamePlayers()) {
-            getDB().query(QueryGen.updatePlayer(player.getName(), null, plugin.getPlayerKit(player.getName())));
-            if (player.isOnline()) {
+    public int newGame(Timestamp createTime, World world) {
+        getDB().query(QueryGen.createGame(createTime, world.getName()));
+        try {
+            ResultSet result = getDB().query(QueryGen.getGame(createTime, world.getName()));
+            result.next();
+            return result.getInt("id");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return -1;
+    }
 
+    @Override
+    public void gameStarted(Game game, Timestamp startTime) {
+        if (game.getId() < 0) {
+            return;
+        }
+        getDB().query(QueryGen.startGame(game.getId(), startTime));
+        for (GamePlayer player : game.getGamePlayers()) {
+            getDB().query(QueryGen.updatePlayer(player.getName(),
+                    (player.getType().getId() >= 0 ? player.getType().getId() : null),
+                    plugin.getPlayerKit(player.getName())));
+            if (player.isOnline() && player.getId() > -1) {
+                getDB().query(QueryGen.playerStartingInGame(player.getId(), game.getId(), player.isZombie(), plugin.getPlayerKit(player.getName())));
             }
         }
     }
 
     @Override
-    public void playerJoinedGame(Player player, Game game) {
-        //To change body of implemented methods use File | Settings | File Templates.
+    public void playerJoinedGame(Game game, GamePlayer player) {
+        if (game.getId() < 0 || player.getId() < 0) {
+            return;
+        }
+        getDB().query(QueryGen.playerJoiningInGame(game.getId(), player.getId(), player.isZombie(), plugin.getPlayerKit(player.getName())));
+    }
+
+    @Override
+    public void gameEnded(Game game, Timestamp endTime) {
+        if (game.getId() < 0) {
+            return;
+        }
+        Set<GamePlayer> gamePlayers = game.getGamePlayers();
+        boolean humansWon = false;
+        for (GamePlayer player : gamePlayers) {
+            if (player.isOnline() && !player.isZombie()) {
+                humansWon = true;
+                break;
+            }
+        }
+        getDB().query(QueryGen.endGame(game.getId(), endTime, humansWon));
+        for (GamePlayer player : gamePlayers) {
+            getDB().query(QueryGen.updatePlayer(player.getName(),
+                    (player.getType().getId() >= 0 ? player.getType().getId() : null),
+                    plugin.getPlayerKit(player.getName())));
+            if (player.isOnline() && player.getId() > -1) {
+                getDB().query(QueryGen.playerFinishingInGame(player.getId(), game.getId(), player.isZombie()));
+            }
+        }
+    }
+
+    @Override
+    public void playerUpdate(GamePlayer player) {
+        getDB().query(QueryGen.updatePlayer(player.getName(),
+                (player.getType().getId() >= 0 ? player.getType().getId() : null),
+                plugin.getPlayerKit(player.getName())));
+    }
+
+    @Override
+    public void playerKilled(GamePlayer killer, GamePlayer victim, Game game, Timestamp time, int weapon) {
+        getDB().query(QueryGen.playerKilled((killer != null ? killer.getId() : -1),
+                (killer != null && killer.getType().getId() >= 0 ? killer.getType().getId() : null),
+                victim.getId(), (victim.getType().getId() >= 0 ? victim.getType().getId() : null),
+                game.getId(), time, weapon));
+    }
+
+    @Override
+    public void playerTypeChange(Game game, GamePlayer player, PlayerType type) {
+        if (game.getId() < 0 || player.getId() < 0 || type.getId() < 0) {
+            return;
+        }
+        getDB().query(QueryGen.playerTypeChange(player.getId(), game.getId(), type.getId()));
     }
 }

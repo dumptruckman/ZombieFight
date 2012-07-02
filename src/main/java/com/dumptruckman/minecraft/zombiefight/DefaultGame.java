@@ -7,6 +7,7 @@ import com.dumptruckman.minecraft.zombiefight.api.Game;
 import com.dumptruckman.minecraft.zombiefight.api.GamePlayer;
 import com.dumptruckman.minecraft.zombiefight.api.LootTable;
 import com.dumptruckman.minecraft.zombiefight.api.Snapshot;
+import com.dumptruckman.minecraft.zombiefight.api.StatsDatabase;
 import com.dumptruckman.minecraft.zombiefight.api.ZFConfig;
 import com.dumptruckman.minecraft.zombiefight.api.ZombieFight;
 import com.dumptruckman.minecraft.zombiefight.task.GameCountdownTask;
@@ -51,8 +52,6 @@ class DefaultGame implements Game {
 
     private Map<String, GamePlayer> gamePlayers;
 
-    private Timestamp startTime;
-
     private boolean started;
     private boolean ended;
     private boolean reset;
@@ -85,6 +84,10 @@ class DefaultGame implements Game {
 
     protected Messager getMessager() {
         return getPlugin().getMessager();
+    }
+
+    protected StatsDatabase getStats() {
+        return getPlugin().getStats();
     }
 
     protected GamePlayer getGamePlayer(String name) {
@@ -232,9 +235,9 @@ class DefaultGame implements Game {
         broadcast(Language.RUN_FROM_ZOMBIE, TimeTools.toLongForm(plugin.config().get(ZFConfig.ZOMBIE_LOCK)));
         zombiesLocked = true;
         zombieLockTask.start();
-        startTime = new Timestamp(System.currentTimeMillis());
-        plugin.getStats().createGame(this);
-        plugin.getStats().gameStarted(this);
+        if (getStats() != null) {
+            getStats().gameStarted(this, new Timestamp(System.currentTimeMillis()));
+        }
         checkGameEnd();
     }
 
@@ -274,6 +277,10 @@ class DefaultGame implements Game {
         zombiesLocked = false;
         lastHuman = false;
         ended = true;
+        if (getStats() != null) {
+            getStats().gameEnded(this, new Timestamp(System.currentTimeMillis()));
+        }
+        id = -1;
         broadcast(Language.GAME_ENDED);
         gameEndTask.start();
     }
@@ -308,6 +315,11 @@ class DefaultGame implements Game {
     /**
      *
      */
+
+    @Override
+    public int getId() {
+        return id;
+    }
 
     @Override
     public Location getSpawnLocation() {
@@ -366,6 +378,9 @@ class DefaultGame implements Game {
             if (playersInWorld.size() < getConfig().get(ZFConfig.MIN_PLAYERS)) {
                 broadcast(Language.JOIN_WHILE_GAME_PREPARING);
             }
+        }
+        if (getStats() != null) {
+            id = getStats().newGame(new Timestamp(System.currentTimeMillis()), getWorld());
         }
         checkGameStart();
     }
@@ -452,6 +467,9 @@ class DefaultGame implements Game {
                 delayedSpawn(player);
             }
         }
+        if (hasStarted() && !hasEnded() && getStats() != null) {
+            getStats().playerJoinedGame(this, gPlayer);
+        }
     }
 
     private void delayedSpawn(final Player player) {
@@ -486,13 +504,21 @@ class DefaultGame implements Game {
     }
 
     @Override
-    public void playerDied(final Player player) {
+    public void playerDied(Player player, Player killer) {
         if (hasStarted() && !hasEnded()) {
+            final GamePlayer gPlayer = getGamePlayer(player.getName());
+            int item = -1;
+            GamePlayer gKiller = null;
+            if (killer != null) {
+                item = killer.getItemInHand().getTypeId();
+                gKiller = getGamePlayer(killer.getName());
+            }
+            getStats().playerKilled(gKiller, gPlayer, this, new Timestamp(System.currentTimeMillis()), item);
             if (!isZombie(player)) {
                 Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
                     @Override
                     public void run() {
-                        getGamePlayer(player.getName()).makeZombie(true);
+                        gPlayer.makeZombie(true);
                         checkGameEnd();
                     }
                 });
@@ -741,10 +767,5 @@ class DefaultGame implements Game {
     @Override
     public Set<GamePlayer> getGamePlayers() {
         return new HashSet<GamePlayer>(gamePlayers.values());
-    }
-
-    @Override
-    public Timestamp getStartTime() {
-        return startTime;
     }
 }
