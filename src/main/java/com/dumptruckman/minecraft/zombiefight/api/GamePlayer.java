@@ -4,6 +4,8 @@ import org.bukkit.entity.Player;
 
 public interface GamePlayer {
 
+    int getId();
+
     Player getPlayer();
 
     String getName();

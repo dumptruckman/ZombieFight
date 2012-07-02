@@ -8,12 +8,12 @@ import com.dumptruckman.minecraft.zombiefight.api.StatsDatabase;
 import com.dumptruckman.minecraft.zombiefight.api.ZombieFight;
 import org.bukkit.entity.Player;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 class DefaultStatsDatabase implements StatsDatabase {
-
-    private Queue<String> queries = new ConcurrentLinkedQueue<String>();
     private ZombieFight plugin;
 
     DefaultStatsDatabase(ZombieFight plugin) {
@@ -75,10 +75,26 @@ class DefaultStatsDatabase implements StatsDatabase {
     }
 
     @Override
+    public int getPlayer(String player) {
+        ResultSet result = getDB().query(QueryGen.getPlayer(player));
+        try {
+            if (!result.next()) {
+                getDB().query(QueryGen.updatePlayer(player, null, null));
+                result = getDB().query(QueryGen.getPlayer(player));
+                result.next();
+            }
+            return result.getInt("id");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return -1;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
     public void gameStarted(Game game) {
-        queries.add(QueryGen.createGame(game.getStartTime()));
+        getDB().query(QueryGen.createGame(game.getStartTime()));
         for (GamePlayer player : game.getGamePlayers()) {
-            queries.add(QueryGen.updatePlayer(player.getName(), null, plugin.getPlayerKit(player.getName())));
+            getDB().query(QueryGen.updatePlayer(player.getName(), null, plugin.getPlayerKit(player.getName())));
             if (player.isOnline()) {
 
             }

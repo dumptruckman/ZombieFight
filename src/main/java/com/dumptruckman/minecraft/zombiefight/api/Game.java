@@ -15,6 +15,8 @@ import java.util.Set;
 
 public interface Game {
 
+    int getId();
+
     boolean isEnabled();
 
     Location getSpawnLocation();

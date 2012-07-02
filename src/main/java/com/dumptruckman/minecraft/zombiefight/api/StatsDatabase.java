@@ -9,4 +9,6 @@ public interface StatsDatabase {
     void gameStarted(Game game);
 
     void playerJoinedGame(Player player, Game game);
+
+    int getPlayer(String player);
 }

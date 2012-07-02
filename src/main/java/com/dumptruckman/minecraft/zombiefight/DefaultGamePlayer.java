@@ -20,8 +20,10 @@ class DefaultGamePlayer implements GamePlayer {
 
     private String name;
 
-    boolean online = false;
-    boolean zombie = false;
+    private boolean online = false;
+    private boolean zombie = false;
+
+    private int id;
 
     private String trackedPlayer = "";
 
@@ -33,6 +35,7 @@ class DefaultGamePlayer implements GamePlayer {
         if (player != null && player.getWorld().equals(game.getWorld())) {
             online = true;
         }
+        id = plugin.getStats().getPlayer(name);
     }
 
     private void fixUpPlayer(Player player) {
@@ -69,6 +72,11 @@ class DefaultGamePlayer implements GamePlayer {
             }
             player.setPlayerListName(name.substring(0, length));
         }
+    }
+
+    @Override
+    public int getId() {
+        return id;
     }
 
     @Override

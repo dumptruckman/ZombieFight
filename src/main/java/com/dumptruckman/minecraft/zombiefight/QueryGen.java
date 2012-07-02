@@ -45,7 +45,7 @@ class QueryGen {
     static String createGamesTable() {
         return "CREATE TABLE `" + GAMES_TABLE + "` ("
                 + "`id` INT UNSIGNED NOT NULL AUTO_INCREMENT"
-                + ",`start_time` TIMESTAMP NOT NULL"
+                + ",`start_time` TIMESTAMP"
                 + ",`end_time` TIMESTAMP"
                 + ",`humans_won` TINYINT(1) NOT NULL DEFAULT '0'"
 
@@ -129,6 +129,11 @@ class QueryGen {
                 + (type != null ? ",`current_type`='" + type + "'" : "")
                 + (kit != null ? ",`kit_selected`='" + kit + "'" : "")
                 + " WHERE `player_name`='" + name + "'" : "");
+    }
+
+    static String getPlayer(String name) {
+        return "SELECT `id` FROM `" + PLAYERS_TABLE + "` "
+                + "WHERE `player_name`='" + name + "'";
     }
 
     static String playerStartingInGame(String name, Timestamp gameTime, boolean isZombie, String kit) {

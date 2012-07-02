@@ -43,6 +43,8 @@ class DefaultGame implements Game {
 
     private ZombieFight plugin;
 
+    private int id = -1;
+
     private World world;
 
     private Snapshot snapshot;
@@ -231,6 +233,7 @@ class DefaultGame implements Game {
         zombiesLocked = true;
         zombieLockTask.start();
         startTime = new Timestamp(System.currentTimeMillis());
+        plugin.getStats().createGame(this);
         plugin.getStats().gameStarted(this);
         checkGameEnd();
     }
