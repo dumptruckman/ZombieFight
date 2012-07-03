@@ -16,6 +16,7 @@ import com.dumptruckman.minecraft.zombiefight.task.HumanFinderTask;
 import com.dumptruckman.minecraft.zombiefight.task.LastHumanCountdownTask;
 import com.dumptruckman.minecraft.zombiefight.task.ZombieLockCountdownTask;
 import com.dumptruckman.minecraft.zombiefight.util.Language;
+import com.dumptruckman.minecraft.zombiefight.util.Perms;
 import com.dumptruckman.minecraft.zombiefight.util.TimeTools;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -51,6 +52,8 @@ class DefaultGame implements Game {
     private Snapshot snapshot;
 
     private Map<String, GamePlayer> gamePlayers;
+
+    private Set<String> bannedPlayers;
 
     private boolean started;
     private boolean ended;
@@ -355,6 +358,7 @@ class DefaultGame implements Game {
             humanFinderTask.kill();
         }
         gamePlayers = new HashMap<String, GamePlayer>();
+        bannedPlayers = new HashSet<String>();
         started = false;
         ended = false;
         reset = false;
@@ -485,7 +489,8 @@ class DefaultGame implements Game {
     public void playerQuit(Player player) {
         Logging.finer("Player quit game in world: " + getWorld().getName());
 
-        getGamePlayer(player.getName()).leftGame();
+        GamePlayer gPlayer = getGamePlayer(player.getName());
+        gPlayer.leftGame();
         if (!hasStarted()) {
             if (isCountdownPhase()) {
                 int playersInWorld = getWorld().getPlayers().size();
@@ -499,6 +504,20 @@ class DefaultGame implements Game {
                 }
             }
         } else if (!hasEnded()) {
+            if (gPlayer.isZombie()) {
+                int onlineZombies = 0;
+                for (GamePlayer gamePlayer : getOnlinePlayers()) {
+                    if (gamePlayer.isZombie() && !gamePlayer.getName().equals(gPlayer.getName())) {
+                        onlineZombies++;
+                    }
+                }
+                if (onlineZombies < 1) {
+                    bannedPlayers.add(player.getName());
+                    if (!Perms.CAN_ALWAYS_BREAK.hasPermission(player)) {
+                        player.kickPlayer("Banned for current game for logging out as only zombie!  Check back in a bit.");
+                    }
+                }
+            }
             checkGameEnd();
         }
     }
@@ -767,5 +786,10 @@ class DefaultGame implements Game {
     @Override
     public Set<GamePlayer> getGamePlayers() {
         return new HashSet<GamePlayer>(gamePlayers.values());
+    }
+
+    @Override
+    public boolean isBanned(Player player) {
+        return bannedPlayers.contains(player);
     }
 }

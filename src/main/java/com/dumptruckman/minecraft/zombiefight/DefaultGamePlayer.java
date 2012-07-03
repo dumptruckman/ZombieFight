@@ -184,6 +184,7 @@ class DefaultGamePlayer implements GamePlayer {
         player.setFoodLevel(20);
         player.setSaturation(5F);
         player.setExhaustion(0F);
+        player.closeInventory();
         for (PotionEffect effect : player.getActivePotionEffects()) {
             player.removePotionEffect(effect.getType());
         }

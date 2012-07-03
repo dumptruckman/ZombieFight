@@ -32,11 +32,13 @@ import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
+import org.bukkit.event.world.PortalCreateEvent;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.material.Button;
@@ -121,12 +123,35 @@ public class ZombieFightListener implements Listener {
         return plugin.getMessager();
     }
 
+    @EventHandler
+    public void portalCreate(PortalCreateEvent event) {
+        Game game = plugin.getGameManager().getGame(event.getWorld());
+        if (!game.isEnabled() || event.getReason() != PortalCreateEvent.CreateReason.FIRE) {
+            return;
+        }
+        event.setCancelled(true);
+    }
+
+    @EventHandler
+    public void playerLogin(PlayerLoginEvent event) {
+        Player player = event.getPlayer();
+        Game game = plugin.getGameManager().getGame(player.getWorld());
+        if (!game.isEnabled()) {
+            return;
+        }
+        if (game.hasStarted() && !game.hasEnded()) {
+            if (game.isBanned(player) && !Perms.CAN_ALWAYS_BREAK.hasPermission(player)) {
+                event.setKickMessage("Banned for current game for logging out as only zombie!  Check back in a bit.");
+                event.setResult(PlayerLoginEvent.Result.KICK_BANNED);
+            }
+        }
+    }
+
     @EventHandler(priority = EventPriority.MONITOR)
     public void playerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         Game game = plugin.getGameManager().getGame(player.getWorld());
         if (!game.isEnabled()) {
-            Logging.finest("Player joined non-game world.");
             return;
         }
         game.playerJoined(player);
@@ -227,6 +252,10 @@ public class ZombieFightListener implements Listener {
         }
         Game game = plugin.getGameManager().getGame(player.getWorld());
         if (!game.isEnabled()) {
+            return;
+        }
+        if ((!game.hasStarted() || game.hasEnded()) && !Perms.CAN_ALWAYS_BREAK.hasPermission(player)) {
+            event.setCancelled(true);
             return;
         }
         if (game.isZombie(player) && event.getInventory().getType() != InventoryType.PLAYER) {

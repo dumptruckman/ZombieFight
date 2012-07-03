@@ -105,11 +105,9 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
     @Override
     public void postReload() {
         statsDatabase = new DefaultStatsDatabase(this);
-        if (!statsDatabase.connect()) {
-            Logging.warning("Could not connect to database, stats will not be loaded or tracked!");
-        } else {
-            Logging.fine("Connected to MySQL DB");
-        }
+        //if (!statsDatabase.connect()) {
+        //    Logging.warning("Could not connect to database, stats will not be loaded or tracked!");
+        //}
         disguiser = new DefaultDisguiser(this);
         listener.resetBorderDamager();
         for (World world : Bukkit.getWorlds()) {

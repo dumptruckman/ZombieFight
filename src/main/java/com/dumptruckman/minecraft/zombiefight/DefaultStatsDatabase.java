@@ -93,6 +93,9 @@ class DefaultStatsDatabase implements StatsDatabase {
 
     @Override
     public int getPlayer(String player) {
+        if (!getDB().isConnected()) {
+            return -1;
+        }
         ResultSet result = getDB().query(QueryGen.getPlayer(player));
         try {
             if (!result.next()) {
@@ -109,6 +112,9 @@ class DefaultStatsDatabase implements StatsDatabase {
 
     @Override
     public int newGame(Timestamp createTime, World world) {
+        if (!getDB().isConnected()) {
+            return -1;
+        }
         getDB().query(QueryGen.createGame(createTime, world.getName()));
         try {
             ResultSet result = getDB().query(QueryGen.getGame(createTime, world.getName()));
@@ -122,6 +128,9 @@ class DefaultStatsDatabase implements StatsDatabase {
 
     @Override
     public void gameStarted(Game game, Timestamp startTime) {
+        if (!getDB().isConnected()) {
+            return;
+        }
         if (game.getId() < 0) {
             return;
         }
@@ -138,6 +147,9 @@ class DefaultStatsDatabase implements StatsDatabase {
 
     @Override
     public void playerJoinedGame(Game game, GamePlayer player) {
+        if (!getDB().isConnected()) {
+            return;
+        }
         if (game.getId() < 0 || player.getId() < 0) {
             return;
         }
@@ -146,6 +158,9 @@ class DefaultStatsDatabase implements StatsDatabase {
 
     @Override
     public void gameEnded(Game game, Timestamp endTime) {
+        if (!getDB().isConnected()) {
+            return;
+        }
         if (game.getId() < 0) {
             return;
         }
@@ -170,6 +185,9 @@ class DefaultStatsDatabase implements StatsDatabase {
 
     @Override
     public void playerUpdate(GamePlayer player) {
+        if (!getDB().isConnected()) {
+            return;
+        }
         getDB().query(QueryGen.updatePlayer(player.getName(),
                 (player.getType().getId() >= 0 ? player.getType().getId() : null),
                 plugin.getPlayerKit(player.getName())));
@@ -177,6 +195,9 @@ class DefaultStatsDatabase implements StatsDatabase {
 
     @Override
     public void playerKilled(GamePlayer killer, GamePlayer victim, Game game, Timestamp time, int weapon) {
+        if (!getDB().isConnected()) {
+            return;
+        }
         getDB().query(QueryGen.playerKilled((killer != null ? killer.getId() : -1),
                 (killer != null && killer.getType().getId() >= 0 ? killer.getType().getId() : null),
                 victim.getId(), (victim.getType().getId() >= 0 ? victim.getType().getId() : null),
@@ -185,6 +206,9 @@ class DefaultStatsDatabase implements StatsDatabase {
 
     @Override
     public void playerTypeChange(Game game, GamePlayer player, PlayerType type) {
+        if (!getDB().isConnected()) {
+            return;
+        }
         if (game.getId() < 0 || player.getId() < 0 || type.getId() < 0) {
             return;
         }

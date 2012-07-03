@@ -73,4 +73,6 @@ public interface Game {
     void leftClickAbilityUse(Player player, ItemStack item);
 
     Set<GamePlayer> getGamePlayers();
+
+    boolean isBanned(Player player);
 }
