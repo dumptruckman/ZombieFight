@@ -49,7 +49,8 @@ class DefaultGameManager implements GameManager {
         getEnabledWorlds().add(world.getName());
         plugin.config().set(ZFConfig.ENABLED_WORLDS, new ArrayList<String>(getEnabledWorlds()));
         plugin.config().save();
-        getGame(world);
+        Game game = getGame(world);
+        game.forceEnd(true);
     }
 
     @Override

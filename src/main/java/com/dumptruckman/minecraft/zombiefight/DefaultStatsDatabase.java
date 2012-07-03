@@ -161,7 +161,7 @@ class DefaultStatsDatabase implements StatsDatabase {
         if (game.getId() < 0 || player.getId() < 0) {
             return;
         }
-        getDB().query(QueryGen.playerJoiningInGame(game.getId(), player.getId(), player.isZombie(), plugin.getPlayerKit(player.getName())));
+        getDB().query(QueryGen.playerJoiningInGame(player.getId(), game.getId(), player.isZombie(), plugin.getPlayerKit(player.getName())));
     }
 
     @Override

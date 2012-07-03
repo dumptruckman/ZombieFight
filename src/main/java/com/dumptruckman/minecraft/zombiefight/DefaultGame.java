@@ -366,6 +366,7 @@ class DefaultGame implements Game {
         countingDown = false;
         zombiesLocked = true;
         lastHuman = false;
+        id = -1;
         snapshot = new DefaultSnapshot(getWorld());
         countdownTask = new GameCountdownTask(this, plugin);
         zombieLockTask = new ZombieLockCountdownTask(this, plugin);
@@ -382,9 +383,9 @@ class DefaultGame implements Game {
             if (playersInWorld.size() < getConfig().get(ZFConfig.MIN_PLAYERS)) {
                 broadcast(Language.JOIN_WHILE_GAME_PREPARING);
             }
-        }
-        if (getStats() != null) {
-            id = getStats().newGame(new Timestamp(System.currentTimeMillis()), getWorld());
+            if (getStats() != null) {
+                id = getStats().newGame(new Timestamp(System.currentTimeMillis()), getWorld());
+            }
         }
         checkGameStart();
     }
