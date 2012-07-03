@@ -69,6 +69,7 @@ class DefaultStatsDatabase implements StatsDatabase {
                 Logging.severe("Could not create kills table!");
             }
         }
+        getDB().query(QueryGen.createGrandTotalKillsView());
     }
 
     private void updateDB() {
@@ -89,6 +90,13 @@ class DefaultStatsDatabase implements StatsDatabase {
             this.updateDB();
         }
         return ret;
+    }
+
+    @Override
+    public void disconnect() {
+        if (getDB().isConnected()) {
+            getDB().disconnect();
+        }
     }
 
     @Override

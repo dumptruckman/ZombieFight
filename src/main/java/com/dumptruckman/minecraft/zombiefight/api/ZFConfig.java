@@ -23,6 +23,7 @@ public interface ZFConfig extends BaseConfig {
     MappedConfigEntry<Location> GAME_SPAWN = new EntryBuilder<Location>(Location.class, "data.game_spawn").serializer(new LocationSerializer()).comment("# The location of the game spawn, per world.").buildMap();
     MappedConfigEntry<Integer> BORDER_RADIUS = new EntryBuilder<Integer>(Integer.class, "data.border.radius").def(150).defaultIfMissing().stringSerializer().comment("# The radius of the border from the game spawn.").buildMap();
     MappedConfigEntry<Integer> BORDER_WARN = new EntryBuilder<Integer>(Integer.class, "data.border.warn").def(7).defaultIfMissing().stringSerializer().comment("# The distance before the border that players will be warned.").buildMap();
+    ConfigEntry<Boolean> TRACK_STATS = new EntryBuilder<Boolean>(Boolean.class, "database.track_stats").def(false).defaultIfMissing().stringSerializer().comment("# Whether or not to track stats... DB must be setup properly!").build();
 
     ConfigEntry<Integer> MIN_PLAYERS = new EntryBuilder<Integer>(Integer.class, "game_settings.players.minimum_players").stringSerializer().def(10).defaultIfMissing().comment("# The minimum players required to start a game.").build();
     ConfigEntry<Integer> MAX_PLAYERS = new EntryBuilder<Integer>(Integer.class, "game_settings.players.maximum_players").stringSerializer().def(30).defaultIfMissing().comment("# The maximum players for a game.  The game will start immediately if reached.").build();
@@ -44,4 +45,5 @@ public interface ZFConfig extends BaseConfig {
     ConfigEntry<Integer> HUMAN_FINDER_START = new EntryBuilder<Integer>(Integer.class, "game_settings.human_finder.start_after").def(60).defaultIfMissing().stringSerializer().comment("# How long (in seconds) after a zombie last attacks a human (or vice versa) that lightning beacons will start locating humans.").build();
     ConfigEntry<Integer> HUMAN_FINDER_TICK = new EntryBuilder<Integer>(Integer.class, "game_settings.human_finder.period").def(20).defaultIfMissing().stringSerializer().comment("# How often lightning beacons will appear once they start (until zombies hit humans)").build();
     ConfigEntry<Integer> SMELL_RANGE = new EntryBuilder<Integer>(Integer.class, "game_settings.zombie.ability.smell.radius").def(75).defaultIfMissing().stringSerializer().comment("# The radius for how far zombies can smell humans").build();
+
 }

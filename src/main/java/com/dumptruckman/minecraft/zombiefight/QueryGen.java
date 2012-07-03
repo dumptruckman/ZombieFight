@@ -110,6 +110,17 @@ class QueryGen {
                 + ") ENGINE = InnoDB,COMMENT = 'version:" + KILLS_VERSION + "'";
     }
 
+    static String createGrandTotalKillsView() {
+        return "CREATE OR REPLACE VIEW `grand_total_kills` AS" +
+                " SELECT " +
+                "`" + KILLS_TABLE + "`.`killer_id`," +
+                "`" + KILLS_TABLE + "`.`victim_type`," +
+                "count(`" + KILLS_TABLE + "`.`killer_id`) AS `kill_count`" +
+                " FROM `" + KILLS_TABLE + "`" +
+                " GROUP BY `" + KILLS_TABLE + "`.`killer_id` ,`" + KILLS_TABLE + "`.`victim_type`" +
+                " ORDER BY count(`" + KILLS_TABLE + "`.`killer_id`) DESC";
+    }
+
     static String createGame(Timestamp time, String world) {
         return "INSERT INTO `" + GAMES_TABLE + "` "
                 + "(`world`,`create_time`) VALUES "

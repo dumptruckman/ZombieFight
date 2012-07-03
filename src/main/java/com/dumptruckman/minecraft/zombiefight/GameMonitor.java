@@ -85,6 +85,7 @@ public class GameMonitor implements Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     public void blockMonitor(BlockFromToEvent event) {
         handleBlockEvent(event.getBlock().getState(), event);
+        handleBlockEvent(event.getToBlock().getState(), event);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)

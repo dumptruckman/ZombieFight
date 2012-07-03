@@ -1,5 +1,4 @@
 <?php 
-
 /**
  * Database Connection Information
  * Change these...
@@ -9,11 +8,45 @@ $user = "root";
 $password = "";
 $database = "minecraftserver";
 
+function mysql_fetch_all($res) {
+   while($row=mysql_fetch_array($res)) {
+       $return[] = $row;
+   }
+   return $return;
+}
+
+function create_table_row($dataArr) {
+    echo "<tr>";
+    for($j = 0; $j < count($dataArr); $j++) {
+        echo "<td>".$dataArr[$j]."</td>";
+    }
+    echo "</tr>";
+}
+
+function get_total_kills($type) {
+  return mysql_query("
+      SELECT
+      `zf_players`.`player_name`,
+      `grand_total_kills`.`kill_count`
+      FROM `zf_players`
+      JOIN `grand_total_kills`
+      ON `zf_players`.`id`=`grand_total_kills`.`killer_id`
+      WHERE `grand_total_kills`.`victim_type`=
+      (
+        SELECT `id`
+        FROM `zf_player_type`
+        WHERE `type_name`='{$type}'
+      )
+      ORDER BY `grand_total_kills`.`kill_count` DESC
+      LIMIT 10
+      ");
+}
+
 mysql_connect($host, $user, $password);
 @mysql_select_db($database) or die("Unable to select database");
 
 $dir = "./";
-  
+
 /*function get_hourlycheck () {
     include DRUPAL_ROOT . "/sites/default/files/db.inc";
     $result = mysql_query ('SELECT * FROM globals');
@@ -28,46 +61,35 @@ echo "
 <table border=0 id='leaderboards' cellpadding=10>
   <tr>
     <td>
-      <table border=0 id='totalKills'>
+      <table border=1 id='humanKills' cellpadding=3>
         <thead>
-          <th>Player</th>
-          <th>Kills</th>
+          <th>Player Name</th>
+          <th>Human Kills</th>
         </thead>";
-
+$result = get_total_kills("HUMAN");
+$all = mysql_fetch_all($result);
+for($i = 0; $i < count($all); $i++) {
+    create_table_row($all[$i]);
+}
+echo "
+      </table>
+    </td>
+    <td>
+      <table border=1 id='zombieKills' cellpadding=3>
+        <thead>
+          <th>Player Name</th>
+          <th>Zombie Kills</th>
+        </thead>";
+$result = get_total_kills("ZOMBIE");
+$all = mysql_fetch_all($result);
+for($i = 0; $i < count($all); $i++) {
+    create_table_row($all[$i]);
+}
 echo "
       </table>
     </td>
   </tr>
 </table>
-  <tr>
-    <th>Item</th>
-    <th>Stack Size</th>
-    <th>Stock</th>
-    <th>Stock Change</th>
-    <th>Buy Price</th>
-    <th>Buy Change</th>
-    <th>Sell Price</th>
-    <th>Sell Change</th>
-    <th style='display:none;width:0;'>Stock Ratio</th>
-  </tr></thead><tbody>
 ";
-  
-  $size = count($olddata);
-  $i = 1;
-  while ($i < $size ) {
-    echo "<tr>
-            <td><a href='#' onMouseover=\"ddrivetip('<table border = 0><tr><td>Volatlity</td><td>Max Stock</td><td>Max Buy</td><td>Max Sell</td><td>Baseline Buy</td><td>Baseline Sell</td><td>Min Buy</td><td>Min Sell</td></tr><tr><td>{$newdata[$i]['volatility']['value']}</td><td>{$newdata[$i]['stockceil']['value']}</td><td>{$newdata[$i]['maxbuy']['value']}</td><td>{$newdata[$i]['maxsell']['value']}</td><td>{$newdata[$i]['avgbuy']['value']}</td><td>{$newdata[$i]['avgsell']['value']}</td><td>{$newdata[$i]['minbuy']['value']}</td><td>{$newdata[$i]['minsell']['value']}</td></tr></table>', 'white', 600)\"; onMouseout=\"hideddrivetip()\">{$newdata[$i]['name']['value']}</a></td>
-            <td><font color='black'>{$newdata[$i]['count']['value']}</font></td>
-            <td><font color='{$newdata[$i]['stock']['color']}'>{$newdata[$i]['stock']['value']}</font></td>
-            <td><font color='{$newdata[$i]['stock']['change']['color']}'>{$newdata[$i]['stock']['change']['value']}</font></td>
-            <td><font color='{$newdata[$i]['buy']['color']}'>{$newdata[$i]['buy']['value']}</font></td>
-            <td><font color='{$newdata[$i]['buy']['change']['color']}'>{$newdata[$i]['buy']['change']['value']}</font></td>
-            <td><font color='{$newdata[$i]['sell']['color']}'>{$newdata[$i]['sell']['value']}</font></td>
-            <td><font color='{$newdata[$i]['sell']['change']['color']}'>{$newdata[$i]['sell']['change']['value']}</font></td>
-            <td style='display:none;width:0;'>{$newdata[$i]['stockratio']['value']}</td>
-          </tr>";
-    $i++;
-  }
-  
-  echo "</tbody></table>";
+mysql_close();
 ?>
