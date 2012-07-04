@@ -88,6 +88,9 @@ class DefaultStatsDatabase implements StatsDatabase {
         if (!isTracking) {
             return false;
         }
+        if (getDB().isConnected()) {
+            return true;
+        }
         boolean ret = getDB().connect(plugin);
         if (ret && firstConnect) {
             this.checkTables();
@@ -109,9 +112,7 @@ class DefaultStatsDatabase implements StatsDatabase {
         if (!connect()) {
             return null;
         }
-        ResultSet result = getDB().query(query);
-        disconnect();
-        return result;
+        return getDB().query(query);
     }
 
     @Override
@@ -126,10 +127,13 @@ class DefaultStatsDatabase implements StatsDatabase {
                 result = query(QueryGen.getPlayer(player));
                 result.next();
             }
-            return result.getInt("id");
+            int id = result.getInt("id");
+            disconnect();
+            return id;
         } catch (SQLException e) {
             e.printStackTrace();
         }
+        disconnect();
         return -1;
     }
 
@@ -142,10 +146,13 @@ class DefaultStatsDatabase implements StatsDatabase {
         try {
             ResultSet result = query(QueryGen.getGame(createTime, world.getName()));
             result.next();
-            return result.getInt("id");
+            int id = result.getInt("id");
+            disconnect();
+            return id;
         } catch (SQLException e) {
             e.printStackTrace();
         }
+        disconnect();
         return -1;
     }
 
@@ -166,6 +173,7 @@ class DefaultStatsDatabase implements StatsDatabase {
                 query(QueryGen.playerStartingInGame(player.getId(), game.getId(), player.isZombie(), plugin.getPlayerKit(player.getName())));
             }
         }
+        disconnect();
     }
 
     @Override
@@ -177,6 +185,7 @@ class DefaultStatsDatabase implements StatsDatabase {
             return;
         }
         query(QueryGen.playerJoiningInGame(player.getId(), game.getId(), player.isZombie(), plugin.getPlayerKit(player.getName())));
+        disconnect();
     }
 
     @Override
@@ -204,6 +213,7 @@ class DefaultStatsDatabase implements StatsDatabase {
                 query(QueryGen.playerFinishingInGame(player.getId(), game.getId(), player.isZombie()));
             }
         }
+        disconnect();
     }
 
     @Override
@@ -214,6 +224,7 @@ class DefaultStatsDatabase implements StatsDatabase {
         query(QueryGen.updatePlayer(player.getName(),
                 (player.getType().getId() >= 0 ? player.getType().getId() : null),
                 plugin.getPlayerKit(player.getName())));
+        disconnect();
     }
 
     @Override
@@ -225,6 +236,7 @@ class DefaultStatsDatabase implements StatsDatabase {
                 (killer != null && killer.getType().getId() >= 0 ? killer.getType().getId() : null),
                 victim.getId(), (victim.getType().getId() >= 0 ? victim.getType().getId() : null),
                 game.getId(), time, weapon));
+        disconnect();
     }
 
     @Override
@@ -236,5 +248,6 @@ class DefaultStatsDatabase implements StatsDatabase {
             return;
         }
         query(QueryGen.playerTypeChange(player.getId(), game.getId(), type.getId()));
+        disconnect();
     }
 }
