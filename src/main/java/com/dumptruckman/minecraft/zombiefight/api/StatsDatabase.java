@@ -6,10 +6,6 @@ import java.sql.Timestamp;
 
 public interface StatsDatabase {
 
-    boolean connect();
-
-    void disconnect();
-
     int newGame(Timestamp createTime, World world);
 
     void gameStarted(Game game, Timestamp startTime);
