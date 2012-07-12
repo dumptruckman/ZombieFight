@@ -328,6 +328,10 @@ class DefaultGame implements Game {
     public Location getSpawnLocation() {
         Location loc;
         if (!hasStarted() || hasReset()) {
+            Game primaryGame = plugin.getGameManager().getPrimaryGame();
+            if (primaryGame != null && !primaryGame.equals(this)) {
+                return primaryGame.getSpawnLocation();
+            }
             loc = getConfig().get(ZFConfig.PRE_GAME_SPAWN.specific(getWorld().getName()));
         } else {
             loc = getConfig().get(ZFConfig.GAME_SPAWN.specific(getWorld().getName()));

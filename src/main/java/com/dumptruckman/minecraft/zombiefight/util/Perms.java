@@ -22,6 +22,8 @@ public class Perms {
 
     public static final Perm CMD_ENABLE = new Perm.Builder(BASE_PERM + "cmd.enable").commandPermission().build();
     public static final Perm CMD_DISABLE = new Perm.Builder(BASE_PERM + "cmd.disable").commandPermission().build();
+    public static final Perm CMD_SELECT = new Perm.Builder(BASE_PERM + "cmd.select").commandPermission().build();
+    public static final Perm CMD_DESELECT = new Perm.Builder(BASE_PERM + "cmd.deselect").commandPermission().build();
 
     public static final Perm CMD_CLEANUP = new Perm.Builder(BASE_PERM + "cmd.cleanup").commandPermission().build();
 
