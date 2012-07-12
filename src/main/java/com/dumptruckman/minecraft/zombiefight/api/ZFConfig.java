@@ -46,4 +46,5 @@ public interface ZFConfig extends BaseConfig {
     ConfigEntry<Integer> HUMAN_FINDER_TICK = new EntryBuilder<Integer>(Integer.class, "game_settings.human_finder.period").def(20).defaultIfMissing().stringSerializer().comment("# How often lightning beacons will appear once they start (until zombies hit humans)").build();
     ConfigEntry<Integer> SMELL_RANGE = new EntryBuilder<Integer>(Integer.class, "game_settings.zombie.ability.smell.radius").def(75).defaultIfMissing().stringSerializer().comment("# The radius for how far zombies can smell humans").build();
 
+    ConfigEntry<String> PRIMARY_WORLD = new EntryBuilder<String>(String.class, "worlds.primary").stringSerializer().comment("The world where the active game is.").build();
 }

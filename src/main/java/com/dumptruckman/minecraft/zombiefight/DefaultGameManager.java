@@ -21,6 +21,7 @@ class DefaultGameManager implements GameManager {
 
     DefaultGameManager(ZombieFight plugin) {
         this.plugin = plugin;
+        primaryGame = plugin.config().get(ZFConfig.PRIMARY_WORLD);
     }
 
     @Override
@@ -79,6 +80,8 @@ class DefaultGameManager implements GameManager {
         } else {
             primaryGame = null;
         }
+        plugin.config().set(ZFConfig.PRIMARY_WORLD, primaryGame);
+        plugin.config().save();
     }
 
     @Override
