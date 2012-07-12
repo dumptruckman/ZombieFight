@@ -95,6 +95,7 @@ class DefaultStatsDatabase implements StatsDatabase {
             firstConnect = false;
         } else if (!ret) {
             Logging.warning("Could not connect to database, stats will not be loaded or tracked!");
+            isTracking = false;
         }
         return ret;
     }
