@@ -332,9 +332,9 @@ class DefaultGame implements Game {
             if (primaryGame != null && !primaryGame.equals(this)) {
                 return primaryGame.getSpawnLocation();
             }
-            loc = getConfig().get(ZFConfig.PRE_GAME_SPAWN.specific(getWorld().getName()));
+            loc = getWorld().getSpawnLocation();
         } else {
-            loc = getConfig().get(ZFConfig.GAME_SPAWN.specific(getWorld().getName()));
+            loc = getWorld().getSpawnLocation();
         }
         if (loc == null) {
             Logging.fine("No spawn set, will use world spawn.");
