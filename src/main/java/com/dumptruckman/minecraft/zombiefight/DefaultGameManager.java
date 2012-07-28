@@ -17,9 +17,11 @@ class DefaultGameManager implements GameManager {
     private ZombieFight plugin;
     private Map<String, Game> gameMap = new HashMap<String, Game>(1);
     private Set<String> enabledWorlds = null;
+    private String primaryGame = null;
 
     DefaultGameManager(ZombieFight plugin) {
         this.plugin = plugin;
+        primaryGame = plugin.config().get(ZFConfig.PRIMARY_WORLD);
     }
 
     @Override
@@ -58,6 +60,9 @@ class DefaultGameManager implements GameManager {
         Game game = getGame(world);
         game.forceEnd(false);
         getEnabledWorlds().remove(world.getName());
+        if (primaryGame != null && primaryGame.equals(world.getName())) {
+            primaryGame = null;
+        }
         plugin.config().set(ZFConfig.ENABLED_WORLDS, new ArrayList<String>(getEnabledWorlds()));
         plugin.config().save();
     }
@@ -66,5 +71,21 @@ class DefaultGameManager implements GameManager {
     public void unloadWorld(World world) {
         disableWorld(world);
         gameMap.remove(world.getName());
+    }
+
+    @Override
+    public void setPrimaryGame(World world) {
+        if (world != null) {
+            primaryGame = world.getName();
+        } else {
+            primaryGame = null;
+        }
+        plugin.config().set(ZFConfig.PRIMARY_WORLD, primaryGame);
+        plugin.config().save();
+    }
+
+    @Override
+    public Game getPrimaryGame() {
+        return primaryGame != null ? gameMap.get(primaryGame) : null;
     }
 }

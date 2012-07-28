@@ -470,6 +470,15 @@ public class ZombieFightListener implements Listener {
         if (!game.isEnabled()) {
             return;
         }
+        if ((!game.hasStarted() || game.hasEnded()) && !Perms.CAN_ALWAYS_BREAK.hasPermission(player)) {
+            event.setCancelled(true);
+            Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
+                public void run() {
+                    player.updateInventory();
+                }
+            }, 1L);
+            return;
+        }
         if (game.isZombie(player)) {
             if (!event.getItemDrop().getItemStack().getType().isBlock()) {
                 event.setCancelled(true);

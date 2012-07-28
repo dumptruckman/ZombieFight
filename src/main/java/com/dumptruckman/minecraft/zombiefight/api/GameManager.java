@@ -13,4 +13,8 @@ public interface GameManager {
     void disableWorld(World world);
 
     void unloadWorld(World world);
+
+    void setPrimaryGame(World world);
+
+    Game getPrimaryGame();
 }

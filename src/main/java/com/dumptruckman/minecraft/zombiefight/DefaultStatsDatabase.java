@@ -112,7 +112,8 @@ class DefaultStatsDatabase implements StatsDatabase {
         if (!connect()) {
             return null;
         }
-        return getDB().query(query);
+        ResultSet result = getDB().query(query);
+        return result;
     }
 
     @Override
@@ -132,7 +133,7 @@ class DefaultStatsDatabase implements StatsDatabase {
             return id;
         } catch (SQLException e) {
             e.printStackTrace();
-        }
+        } catch (NullPointerException ignore) {}
         disconnect();
         return -1;
     }
@@ -151,7 +152,7 @@ class DefaultStatsDatabase implements StatsDatabase {
             return id;
         } catch (SQLException e) {
             e.printStackTrace();
-        }
+        } catch (NullPointerException ignore) {}
         disconnect();
         return -1;
     }

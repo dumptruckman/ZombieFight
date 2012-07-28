@@ -12,12 +12,14 @@ import com.dumptruckman.minecraft.zombiefight.api.ZFConfig;
 import com.dumptruckman.minecraft.zombiefight.api.ZombieFight;
 import com.dumptruckman.minecraft.zombiefight.command.BorderCommand;
 import com.dumptruckman.minecraft.zombiefight.command.CleanupCommand;
+import com.dumptruckman.minecraft.zombiefight.command.DeselectCommand;
 import com.dumptruckman.minecraft.zombiefight.command.DisableGameCommand;
 import com.dumptruckman.minecraft.zombiefight.command.EnableGameCommand;
 import com.dumptruckman.minecraft.zombiefight.command.EndGameCommand;
 import com.dumptruckman.minecraft.zombiefight.command.GameSpawnCommand;
 import com.dumptruckman.minecraft.zombiefight.command.KitCommand;
 import com.dumptruckman.minecraft.zombiefight.command.PreGameSpawnCommand;
+import com.dumptruckman.minecraft.zombiefight.command.SelectCommand;
 import com.dumptruckman.minecraft.zombiefight.command.StartGameCommand;
 import com.dumptruckman.minecraft.zombiefight.util.CommentedConfig;
 import com.dumptruckman.minecraft.zombiefight.util.Language;
@@ -80,6 +82,8 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
         getCommandHandler().registerCommand(new KitCommand(this));
         getCommandHandler().registerCommand(new BorderCommand(this));
         getCommandHandler().registerCommand(new CleanupCommand(this));
+        getCommandHandler().registerCommand(new SelectCommand(this));
+        getCommandHandler().registerCommand(new DeselectCommand(this));
         getLootConfig();
     }
 

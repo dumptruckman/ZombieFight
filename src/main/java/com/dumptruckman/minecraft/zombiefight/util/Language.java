@@ -61,6 +61,20 @@ public class Language {
     public static final Message CMD_ENABLE_SUCCESS = new Message("cmd.enable.success",
             "You have enabled the game for the world.");
 
+    public static final Message CMD_SELECT_NAME = new Message("cmd.select.name",
+            "Selects the active game world.");
+    public static final Message CMD_SELECT_NOT_ENABLED = new Message("cmd.select.not_enabled",
+            "The world is not enabled! Use /zf enable first.");
+    public static final Message CMD_SELECT_SUCCESS = new Message("cmd.select.success",
+            "You have select '%1' as the active game world.");
+
+    public static final Message CMD_DESELECT_NAME = new Message("cmd.deselect.name",
+            "Disables primary game selection.");
+    public static final Message CMD_DESELECT_NONE_SELECTED = new Message("cmd.deselect.none_selected",
+            "There is no primary game selection!");
+    public static final Message CMD_DESELECT_SUCCESS = new Message("cmd.deselect.success",
+            "You have disabled primary game selection.");
+
     public static final Message CMD_CLEANUP_NAME = new Message("cmd.cleanup.name",
             "Allows user to clean up during a game.");
     public static final Message CMD_CLEANUP_DISABLE = new Message("cmd.cleanup.disable",
