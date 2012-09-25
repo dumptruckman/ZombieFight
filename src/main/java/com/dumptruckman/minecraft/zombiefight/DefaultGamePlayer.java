@@ -50,7 +50,7 @@ class DefaultGamePlayer implements GamePlayer {
         player.setPlayerListName(ChatColor.stripColor(player.getPlayerListName()));
         if (isZombie()) {
             if (!DisguiseCraft.getAPI().isDisguised(player)) {
-                DisguiseCraft.getAPI().disguisePlayer(player, new Disguise(player.getEntityId(), MobType.Zombie));
+                DisguiseCraft.getAPI().disguisePlayer(player, new Disguise(DisguiseCraft.getAPI().newEntityID(), MobType.Zombie));
             }
             /*if (!plugin.getDisguiser().isDisguised(player)) {
                 plugin.getDisguiser().disguise(player, EntityType.ZOMBIE);
