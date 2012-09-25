@@ -193,9 +193,9 @@
         </dependency>
         <!-- MobDisguise Dependency -->
         <dependency>
-            <groupId>desmin88</groupId>
-            <artifactId>MobDisguise</artifactId>
-            <version>1.8.1</version>
+            <groupId>pgDev</groupId>
+            <artifactId>DisguiseCraft</artifactId>
+            <version>3.5</version>
             <type>jar</type>
             <scope>compile</scope>
         </dependency>
