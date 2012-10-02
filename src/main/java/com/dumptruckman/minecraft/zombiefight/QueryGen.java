@@ -198,10 +198,10 @@ class QueryGen {
                 + " WHERE `player_id`='" + playerId + "' AND `game_id`='" + gameId + "'";
     }
 
-    static String addPlayerType(PlayerType type) {
+    static String addPlayerType() {
         return "INSERT IGNORE INTO `" + PLAYER_TYPE_TABLE + "` ("
                 + "`type_name`) VALUES ("
-                + "'" + type + "')";
+                + "'?')";
     }
 
     static String getPlayerTypeId(PlayerType type) {

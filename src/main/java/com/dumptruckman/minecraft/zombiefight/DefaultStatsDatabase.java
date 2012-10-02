@@ -4,7 +4,6 @@
 package com.dumptruckman.minecraft.zombiefight;
 
 import com.dumptruckman.minecraft.pluginbase.database.SQLDatabase;
-import com.dumptruckman.minecraft.pluginbase.util.Logging;
 import com.dumptruckman.minecraft.zombiefight.api.Game;
 import com.dumptruckman.minecraft.zombiefight.api.GamePlayer;
 import com.dumptruckman.minecraft.zombiefight.api.PlayerType;
@@ -13,6 +12,7 @@ import com.dumptruckman.minecraft.zombiefight.api.ZFConfig;
 import com.dumptruckman.minecraft.zombiefight.api.ZombieFight;
 import org.bukkit.World;
 
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -35,34 +35,32 @@ class DefaultStatsDatabase implements StatsDatabase {
     private void checkTables() {
         try {
             if (!getDB().checkTable(QueryGen.PLAYER_TYPE_TABLE)) {
-                getDB().execute(QueryGen.createPlayerTypeTable());
+                getDB().getFreshPreparedStatementHotFromTheOven(QueryGen.createPlayerTypeTable()).executeUpdate();
             }
+            PreparedStatement playerTypeStatement = getDB().getFreshPreparedStatementWithGeneratedKeys(QueryGen.addPlayerType());
             for (PlayerType type : PlayerType.values()) {
-                getDB().execute(QueryGen.addPlayerType(type));
-                ResultSet result = getDB().executeQueryNow(QueryGen.getPlayerTypeId(type));
-                try {
-                    result.next();
-                    type.setId(result.getInt("id"));
-                } catch (SQLException ignore) {
-                    Logging.warning("Could not set PlayerType id");
-                }
+                playerTypeStatement.setString(1, type.name());
+                playerTypeStatement.executeUpdate();
+                ResultSet resultSet = playerTypeStatement.getGeneratedKeys();
+                resultSet.next();
+                type.setId(resultSet.getInt(1));
             }
             if (!getDB().checkTable(QueryGen.PLAYERS_TABLE)) {
-                getDB().execute(QueryGen.createPlayersTable());
+                getDB().getFreshPreparedStatementHotFromTheOven(QueryGen.createPlayersTable()).executeUpdate();
             }
             if (!getDB().checkTable(QueryGen.GAMES_TABLE)) {
-                getDB().execute(QueryGen.createGamesTable());
+                getDB().getFreshPreparedStatementHotFromTheOven(QueryGen.createGamesTable()).executeUpdate();
             }
             if (!getDB().checkTable(QueryGen.STATS_TABLE)) {
-                getDB().execute(QueryGen.createStatsTable());
+                getDB().getFreshPreparedStatementHotFromTheOven(QueryGen.createStatsTable()).executeUpdate();
             }
             if (!getDB().checkTable(QueryGen.TYPE_HISTORY_TABLE)) {
-                getDB().execute(QueryGen.createTypeHistoryTable());
+                getDB().getFreshPreparedStatementHotFromTheOven(QueryGen.createTypeHistoryTable()).executeUpdate();
             }
             if (!getDB().checkTable(QueryGen.KILLS_TABLE)) {
-                getDB().execute(QueryGen.createKillsTable());
+                getDB().getFreshPreparedStatementHotFromTheOven(QueryGen.createKillsTable()).executeUpdate();
             }
-            getDB().execute(QueryGen.createGrandTotalKillsView());
+            getDB().getFreshPreparedStatementHotFromTheOven(QueryGen.createGrandTotalKillsView()).executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }
