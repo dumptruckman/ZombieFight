@@ -14,7 +14,7 @@ public class GameCountdownTask extends CountdownTask {
     public GameCountdownTask(Game game, ZombieFight plugin) {
         super(game, plugin);
         setCountdown(getConfig().get(ZFConfig.COUNTDOWN_TIME));
-        setWarnings(getConfig().getList(ZFConfig.COUNTDOWN_WARNINGS));
+        setWarnings(getConfig().get(ZFConfig.COUNTDOWN_WARNINGS));
     }
 
     @Override

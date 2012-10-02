@@ -39,7 +39,7 @@ class DefaultGameManager implements GameManager {
 
     private Set<String> getEnabledWorlds() {
         if (enabledWorlds == null) {
-            enabledWorlds = new CopyOnWriteArraySet<String>(plugin.config().getList(ZFConfig.ENABLED_WORLDS));
+            enabledWorlds = new CopyOnWriteArraySet<String>(plugin.config().get(ZFConfig.ENABLED_WORLDS));
         }
         return enabledWorlds;
     }

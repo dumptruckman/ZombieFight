@@ -21,7 +21,6 @@ import java.util.Set;
 class DefaultStatsDatabase implements StatsDatabase {
 
     private ZombieFight plugin;
-    private boolean firstConnect = true;
     private boolean isTracking = false;
 
     DefaultStatsDatabase(ZombieFight plugin) {
@@ -34,89 +33,39 @@ class DefaultStatsDatabase implements StatsDatabase {
     }
 
     private void checkTables() {
-        if (!getDB().isConnected()) {
-            return;
-        }
-        if (!getDB().checkTable(QueryGen.PLAYER_TYPE_TABLE)) {
-            if (!getDB().createTable(QueryGen.createPlayerTypeTable())) {
-                Logging.severe("Could not create player type table!");
+        try {
+            if (!getDB().checkTable(QueryGen.PLAYER_TYPE_TABLE)) {
+                getDB().execute(QueryGen.createPlayerTypeTable());
             }
-        }
-        for (PlayerType type : PlayerType.values()) {
-            getDB().query(QueryGen.addPlayerType(type));
-            ResultSet result = getDB().query(QueryGen.getPlayerTypeId(type));
-            try {
-                result.next();
-                type.setId(result.getInt("id"));
-            } catch (SQLException ignore) {
-                Logging.warning("Could not set PlayerType id");
+            for (PlayerType type : PlayerType.values()) {
+                getDB().execute(QueryGen.addPlayerType(type));
+                ResultSet result = getDB().executeQueryNow(QueryGen.getPlayerTypeId(type));
+                try {
+                    result.next();
+                    type.setId(result.getInt("id"));
+                } catch (SQLException ignore) {
+                    Logging.warning("Could not set PlayerType id");
+                }
             }
-        }
-        if (!getDB().checkTable(QueryGen.PLAYERS_TABLE)) {
-            if (!getDB().createTable(QueryGen.createPlayersTable())) {
-                Logging.severe("Could not create players table!");
+            if (!getDB().checkTable(QueryGen.PLAYERS_TABLE)) {
+                getDB().execute(QueryGen.createPlayersTable());
             }
-        }
-        if (!getDB().checkTable(QueryGen.GAMES_TABLE)) {
-            if (!getDB().createTable(QueryGen.createGamesTable())) {
-                Logging.severe("Could not create games table!");
+            if (!getDB().checkTable(QueryGen.GAMES_TABLE)) {
+                getDB().execute(QueryGen.createGamesTable());
             }
-        }
-        if (!getDB().checkTable(QueryGen.STATS_TABLE)) {
-            if (!getDB().createTable(QueryGen.createStatsTable())) {
-                Logging.severe("Could not create stats table!");
+            if (!getDB().checkTable(QueryGen.STATS_TABLE)) {
+                getDB().execute(QueryGen.createStatsTable());
             }
-        }
-        if (!getDB().checkTable(QueryGen.TYPE_HISTORY_TABLE)) {
-            if (!getDB().createTable(QueryGen.createTypeHistoryTable())) {
-                Logging.severe("Could not create type history table!");
+            if (!getDB().checkTable(QueryGen.TYPE_HISTORY_TABLE)) {
+                getDB().execute(QueryGen.createTypeHistoryTable());
             }
-        }
-        if (!getDB().checkTable(QueryGen.KILLS_TABLE)) {
-            if (!getDB().createTable(QueryGen.createKillsTable())) {
-                Logging.severe("Could not create kills table!");
+            if (!getDB().checkTable(QueryGen.KILLS_TABLE)) {
+                getDB().execute(QueryGen.createKillsTable());
             }
+            getDB().execute(QueryGen.createGrandTotalKillsView());
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
-        getDB().query(QueryGen.createGrandTotalKillsView());
-    }
-
-    private void updateDB() {
-        if (!getDB().isConnected()) {
-            return;
-        }
-        //ResultSet table = getDB().query()
-    }
-
-    private boolean connect() {
-        if (!isTracking) {
-            return false;
-        }
-        if (getDB().isConnected()) {
-            return true;
-        }
-        boolean ret = getDB().connect(plugin);
-        if (ret && firstConnect) {
-            this.checkTables();
-            this.updateDB();
-            firstConnect = false;
-        } else if (!ret) {
-            Logging.warning("Could not connect to database, stats will not be loaded or tracked!");
-        }
-        return ret;
-    }
-
-    private void disconnect() {
-        if (getDB().isConnected()) {
-            getDB().disconnect();
-        }
-    }
-
-    private ResultSet query(String query) {
-        if (!connect()) {
-            return null;
-        }
-        ResultSet result = getDB().query(query);
-        return result;
     }
 
     @Override
@@ -124,20 +73,18 @@ class DefaultStatsDatabase implements StatsDatabase {
         if (!isTracking) {
             return -1;
         }
-        ResultSet result = query(QueryGen.getPlayer(player));
         try {
+            ResultSet result = getDB().executeQueryNow(QueryGen.getPlayer(player));
             if (!result.next()) {
-                query(QueryGen.updatePlayer(player, null, null));
-                result = query(QueryGen.getPlayer(player));
+                getDB().queueUpdate(QueryGen.updatePlayer(player, null, null));
+                result = getDB().executeQueryAfterQueue(QueryGen.getPlayer(player));
                 result.next();
             }
             int id = result.getInt("id");
-            disconnect();
             return id;
         } catch (SQLException e) {
             e.printStackTrace();
         } catch (NullPointerException ignore) {}
-        disconnect();
         return -1;
     }
 
@@ -146,17 +93,15 @@ class DefaultStatsDatabase implements StatsDatabase {
         if (!isTracking) {
             return -1;
         }
-        query(QueryGen.createGame(createTime, world.getName()));
         try {
-            ResultSet result = query(QueryGen.getGame(createTime, world.getName()));
+            getDB().queueUpdate(QueryGen.createGame(createTime, world.getName()));
+            ResultSet result = getDB().executeQueryAfterQueue(QueryGen.getGame(createTime, world.getName()));
             result.next();
             int id = result.getInt("id");
-            disconnect();
             return id;
         } catch (SQLException e) {
             e.printStackTrace();
         } catch (NullPointerException ignore) {}
-        disconnect();
         return -1;
     }
 
@@ -168,16 +113,15 @@ class DefaultStatsDatabase implements StatsDatabase {
         if (game.getId() < 0) {
             return;
         }
-        query(QueryGen.startGame(game.getId(), startTime));
+        getDB().queueUpdate(QueryGen.startGame(game.getId(), startTime));
         for (GamePlayer player : game.getGamePlayers()) {
-            query(QueryGen.updatePlayer(player.getName(),
+            getDB().queueUpdate(QueryGen.updatePlayer(player.getName(),
                     (player.getType().getId() >= 0 ? player.getType().getId() : null),
                     plugin.getPlayerKit(player.getName())));
             if (player.isOnline() && player.getId() > -1) {
-                query(QueryGen.playerStartingInGame(player.getId(), game.getId(), player.isZombie(), plugin.getPlayerKit(player.getName())));
+                getDB().queueUpdate(QueryGen.playerStartingInGame(player.getId(), game.getId(), player.isZombie(), plugin.getPlayerKit(player.getName())));
             }
         }
-        disconnect();
     }
 
     @Override
@@ -188,8 +132,7 @@ class DefaultStatsDatabase implements StatsDatabase {
         if (game.getId() < 0 || player.getId() < 0) {
             return;
         }
-        query(QueryGen.playerJoiningInGame(player.getId(), game.getId(), player.isZombie(), plugin.getPlayerKit(player.getName())));
-        disconnect();
+        getDB().queueUpdate(QueryGen.playerJoiningInGame(player.getId(), game.getId(), player.isZombie(), plugin.getPlayerKit(player.getName())));
     }
 
     @Override
@@ -208,16 +151,15 @@ class DefaultStatsDatabase implements StatsDatabase {
                 break;
             }
         }
-        query(QueryGen.endGame(game.getId(), endTime, humansWon));
+        getDB().queueUpdate(QueryGen.endGame(game.getId(), endTime, humansWon));
         for (GamePlayer player : gamePlayers) {
-            query(QueryGen.updatePlayer(player.getName(),
+            getDB().queueUpdate(QueryGen.updatePlayer(player.getName(),
                     (player.getType().getId() >= 0 ? player.getType().getId() : null),
                     plugin.getPlayerKit(player.getName())));
             if (player.isOnline() && player.getId() > -1) {
-                query(QueryGen.playerFinishingInGame(player.getId(), game.getId(), player.isZombie()));
+                getDB().queueUpdate(QueryGen.playerFinishingInGame(player.getId(), game.getId(), player.isZombie()));
             }
         }
-        disconnect();
     }
 
     @Override
@@ -225,10 +167,9 @@ class DefaultStatsDatabase implements StatsDatabase {
         if (!isTracking) {
             return;
         }
-        query(QueryGen.updatePlayer(player.getName(),
+        getDB().queueUpdate(QueryGen.updatePlayer(player.getName(),
                 (player.getType().getId() >= 0 ? player.getType().getId() : null),
                 plugin.getPlayerKit(player.getName())));
-        disconnect();
     }
 
     @Override
@@ -236,11 +177,10 @@ class DefaultStatsDatabase implements StatsDatabase {
         if (!isTracking) {
             return;
         }
-        query(QueryGen.playerKilled((killer != null ? killer.getId() : -1),
+        getDB().queueUpdate(QueryGen.playerKilled((killer != null ? killer.getId() : -1),
                 (killer != null && killer.getType().getId() >= 0 ? killer.getType().getId() : null),
                 victim.getId(), (victim.getType().getId() >= 0 ? victim.getType().getId() : null),
                 game.getId(), time, weapon));
-        disconnect();
     }
 
     @Override
@@ -251,7 +191,6 @@ class DefaultStatsDatabase implements StatsDatabase {
         if (game.getId() < 0 || player.getId() < 0 || type.getId() < 0) {
             return;
         }
-        query(QueryGen.playerTypeChange(player.getId(), game.getId(), type.getId()));
-        disconnect();
+        getDB().queueUpdate(QueryGen.playerTypeChange(player.getId(), game.getId(), type.getId()));
     }
 }

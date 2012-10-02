@@ -37,14 +37,14 @@ public class BorderCommand extends ZFCommand {
         if (!args.isEmpty()) {
             try {
                 int radius = Integer.valueOf(args.get(0));
-                plugin.config().set(ZFConfig.BORDER_RADIUS.specific(player.getWorld().getName()), radius);
+                plugin.config().set(ZFConfig.BORDER_RADIUS, player.getWorld().getName(), radius);
                 plugin.config().save();
                 getMessager().good(Language.CMD_BORDER_SET_SUCCESS, player, radius);
             } catch (NumberFormatException ignore) {
                 getMessager().bad(Language.CMD_BORDER_SET_FAILURE, player);
             }
         } else {
-            getMessager().normal(Language.CMD_BORDER_CHECK, sender, plugin.config().get(ZFConfig.BORDER_RADIUS.specific(player.getWorld().getName())));
+            getMessager().normal(Language.CMD_BORDER_CHECK, sender, plugin.config().get(ZFConfig.BORDER_RADIUS, player.getWorld().getName()));
         }
     }
 }

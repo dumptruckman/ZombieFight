@@ -14,7 +14,7 @@ public class ZombieLockCountdownTask extends CountdownTask {
     public ZombieLockCountdownTask(Game game, ZombieFight plugin) {
         super(game, plugin);
         setCountdown(getConfig().get(ZFConfig.ZOMBIE_LOCK));
-        setWarnings(getConfig().getList(ZFConfig.ZOMBIE_LOCK_WARNINGS));
+        setWarnings(getConfig().get(ZFConfig.ZOMBIE_LOCK_WARNINGS));
     }
 
     @Override

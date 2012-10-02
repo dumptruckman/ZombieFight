@@ -52,10 +52,10 @@ public class EnableGameCommand extends ZFCommand {
             getMessager().bad(Language.CMD_ENABLE_ALREADY, sender);
             return;
         }
-        int borderRadius = plugin.config().get(ZFConfig.BORDER_RADIUS.specific(world.getName()));
-        plugin.config().set(ZFConfig.BORDER_RADIUS.specific(world.getName()), borderRadius);
-        int borderWarn = plugin.config().get(ZFConfig.BORDER_WARN.specific(world.getName()));
-        plugin.config().set(ZFConfig.BORDER_WARN.specific(world.getName()), borderWarn);
+        int borderRadius = plugin.config().get(ZFConfig.BORDER_RADIUS, world.getName());
+        plugin.config().set(ZFConfig.BORDER_RADIUS, world.getName(), borderRadius);
+        int borderWarn = plugin.config().get(ZFConfig.BORDER_WARN, world.getName());
+        plugin.config().set(ZFConfig.BORDER_WARN, world.getName(), borderWarn);
         plugin.getGameManager().enableWorld(world);
         getMessager().good(Language.CMD_ENABLE_SUCCESS, sender);
     }

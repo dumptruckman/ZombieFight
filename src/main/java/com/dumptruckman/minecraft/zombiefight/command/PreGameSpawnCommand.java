@@ -38,14 +38,14 @@ public class PreGameSpawnCommand extends ZFCommand {
         if (!args.isEmpty() && args.get(0).equalsIgnoreCase("set")) {
             if (Perms.CMD_PGSPAWN_SET.hasPermission(player)) {
                 Location loc = player.getLocation();
-                plugin.config().set(ZFConfig.PRE_GAME_SPAWN.specific(loc.getWorld().getName()), loc);
+                plugin.config().set(ZFConfig.PRE_GAME_SPAWN, loc.getWorld().getName(), loc);
                 plugin.config().save();
                 getMessager().good(Language.CMD_PGSPAWN_SET_SUCCESS, player);
             } else {
                 getMessager().bad(Language.CMD_PGSPAWN_SET_NO_PERM, player);
             }
         } else {
-            Location loc = plugin.config().get(ZFConfig.PRE_GAME_SPAWN.specific(player.getWorld().getName()));
+            Location loc = plugin.config().get(ZFConfig.PRE_GAME_SPAWN, player.getWorld().getName());
             if (loc != null) {
                 player.teleport(loc);
             } else {

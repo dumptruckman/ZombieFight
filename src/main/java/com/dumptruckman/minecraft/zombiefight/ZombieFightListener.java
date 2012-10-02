@@ -79,7 +79,7 @@ public class ZombieFightListener implements Listener {
                     playersPastBorder.get(worldBorder).clear();
                     continue;
                 }
-                Location spawnLoc = plugin.config().get(ZFConfig.GAME_SPAWN.specific(world.getName()));
+                Location spawnLoc = plugin.config().get(ZFConfig.GAME_SPAWN, world.getName());
                 if (spawnLoc == null) {
                     spawnLoc = world.getSpawnLocation();
                 }
@@ -92,7 +92,7 @@ public class ZombieFightListener implements Listener {
                             break;
                         }
                         Location loc = player.getLocation();
-                        int radius = plugin.config().get(ZFConfig.BORDER_RADIUS.specific(world.getName()));
+                        int radius = plugin.config().get(ZFConfig.BORDER_RADIUS, world.getName());
                         if (loc.distance(spawnLoc) < radius) {
                             playersNotPastBorder.add(name);
                             break;
@@ -325,8 +325,8 @@ public class ZombieFightListener implements Listener {
         if (game.hasStarted() && !game.hasReset()) {
             // TODO clean this up
             Location loc = game.getSpawnLocation();
-            int radius = plugin.config().get(ZFConfig.BORDER_RADIUS.specific(world.getName()));
-            int warnRadius = plugin.config().get(ZFConfig.BORDER_WARN.specific(world.getName()));
+            int radius = plugin.config().get(ZFConfig.BORDER_RADIUS, world.getName());
+            int warnRadius = plugin.config().get(ZFConfig.BORDER_WARN, world.getName());
             double distance = loc.distance(event.getTo());
             if (distance >= radius) {
                 Set<String> players = playersPastBorder.get(world.getName());

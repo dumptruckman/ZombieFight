@@ -10,7 +10,7 @@ import com.dumptruckman.minecraft.zombiefight.api.ZFConfig;
 import java.io.File;
 import java.io.IOException;
 
-public class CommentedConfig extends AbstractYamlConfig<ZFConfig> implements ZFConfig {
+public class CommentedConfig extends AbstractYamlConfig implements ZFConfig {
 
     public CommentedConfig(BukkitPlugin plugin, boolean doComments, File configFile, Class<? extends ZFConfig>... configClasses) throws IOException {
         super(plugin, doComments, true, configFile, configClasses);
