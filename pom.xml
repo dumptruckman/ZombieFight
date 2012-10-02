@@ -177,7 +177,7 @@
         <dependency>
             <groupId>com.dumptruckman.minecraft</groupId>
             <artifactId>BukkitPlugin</artifactId>
-            <version>1.4-SNAPSHOT</version>
+            <version>1.5-SNAPSHOT</version>
             <type>jar</type>
             <scope>compile</scope>
             <exclusions>
