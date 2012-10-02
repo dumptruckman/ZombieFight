@@ -92,12 +92,15 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
 
     @Override
     public void preReload() {
-        for (World world : Bukkit.getWorlds()) {
-            Logging.finest("Shutting down games for world " + world);
-            Game game = getGameManager().getGame(world);
-            if (game.isEnabled()) {
-                game.broadcast(Language.PLUGIN_RELOAD);
-                game.forceEnd(false);
+        initDatabase();
+        if (isGameManagerSet()) {
+            for (World world : Bukkit.getWorlds()) {
+                Logging.finest("Shutting down games for world " + world);
+                Game game = getGameManager().getGame(world);
+                if (game.isEnabled()) {
+                    game.broadcast(Language.PLUGIN_RELOAD);
+                    game.forceEnd(false);
+                }
             }
         }
         if (disguiser != null) {
@@ -135,6 +138,10 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
     public List<String> dumpVersionInfo() {
         List<String> versionInfo = new LinkedList<String>();
         return versionInfo;
+    }
+
+    private boolean isGameManagerSet() {
+        return gameManager != null;
     }
 
     @Override
