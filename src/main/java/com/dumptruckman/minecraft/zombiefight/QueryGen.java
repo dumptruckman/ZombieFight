@@ -20,32 +20,32 @@ class QueryGen {
     static final String KILLS_TABLE = "zf_kills";
     static final int KILLS_VERSION = 0;
 
-    static String createPlayerTypeTable() {
+    static String createPlayerTypeTable(boolean sqlite) {
         return "CREATE TABLE `" + PLAYER_TYPE_TABLE + "` ("
-                + "`id` INT UNSIGNED NOT NULL AUTO_INCREMENT"
-                + ",`type_name` VARCHAR(255) CHARACTER SET latin1 COLLATE latin1_general_ci NOT NULL"
+                + "`id` INT UNSIGNED NOT NULL" + (sqlite ? "" : " AUTO_INCREMENT")
+                + ",`type_name` VARCHAR(255)" + (sqlite ? "" : " CHARACTER SET latin1 COLLATE latin1_general_ci") + " NOT NULL"
 
                 + ",PRIMARY KEY(`id`)"
-                + ",UNIQUE KEY(`type_name`)"
-                + ") ENGINE = InnoDB,COMMENT = 'version:" + PLAYER_TYPE_VERSION + "'";
+                + ",UNIQUE" + (sqlite ? "" : " KEY") + "(`type_name`)"
+                + ")" + (sqlite ? "" : "ENGINE = InnoDB,COMMENT = 'version:" + PLAYER_TYPE_VERSION + "'");
     }
 
-    static String createPlayersTable() {
+    static String createPlayersTable(boolean sqlite) {
         return "CREATE TABLE `" + PLAYERS_TABLE + "` ("
-                + "`id` INT UNSIGNED NOT NULL AUTO_INCREMENT"
-                + ",`player_name` VARCHAR(64) CHARACTER SET latin1 COLLATE latin1_general_ci NOT NULL"
+                + "`id` INT UNSIGNED NOT NULL" + (sqlite ? "" : " AUTO_INCREMENT")
+                + ",`player_name` VARCHAR(64)" + (sqlite ? "" : " CHARACTER SET latin1 COLLATE latin1_general_ci") + " NOT NULL"
                 + ",`current_type` INT UNSIGNED"
                 + ",`kit_selected` VARCHAR(255)"
 
                 + ",PRIMARY KEY(`id`)"
-                + ",UNIQUE KEY(`player_name`)"
+                + ",UNIQUE" + (sqlite ? "" : " KEY") + "(`player_name`)"
                 + ",FOREIGN KEY(`current_type`) REFERENCES `" + PLAYER_TYPE_TABLE + "`(`id`)"
-                + ") ENGINE = InnoDB,COMMENT = 'version:" + PLAYERS_VERSION + "'";
+                + ")" + (sqlite ? "" : "ENGINE = InnoDB,COMMENT = 'version:" + PLAYERS_VERSION + "'");
     }
 
-    static String createGamesTable() {
+    static String createGamesTable(boolean sqlite) {
         return "CREATE TABLE `" + GAMES_TABLE + "` ("
-                + "`id` INT UNSIGNED NOT NULL AUTO_INCREMENT"
+                + "`id` INT UNSIGNED NOT NULL" + (sqlite ? "" : " AUTO_INCREMENT")
                 + ",`world` VARCHAR(255) NOT NULL"
                 + ",`create_time` TIMESTAMP NOT NULL"
                 + ",`start_time` TIMESTAMP"
@@ -53,13 +53,13 @@ class QueryGen {
                 + ",`humans_won` TINYINT(1) NOT NULL DEFAULT '0'"
 
                 + ",PRIMARY KEY(`id`)"
-                + ",UNIQUE KEY(`world`,`create_time`)"
-                + ") ENGINE = InnoDB,COMMENT = 'version:" + GAMES_VERSION + "'";
+                + ",UNIQUE" + (sqlite ? "" : " KEY") + "(`world`,`create_time`)"
+                + ")" + (sqlite ? "" : "ENGINE = InnoDB,COMMENT = 'version:" + GAMES_VERSION + "'");
     }
 
-    static String createStatsTable() {
+    static String createStatsTable(boolean sqlite) {
         return "CREATE TABLE `" + STATS_TABLE + "` ("
-                + "`id` INT UNSIGNED NOT NULL AUTO_INCREMENT"
+                + "`id` INT UNSIGNED NOT NULL" + (sqlite ? "" : " AUTO_INCREMENT")
                 + ",`player_id` INT UNSIGNED NOT NULL"
                 + ",`game_id` INT UNSIGNED NOT NULL"
                 + ",`started_in` TINYINT(1) NOT NULL DEFAULT '0'"
@@ -70,15 +70,15 @@ class QueryGen {
                 + ",`kit_used` VARCHAR(255)"
 
                 + ",PRIMARY KEY(`id`)"
-                + ",UNIQUE KEY(`player_id`,`game_id`)"
+                + ",UNIQUE" + (sqlite ? "" : " KEY") + "(`player_id`,`game_id`)"
                 + ",FOREIGN KEY(`player_id`) REFERENCES `" + PLAYERS_TABLE + "`(`id`)"
                 + ",FOREIGN KEY(`game_id`) REFERENCES `" + GAMES_TABLE + "`(`id`)"
-                + ") ENGINE = InnoDB,COMMENT = 'version:" + STATS_VERSION + "'";
+                + ")" + (sqlite ? "" : "ENGINE = InnoDB,COMMENT = 'version:" + STATS_VERSION + "'");
     }
 
-    static String createTypeHistoryTable() {
+    static String createTypeHistoryTable(boolean sqlite) {
         return "CREATE TABLE `" + TYPE_HISTORY_TABLE + "` ("
-                + "`id` INT UNSIGNED NOT NULL AUTO_INCREMENT"
+                + "`id` INT UNSIGNED NOT NULL" + (sqlite ? "" : " AUTO_INCREMENT")
                 + ",`player_id` INT UNSIGNED NOT NULL"
                 + ",`game_id` INT UNSIGNED NOT NULL"
                 + ",`player_type` INT UNSIGNED NOT NULL"
@@ -88,12 +88,12 @@ class QueryGen {
                 + ",FOREIGN KEY(`player_id`) REFERENCES `" + PLAYERS_TABLE + "`(`id`)"
                 + ",FOREIGN KEY(`game_id`) REFERENCES `" + GAMES_TABLE + "`(`id`)"
                 + ",FOREIGN KEY(`player_type`) REFERENCES `" + PLAYER_TYPE_TABLE + "`(`id`)"
-                + ") ENGINE = InnoDB,COMMENT = 'version:" + TYPE_HISTORY_VERSION + "'";
+                + ")" + (sqlite ? "" : "ENGINE = InnoDB,COMMENT = 'version:" + TYPE_HISTORY_VERSION + "'");
     }
 
-    static String createKillsTable() {
+    static String createKillsTable(boolean sqlite) {
         return "CREATE TABLE `" + KILLS_TABLE + "` ("
-                + "`id` INT UNSIGNED NOT NULL AUTO_INCREMENT"
+                + "`id` INT UNSIGNED NOT NULL" + (sqlite ? "" : " AUTO_INCREMENT")
                 + ",`killer_id` INT UNSIGNED"
                 + ",`killer_type` INT UNSIGNED"
                 + ",`victim_id` INT UNSIGNED NOT NULL"
@@ -108,7 +108,7 @@ class QueryGen {
                 + ",FOREIGN KEY(`victim_id`) REFERENCES `" + PLAYERS_TABLE + "`(`id`)"
                 + ",FOREIGN KEY(`victim_type`) REFERENCES `" + PLAYER_TYPE_TABLE + "`(`id`)"
                 + ",FOREIGN KEY(`game_id`) REFERENCES `" + GAMES_TABLE + "`(`id`)"
-                + ") ENGINE = InnoDB,COMMENT = 'version:" + KILLS_VERSION + "'";
+                + ")" + (sqlite ? "" : "ENGINE = InnoDB,COMMENT = 'version:" + KILLS_VERSION + "'");
     }
 
     static String createGrandTotalKillsView() {

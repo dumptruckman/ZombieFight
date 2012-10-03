@@ -3,6 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 package com.dumptruckman.minecraft.zombiefight;
 
+import com.dumptruckman.minecraft.pluginbase.config.SQLConfig;
 import com.dumptruckman.minecraft.pluginbase.database.SQLDatabase;
 import com.dumptruckman.minecraft.pluginbase.util.Logging;
 import com.dumptruckman.minecraft.zombiefight.api.Game;
@@ -73,9 +74,10 @@ class DefaultStatsDatabase implements StatsDatabase {
     }
 
     private boolean checkTables() {
+        final boolean sqlite = plugin.sqlConfig().get(SQLConfig.DB_TYPE).equalsIgnoreCase("sqlite");
         try {
             if (!getDB().checkTable(QueryGen.PLAYER_TYPE_TABLE)) {
-                getDB().getFreshPreparedStatementHotFromTheOven(QueryGen.createPlayerTypeTable()).executeUpdate();
+                getDB().getFreshPreparedStatementHotFromTheOven(QueryGen.createPlayerTypeTable(sqlite)).executeUpdate();
             }
             final PreparedStatement setTypeStatement = getDB().getFreshPreparedStatementWithGeneratedKeys(QueryGen.addPlayerType());
             final PreparedStatement retrieveTypeStatement = getDB().getFreshPreparedStatementHotFromTheOven(QueryGen.getPlayerTypeId());
@@ -91,19 +93,19 @@ class DefaultStatsDatabase implements StatsDatabase {
                 type.setId(resultSet.getInt(1));
             }
             if (!getDB().checkTable(QueryGen.PLAYERS_TABLE)) {
-                getDB().getFreshPreparedStatementHotFromTheOven(QueryGen.createPlayersTable()).executeUpdate();
+                getDB().getFreshPreparedStatementHotFromTheOven(QueryGen.createPlayersTable(sqlite)).executeUpdate();
             }
             if (!getDB().checkTable(QueryGen.GAMES_TABLE)) {
-                getDB().getFreshPreparedStatementHotFromTheOven(QueryGen.createGamesTable()).executeUpdate();
+                getDB().getFreshPreparedStatementHotFromTheOven(QueryGen.createGamesTable(sqlite)).executeUpdate();
             }
             if (!getDB().checkTable(QueryGen.STATS_TABLE)) {
-                getDB().getFreshPreparedStatementHotFromTheOven(QueryGen.createStatsTable()).executeUpdate();
+                getDB().getFreshPreparedStatementHotFromTheOven(QueryGen.createStatsTable(sqlite)).executeUpdate();
             }
             if (!getDB().checkTable(QueryGen.TYPE_HISTORY_TABLE)) {
-                getDB().getFreshPreparedStatementHotFromTheOven(QueryGen.createTypeHistoryTable()).executeUpdate();
+                getDB().getFreshPreparedStatementHotFromTheOven(QueryGen.createTypeHistoryTable(sqlite)).executeUpdate();
             }
             if (!getDB().checkTable(QueryGen.KILLS_TABLE)) {
-                getDB().getFreshPreparedStatementHotFromTheOven(QueryGen.createKillsTable()).executeUpdate();
+                getDB().getFreshPreparedStatementHotFromTheOven(QueryGen.createKillsTable(sqlite)).executeUpdate();
             }
             getDB().getFreshPreparedStatementHotFromTheOven(QueryGen.createGrandTotalKillsView()).executeUpdate();
             return true;
