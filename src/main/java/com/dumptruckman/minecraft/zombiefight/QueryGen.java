@@ -3,8 +3,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 package com.dumptruckman.minecraft.zombiefight;
 
-import com.dumptruckman.minecraft.zombiefight.api.PlayerType;
-
 import java.sql.Timestamp;
 
 class QueryGen {
@@ -124,10 +122,10 @@ class QueryGen {
                 " ORDER BY count(`" + KILLS_TABLE + "`.`killer_id`) DESC";
     }
 
-    static String createGame(Timestamp time, String world) {
+    static String createGame() {
         return "INSERT INTO `" + GAMES_TABLE + "` "
                 + "(`world`,`create_time`) VALUES "
-                + "('" + world + "','" + time + "')";
+                + "(?,?)";
     }
 
     static String getGame(Timestamp time, String world) {
@@ -135,98 +133,69 @@ class QueryGen {
                 + "WHERE `world`='" + world + "' AND `create_time`='" + time + "'";
     }
 
-    static String startGame(int id, Timestamp startTime) {
+    static String startGame() {
         return "UPDATE `" + GAMES_TABLE + "` SET "
-                + "`start_time`='" + startTime + "' WHERE "
-                + "`id`='" + id + "'";
+                + "`start_time`=? WHERE "
+                + "`id`=?";
     }
 
-    static String endGame(int id, Timestamp endTme, boolean humansWon) {
-        return "UPDATE `" + GAMES_TABLE + "` SET "
-                + "`end_time`='" + endTme + "'"
-                + (humansWon ? ",`humans_won`='1'" : "") + " WHERE "
-                + "`id`='" + id + "'";
+    static String endGame() {
+        return "UPDATE `" + GAMES_TABLE + "` SET `end_time`=?,`humans_won`=? WHERE `id`=?";
     }
 
-    static String updatePlayer(String name, Integer typeId, String kit) {
-        return "INSERT IGNORE INTO `" + PLAYERS_TABLE + "` ("
-                + "`player_name`"
-                + (typeId != null ? ",`current_type`" : "")
-                + ",`kit_selected`"
-                + ") VALUES ("
-                + "'" + name + "'"
-                + (typeId != null ? ",'" + typeId + "'" : "")
-                + (kit != null ? ",'" + kit + "'" : ",''") + ")"
-                + " ON DUPLICATE KEY UPDATE "
-                + (typeId != null ? "`current_type`='" + typeId + "'," : "")
-                + "`kit_selected`='" + (kit != null ? kit : "") + "'";
+    static String createPlayer() {
+        return "INSERT IGNORE INTO `" + PLAYERS_TABLE + "` (`player_name`) VALUES (?)";
     }
 
-    static String getPlayer(String name) {
+    static String updatePlayer() {
+        return "UPDATE `" + PLAYERS_TABLE + "` SET "
+                + "`player_name`=?,`current_type`=?,`kit_selected`=? "
+                + "WHERE `id`=?";
+    }
+
+    static String getPlayer() {
         return "SELECT `id` FROM `" + PLAYERS_TABLE + "` "
-                + "WHERE `player_name`='" + name + "'";
+                + "WHERE `player_name`=?";
     }
 
-    static String playerStartingInGame(int playerId, int gameId, boolean isZombie, String kit) {
+    static String playerStartingInGame() {
         return "INSERT INTO `" + STATS_TABLE + "` ("
                 + "`player_id`,`game_id`,`started_in`"
-                + (isZombie ? ",`is_zombie`,`first_zombie`" : "")
-                + (kit != null ? ",`kit_used`" : "") + ") VALUES ("
-                + "'" + playerId + "','" + gameId + "','1'"
-                + (isZombie ? ",'1','1'" : "")
-                + (kit != null ? ",'" + kit + "'" : "") + ")";
+                + ",`is_zombie`,`first_zombie`,`kit_used`"
+                + ") VALUES (?,?,?,?,?,?)";
     }
 
-    static String playerJoiningInGame(int playerId, int gameId, boolean isZombie, String kit) {
-        return "INSERT IGNORE INTO `" + STATS_TABLE + "` ("
-                + "`player_id`,`game_id`,`joined_in`"
-                + (isZombie ? ",`is_zombie`" : "")
-                + (kit != null ? ",`kit_used`" : "") + ") VALUES ("
-                + "'" + playerId + "','" + gameId + "','1'"
-                + (isZombie ? ",'1'" : "")
-                + (kit != null ? ",'" + kit + "'" : "") + ") "
+    static String playerJoiningInGame() {
+        return "INSERT INTO `" + STATS_TABLE + "` "
+                + "(`player_id`,`game_id`,`joined_in`,`is_zombie`,`kit_used`) VALUES (?,?,?,?,?) "
                 + "ON DUPLICATE KEY UPDATE "
-                + "`joined_in`='1'"
-                + (isZombie ? ",`is_zombie`='1'" : "")
-                + (kit != null ? ",`kit_used`='" + kit + "'" : "");
+                + "`joined_in`=VALUES(`joined_in`)"
+                + ",`is_zombie`=VALUES(`is_zombie`)"
+                + ",`kit_used`=VALUES(`kit_used`)";
     }
 
-    static String playerFinishingInGame(int playerId, int gameId, boolean isZombie) {
+    static String playerFinishingInGame() {
         return "UPDATE `" + STATS_TABLE + "` SET "
-                + "`finished_in`='1'"
-                + (isZombie ? ",`is_zombie`='1'" : "")
-                + " WHERE `player_id`='" + playerId + "' AND `game_id`='" + gameId + "'";
+                + "`finished_in`=?"
+                + ",`is_zombie`=?"
+                + " WHERE `player_id`=? AND `game_id`=?";
     }
 
     static String addPlayerType() {
-        return "INSERT IGNORE INTO `" + PLAYER_TYPE_TABLE + "` ("
-                + "`type_name`) VALUES ("
-                + "'?')";
+        return "INSERT IGNORE INTO `" + PLAYER_TYPE_TABLE + "` (`type_name`) VALUES (?)";
     }
 
-    static String getPlayerTypeId(PlayerType type) {
-        return "SELECT `id` FROM `" + PLAYER_TYPE_TABLE + "` WHERE "
-                + "`type_name`='" + type + "'";
+    static String getPlayerTypeId() {
+        return "SELECT `id` FROM `" + PLAYER_TYPE_TABLE + "` WHERE `type_name`=?";
     }
 
-    static String playerKilled(int killerId, Integer killerType,
-                               int victimId, Integer victimType,
-                               int gameId, Timestamp time, int weaponId) {
+    static String playerKilled() {
         return "INSERT INTO `" + KILLS_TABLE + "` ("
-                + (killerId > -1 ? "`killer_id`,`killer_type`," : "") + "`victim_id`"
-                + (victimType != null ? ",`victim_type`" : "")
-                + ",`game_id`,`time`,`weapon`) VALUES ("
-                + (killerId > -1 ?  "'" + killerId + "','" + killerType + "'," : "")
-                + "'" + victimId + "'"
-                + (victimType != null ? ",'" + victimType + "'" : "")
-                + ",'" + gameId + "'"
-                + ",'" + time + "'"
-                + ",'" + weaponId + "')";
+                + "`killer_id`,`killer_type`,`victim_id`,`victim_type`,`game_id`,`time`,`weapon`) "
+                + "VALUES (?,?,?,?,?,?,?)";
     }
 
-    static String playerTypeChange(int playerId, int gameId, int typeId) {
-        return "INSERT INTO `" + TYPE_HISTORY_TABLE + "` ("
-                + "`player_id`,`game_id`,`player_type`) VALUES ("
-                + "'" + playerId + "','" + gameId + "','" + typeId + "')";
+    static String playerTypeChange() {
+        return "INSERT INTO `" + TYPE_HISTORY_TABLE + "` (`player_id`,`game_id`,`player_type`,`time`) VALUES (?,?,?,?)";
     }
 }

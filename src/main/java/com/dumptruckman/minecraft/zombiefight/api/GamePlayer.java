@@ -3,11 +3,10 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 package com.dumptruckman.minecraft.zombiefight.api;
 
+import com.dumptruckman.minecraft.zombiefight.DBEntry;
 import org.bukkit.entity.Player;
 
-public interface GamePlayer {
-
-    int getId();
+public interface GamePlayer extends DBEntry {
 
     Player getPlayer();
 
@@ -23,13 +22,13 @@ public interface GamePlayer {
 
     void leftGame();
 
-    void makeZombie(boolean broadcast);
+    void makeZombie(final boolean broadcast);
 
     void makeHuman();
 
     Player getTrackedPlayer();
 
-    void setTrackedPlayer(Player player);
+    void setTrackedPlayer(final Player player);
 
-    boolean isTracking(Player player);
+    boolean isTracking(final Player player);
 }

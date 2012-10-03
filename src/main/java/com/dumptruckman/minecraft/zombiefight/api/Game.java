@@ -4,6 +4,7 @@
 package com.dumptruckman.minecraft.zombiefight.api;
 
 import com.dumptruckman.minecraft.pluginbase.locale.Message;
+import com.dumptruckman.minecraft.zombiefight.DBEntry;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -15,9 +16,7 @@ import org.bukkit.inventory.ItemStack;
 
 import java.util.Set;
 
-public interface Game {
-
-    int getId();
+public interface Game extends DBEntry {
 
     boolean isEnabled();
 

@@ -3,25 +3,23 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 package com.dumptruckman.minecraft.zombiefight.api;
 
-import org.bukkit.World;
-
-import java.sql.Timestamp;
-
 public interface StatsDatabase {
 
-    int newGame(Timestamp createTime, World world);
+    void newGame(final Game game);
 
-    void gameStarted(Game game, Timestamp startTime);
+    void gameReset(final Game game);
 
-    void gameEnded(Game game, Timestamp endTime);
+    void gameStarted(final Game game);
 
-    void playerJoinedGame(Game game, GamePlayer player);
+    void gameEnded(final Game game);
 
-    int getPlayer(String player);
+    void playerJoinedGame(final Game game, final GamePlayer player);
 
-    void playerUpdate(GamePlayer player);
+    void setupPlayer(final GamePlayer player);
 
-    void playerKilled(GamePlayer killer, GamePlayer victim, Game game, Timestamp time, int weapon);
+    void playerUpdate(final GamePlayer player);
 
-    void playerTypeChange(Game game, GamePlayer player, PlayerType type);
+    void playerKilled(final GamePlayer killer, final GamePlayer victim, final Game game, final int weapon);
+
+    void playerTypeChange(final Game game, final GamePlayer player, final PlayerType type);
 }

@@ -21,16 +21,14 @@ import pgDev.bukkit.DisguiseCraft.DisguiseCraft;
 
 class DefaultGamePlayer implements GamePlayer {
 
-    private ZombieFight plugin;
-    private Game game;
-
-    private String name;
+    private final ZombieFight plugin;
+    private final Game game;
+    private final String name;
+    private final DBInfo dbInfo;
 
     private boolean online = false;
 
     private PlayerType playerType = PlayerType.HUMAN;
-
-    private int id;
 
     private String trackedPlayer = "";
 
@@ -38,11 +36,12 @@ class DefaultGamePlayer implements GamePlayer {
         this.name = name;
         this.plugin = plugin;
         this.game = game;
+        this.dbInfo = new DBInfo();
         Player player = getPlayer();
         if (player != null && player.getWorld().equals(game.getWorld())) {
             online = true;
         }
-        id = plugin.getStats().getPlayer(name);
+        plugin.getStats().setupPlayer(this);
     }
 
     private void fixUpPlayer(Player player) {
@@ -82,8 +81,8 @@ class DefaultGamePlayer implements GamePlayer {
     }
 
     @Override
-    public int getId() {
-        return id;
+    public DBInfo getDBInfo() {
+        return dbInfo;
     }
 
     @Override
@@ -178,7 +177,7 @@ class DefaultGamePlayer implements GamePlayer {
         }
     }
 
-    private void resetPlayer(Player player) {
+    private void resetPlayer(final Player player) {
         ItemStack[] armor = player.getInventory().getArmorContents();
         for (int i = 0; i < armor.length; i++) {
             armor[i] = new ItemStack(Material.AIR);
@@ -201,12 +200,12 @@ class DefaultGamePlayer implements GamePlayer {
     }
 
     @Override
-    public void setTrackedPlayer(Player player) {
+    public void setTrackedPlayer(final Player player) {
         trackedPlayer = player.getName();
     }
 
     @Override
-    public boolean isTracking(Player player) {
+    public boolean isTracking(final Player player) {
         return player.getName().equals(trackedPlayer);
     }
 }

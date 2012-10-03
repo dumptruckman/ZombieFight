@@ -34,7 +34,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
-import java.sql.Timestamp;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -46,11 +45,9 @@ import java.util.Set;
 
 class DefaultGame implements Game {
 
-    private ZombieFight plugin;
-
-    private int id = -1;
-
-    private World world;
+    private final ZombieFight plugin;
+    private final World world;
+    private final DBInfo dbInfo;
 
     private Snapshot snapshot;
 
@@ -73,10 +70,11 @@ class DefaultGame implements Game {
     private GameEndTask gameEndTask;
     private HumanFinderTask humanFinderTask;
 
-    DefaultGame(ZombieFight plugin, World world) {
+    DefaultGame(final ZombieFight plugin, final World world) {
         Logging.fine("Made new game object for " + world);
         this.plugin = plugin;
         this.world = world;
+        this.dbInfo = new DBInfo();
         init();
     }
 
@@ -242,7 +240,7 @@ class DefaultGame implements Game {
         zombiesLocked = true;
         zombieLockTask.start();
         if (getStats() != null) {
-            getStats().gameStarted(this, new Timestamp(System.currentTimeMillis()));
+            getStats().gameStarted(this);
         }
         checkGameEnd();
     }
@@ -284,9 +282,9 @@ class DefaultGame implements Game {
         lastHuman = false;
         ended = true;
         if (getStats() != null) {
-            getStats().gameEnded(this, new Timestamp(System.currentTimeMillis()));
+            getStats().gameEnded(this);
         }
-        id = -1;
+        getStats().gameReset(this);
         broadcast(Language.GAME_ENDED);
         gameEndTask.start();
     }
@@ -318,13 +316,9 @@ class DefaultGame implements Game {
      * PUBLIC METHODS FROM Game INTERFACE
      */
 
-    /**
-     *
-     */
-
     @Override
-    public int getId() {
-        return id;
+    public DBInfo getDBInfo() {
+        return dbInfo;
     }
 
     @Override
@@ -373,7 +367,7 @@ class DefaultGame implements Game {
         countingDown = false;
         zombiesLocked = true;
         lastHuman = false;
-        id = -1;
+        getStats().gameReset(this);
         snapshot = new DefaultSnapshot(getWorld());
         countdownTask = new GameCountdownTask(this, plugin);
         zombieLockTask = new ZombieLockCountdownTask(this, plugin);
@@ -391,7 +385,7 @@ class DefaultGame implements Game {
                 broadcast(Language.JOIN_WHILE_GAME_PREPARING);
             }
             if (getStats() != null) {
-                id = getStats().newGame(new Timestamp(System.currentTimeMillis()), getWorld());
+                getStats().newGame(this);
             }
         }
         checkGameStart();
@@ -540,7 +534,7 @@ class DefaultGame implements Game {
                 item = killer.getItemInHand().getTypeId();
                 gKiller = getGamePlayer(killer.getName());
             }
-            getStats().playerKilled(gKiller, gPlayer, this, new Timestamp(System.currentTimeMillis()), item);
+            getStats().playerKilled(gKiller, gPlayer, this, item);
             if (!isZombie(player)) {
                 Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
                     @Override
