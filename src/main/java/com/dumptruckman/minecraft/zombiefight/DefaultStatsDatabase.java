@@ -19,6 +19,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Types;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -196,12 +199,9 @@ class DefaultStatsDatabase implements StatsDatabase {
     @Override
     public void gameStarted(final Game game) {
         queueQuery(new GameStarter(plugin, game));
-        for (GamePlayer player : game.getGamePlayers()) {
-            queueQuery(new PlayerUpdater(plugin, player));
-            if (player.isOnline()) {
-                queueQuery(new PlayerGameStarter(plugin, player, game));
-            }
-        }
+        final Set<GamePlayer> players = game.getGamePlayers();
+        queueQuery(new PlayerUpdater(plugin, players));
+        queueQuery(new PlayerGameStarter(plugin, game, players));
     }
 
     private static class GameStarter extends SQLRunnable {
@@ -221,33 +221,49 @@ class DefaultStatsDatabase implements StatsDatabase {
         }
     }
 
-    private static class PlayerGameStarter extends SQLRunnable {
+    private static class PlayerData {
         private final GamePlayer player;
-        private final Game game;
         private final int isZombie;
         private final String kit;
-        private PlayerGameStarter(final ZombieFight plugin, final GamePlayer player, final Game game) {
-            super(plugin);
+        private final PlayerType type;
+        private PlayerData(final ZombieFight plugin, final GamePlayer player) {
             this.player = player;
-            this.game = game;
             this.isZombie = player.isZombie() ? 1 : 0;
-            final String tempKit = plugin.getPlayerKit(player.getName());
+            final String tempKit =plugin.getPlayerKit(player.getName());
             if (tempKit == null) {
                 this.kit = "";
             } else {
                 this.kit = tempKit;
             }
+            this.type = player.getType();
+        }
+    }
+
+    private static class PlayerGameStarter extends SQLRunnable {
+        private final Collection<PlayerData> players;
+        private final Game game;
+        private PlayerGameStarter(final ZombieFight plugin, final Game game, final Collection<GamePlayer> players) {
+            super(plugin);
+            this.game = game;
+            this.players = new ArrayList<PlayerData>(players.size());
+            for (GamePlayer player : players) {
+                if (player.isOnline()) {
+                    this.players.add(new PlayerData(plugin, player));
+                }
+            }
         }
         @Override
         public void run() throws SQLException {
             final PreparedStatement preparedStatement = getDB().getFreshPreparedStatementHotFromTheOven(QueryGen.playerStartingInGame());
-            preparedStatement.setInt(1, player.getDBInfo().getId());
             preparedStatement.setInt(2, game.getDBInfo().getId());
             preparedStatement.setInt(3, 1);
-            preparedStatement.setInt(4, isZombie);
-            preparedStatement.setInt(5, isZombie);
-            preparedStatement.setString(6, kit);
-            preparedStatement.executeUpdate();
+            for (PlayerData playerData : players) {
+                preparedStatement.setInt(1, playerData.player.getDBInfo().getId());
+                preparedStatement.setInt(4, playerData.isZombie);
+                preparedStatement.setInt(5, playerData.isZombie);
+                preparedStatement.setString(6, playerData.kit);
+                preparedStatement.executeUpdate();
+            }
         }
     }
 
@@ -296,12 +312,8 @@ class DefaultStatsDatabase implements StatsDatabase {
             }
         }
         queueQuery(new GameEnder(plugin, game, humansWon));
-        for (GamePlayer player : gamePlayers) {
-            queueQuery(new PlayerUpdater(plugin, player));
-            if (player.isOnline()) {
-                queueQuery(new PlayerGameFinisher(plugin, player, game));
-            }
-        }
+        queueQuery(new PlayerUpdater(plugin, gamePlayers));
+        queueQuery(new PlayerGameFinisher(plugin, game, gamePlayers));
     }
 
     private static class GameEnder extends SQLRunnable {
@@ -325,23 +337,28 @@ class DefaultStatsDatabase implements StatsDatabase {
     }
 
     private static class PlayerGameFinisher extends SQLRunnable {
-        private final GamePlayer player;
+        private final Collection<PlayerData> players;
         private final Game game;
-        private final int isZombie;
-        private PlayerGameFinisher(final ZombieFight plugin, final GamePlayer player, final Game game) {
+        private PlayerGameFinisher(final ZombieFight plugin, final Game game, final Collection<GamePlayer> players) {
             super(plugin);
-            this.player = player;
             this.game = game;
-            this.isZombie = player.isZombie() ? 1 : 0;
+            this.players = new ArrayList<PlayerData>(players.size());
+            for (GamePlayer player : players) {
+                if (player.isOnline()) {
+                    this.players.add(new PlayerData(plugin, player));
+                }
+            }
         }
         @Override
         public void run() throws SQLException {
             final PreparedStatement preparedStatement = getDB().getFreshPreparedStatementHotFromTheOven(QueryGen.playerFinishingInGame());
             preparedStatement.setInt(1, 1);
-            preparedStatement.setInt(2, isZombie);
-            preparedStatement.setInt(3, player.getDBInfo().getId());
             preparedStatement.setInt(4, game.getDBInfo().getId());
-            preparedStatement.executeUpdate();
+            for (PlayerData playerData : players) {
+                preparedStatement.setInt(2, playerData.isZombie);
+                preparedStatement.setInt(3, playerData.player.getDBInfo().getId());
+                preparedStatement.executeUpdate();
+            }
         }
     }
 
@@ -350,30 +367,28 @@ class DefaultStatsDatabase implements StatsDatabase {
         if (queueThread == null) {
             return;
         }
-        queueThread.queueQuery(new PlayerUpdater(plugin, player));
+        queueThread.queueQuery(new PlayerUpdater(plugin, Arrays.asList(player)));
     }
 
     private static class PlayerUpdater extends SQLRunnable {
-        private final GamePlayer player;
-        private final String kit;
-        private PlayerUpdater(final ZombieFight plugin, final GamePlayer player) {
+        private final Collection<PlayerData> players;
+        private PlayerUpdater(final ZombieFight plugin, final Collection<GamePlayer> players) {
             super(plugin);
-            this.player = player;
-            final String tempKit = plugin.getPlayerKit(player.getName());
-            if (tempKit == null) {
-                this.kit = "";
-            } else {
-                this.kit = tempKit;
+            this.players = new ArrayList<PlayerData>(players.size());
+            for (GamePlayer player : players) {
+                this.players.add(new PlayerData(plugin, player));
             }
         }
         @Override
         public void run() throws SQLException {
             final PreparedStatement preparedStatement = getDB().getFreshPreparedStatementHotFromTheOven(QueryGen.updatePlayer());
-            preparedStatement.setString(1, player.getName());
-            preparedStatement.setInt(2, player.getType().getId());
-            preparedStatement.setString(3, kit);
-            preparedStatement.setInt(4, player.getDBInfo().getId());
-            preparedStatement.executeUpdate();
+            for (PlayerData playerData : players) {
+                preparedStatement.setString(1, playerData.player.getName());
+                preparedStatement.setInt(2, playerData.type.getId());
+                preparedStatement.setString(3, playerData.kit);
+                preparedStatement.setInt(4, playerData.player.getDBInfo().getId());
+                preparedStatement.executeUpdate();
+            }
         }
     }
 
