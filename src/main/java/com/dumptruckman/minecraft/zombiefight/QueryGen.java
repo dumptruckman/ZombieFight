@@ -22,22 +22,22 @@ class QueryGen {
 
     static String createPlayerTypeTable(boolean sqlite) {
         return "CREATE TABLE `" + PLAYER_TYPE_TABLE + "` ("
-                + "`id` INT UNSIGNED NOT NULL" + (sqlite ? "" : " AUTO_INCREMENT")
+                + "`id` " + (sqlite ? "INTEGER PRIMARY KEY" : "INT UNSIGNED NOT NULL AUTO_INCREMENT")
                 + ",`type_name` VARCHAR(255)" + (sqlite ? "" : " CHARACTER SET latin1 COLLATE latin1_general_ci") + " NOT NULL"
 
-                + ",PRIMARY KEY(`id`)"
+                + (sqlite ? "" : ",PRIMARY KEY(`id`)")
                 + ",UNIQUE" + (sqlite ? "" : " KEY") + "(`type_name`)"
                 + ")" + (sqlite ? "" : "ENGINE = InnoDB,COMMENT = 'version:" + PLAYER_TYPE_VERSION + "'");
     }
 
     static String createPlayersTable(boolean sqlite) {
         return "CREATE TABLE `" + PLAYERS_TABLE + "` ("
-                + "`id` INT UNSIGNED NOT NULL" + (sqlite ? "" : " AUTO_INCREMENT")
+                + "`id` " + (sqlite ? "INTEGER PRIMARY KEY" : "INT UNSIGNED NOT NULL AUTO_INCREMENT")
                 + ",`player_name` VARCHAR(64)" + (sqlite ? "" : " CHARACTER SET latin1 COLLATE latin1_general_ci") + " NOT NULL"
                 + ",`current_type` INT UNSIGNED"
                 + ",`kit_selected` VARCHAR(255)"
 
-                + ",PRIMARY KEY(`id`)"
+                + (sqlite ? "" : ",PRIMARY KEY(`id`)")
                 + ",UNIQUE" + (sqlite ? "" : " KEY") + "(`player_name`)"
                 + ",FOREIGN KEY(`current_type`) REFERENCES `" + PLAYER_TYPE_TABLE + "`(`id`)"
                 + ")" + (sqlite ? "" : "ENGINE = InnoDB,COMMENT = 'version:" + PLAYERS_VERSION + "'");
@@ -45,21 +45,21 @@ class QueryGen {
 
     static String createGamesTable(boolean sqlite) {
         return "CREATE TABLE `" + GAMES_TABLE + "` ("
-                + "`id` INT UNSIGNED NOT NULL" + (sqlite ? "" : " AUTO_INCREMENT")
+                + "`id` " + (sqlite ? "INTEGER PRIMARY KEY" : "INT UNSIGNED NOT NULL AUTO_INCREMENT")
                 + ",`world` VARCHAR(255) NOT NULL"
                 + ",`create_time` TIMESTAMP NOT NULL"
                 + ",`start_time` TIMESTAMP"
                 + ",`end_time` TIMESTAMP"
                 + ",`humans_won` TINYINT(1) NOT NULL DEFAULT '0'"
 
-                + ",PRIMARY KEY(`id`)"
+                + (sqlite ? "" : ",PRIMARY KEY(`id`)")
                 + ",UNIQUE" + (sqlite ? "" : " KEY") + "(`world`,`create_time`)"
                 + ")" + (sqlite ? "" : "ENGINE = InnoDB,COMMENT = 'version:" + GAMES_VERSION + "'");
     }
 
     static String createStatsTable(boolean sqlite) {
         return "CREATE TABLE `" + STATS_TABLE + "` ("
-                + "`id` INT UNSIGNED NOT NULL" + (sqlite ? "" : " AUTO_INCREMENT")
+                + "`id` " + (sqlite ? "INTEGER PRIMARY KEY" : "INT UNSIGNED NOT NULL AUTO_INCREMENT")
                 + ",`player_id` INT UNSIGNED NOT NULL"
                 + ",`game_id` INT UNSIGNED NOT NULL"
                 + ",`started_in` TINYINT(1) NOT NULL DEFAULT '0'"
@@ -69,7 +69,7 @@ class QueryGen {
                 + ",`first_zombie` TINYINT(1) NOT NULL DEFAULT '0'"
                 + ",`kit_used` VARCHAR(255)"
 
-                + ",PRIMARY KEY(`id`)"
+                + (sqlite ? "" : ",PRIMARY KEY(`id`)")
                 + ",UNIQUE" + (sqlite ? "" : " KEY") + "(`player_id`,`game_id`)"
                 + ",FOREIGN KEY(`player_id`) REFERENCES `" + PLAYERS_TABLE + "`(`id`)"
                 + ",FOREIGN KEY(`game_id`) REFERENCES `" + GAMES_TABLE + "`(`id`)"
@@ -78,13 +78,13 @@ class QueryGen {
 
     static String createTypeHistoryTable(boolean sqlite) {
         return "CREATE TABLE `" + TYPE_HISTORY_TABLE + "` ("
-                + "`id` INT UNSIGNED NOT NULL" + (sqlite ? "" : " AUTO_INCREMENT")
+                + "`id` " + (sqlite ? "INTEGER PRIMARY KEY" : "INT UNSIGNED NOT NULL AUTO_INCREMENT")
                 + ",`player_id` INT UNSIGNED NOT NULL"
                 + ",`game_id` INT UNSIGNED NOT NULL"
                 + ",`player_type` INT UNSIGNED NOT NULL"
                 + ",`time` TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
 
-                + ",PRIMARY KEY(`id`)"
+                + (sqlite ? "" : ",PRIMARY KEY(`id`)")
                 + ",FOREIGN KEY(`player_id`) REFERENCES `" + PLAYERS_TABLE + "`(`id`)"
                 + ",FOREIGN KEY(`game_id`) REFERENCES `" + GAMES_TABLE + "`(`id`)"
                 + ",FOREIGN KEY(`player_type`) REFERENCES `" + PLAYER_TYPE_TABLE + "`(`id`)"
@@ -93,7 +93,7 @@ class QueryGen {
 
     static String createKillsTable(boolean sqlite) {
         return "CREATE TABLE `" + KILLS_TABLE + "` ("
-                + "`id` INT UNSIGNED NOT NULL" + (sqlite ? "" : " AUTO_INCREMENT")
+                + "`id` " + (sqlite ? "INTEGER PRIMARY KEY" : "INT UNSIGNED NOT NULL AUTO_INCREMENT")
                 + ",`killer_id` INT UNSIGNED"
                 + ",`killer_type` INT UNSIGNED"
                 + ",`victim_id` INT UNSIGNED NOT NULL"
@@ -102,7 +102,7 @@ class QueryGen {
                 + ",`time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP"
                 + ",`weapon` INT NOT NULL DEFAULT '0'"
 
-                + ",PRIMARY KEY(`id`)"
+                + (sqlite ? "" : ",PRIMARY KEY(`id`)")
                 + ",FOREIGN KEY(`killer_id`) REFERENCES `" + PLAYERS_TABLE + "`(`id`)"
                 + ",FOREIGN KEY(`killer_type`) REFERENCES `" + PLAYER_TYPE_TABLE + "`(`id`)"
                 + ",FOREIGN KEY(`victim_id`) REFERENCES `" + PLAYERS_TABLE + "`(`id`)"
@@ -112,7 +112,7 @@ class QueryGen {
     }
 
     static String createGrandTotalKillsView() {
-        return "CREATE OR REPLACE VIEW `grand_total_kills` AS" +
+        return "CREATE VIEW IF NOT EXISTS `grand_total_kills` AS" +
                 " SELECT " +
                 "`" + KILLS_TABLE + "`.`killer_id`," +
                 "`" + KILLS_TABLE + "`.`victim_type`," +
@@ -144,7 +144,7 @@ class QueryGen {
     }
 
     static String createPlayer() {
-        return "INSERT IGNORE INTO `" + PLAYERS_TABLE + "` (`player_name`) VALUES (?)";
+        return "INSERT INTO `" + PLAYERS_TABLE + "` (`player_name`) VALUES (?)";
     }
 
     static String updatePlayer() {
@@ -181,8 +181,8 @@ class QueryGen {
                 + " WHERE `player_id`=? AND `game_id`=?";
     }
 
-    static String addPlayerType() {
-        return "INSERT IGNORE INTO `" + PLAYER_TYPE_TABLE + "` (`type_name`) VALUES (?)";
+    static String addPlayerType(final boolean sqlite) {
+        return "INSERT " + (sqlite ? "OR " : "") + "IGNORE INTO `" + PLAYER_TYPE_TABLE + "` (`type_name`) VALUES (?)";
     }
 
     static String getPlayerTypeId() {

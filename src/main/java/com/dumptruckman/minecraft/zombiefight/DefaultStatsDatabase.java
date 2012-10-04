@@ -82,35 +82,51 @@ class DefaultStatsDatabase implements StatsDatabase {
             if (!getDB().checkTable(QueryGen.PLAYER_TYPE_TABLE)) {
                 getDB().getFreshPreparedStatementHotFromTheOven(QueryGen.createPlayerTypeTable(sqlite)).executeUpdate();
             }
-            final PreparedStatement setTypeStatement = getDB().getFreshPreparedStatementWithGeneratedKeys(QueryGen.addPlayerType());
+            final PreparedStatement setTypeStatement = getDB().getFreshPreparedStatementWithGeneratedKeys(QueryGen.addPlayerType(sqlite));
             final PreparedStatement retrieveTypeStatement = getDB().getFreshPreparedStatementHotFromTheOven(QueryGen.getPlayerTypeId());
             for (PlayerType type : PlayerType.values()) {
                 setTypeStatement.setString(1, type.name());
                 setTypeStatement.executeUpdate();
                 ResultSet resultSet = setTypeStatement.getGeneratedKeys();
                 if (!resultSet.next()) {
+                    resultSet.close();
                     retrieveTypeStatement.setString(1, type.name());
                     resultSet = retrieveTypeStatement.executeQuery();
                     resultSet.next();
                 }
                 type.setId(resultSet.getInt(1));
+                resultSet.close();
             }
+            setTypeStatement.close();
+            retrieveTypeStatement.close();
             if (!getDB().checkTable(QueryGen.PLAYERS_TABLE)) {
-                getDB().getFreshPreparedStatementHotFromTheOven(QueryGen.createPlayersTable(sqlite)).executeUpdate();
+                final PreparedStatement statement = getDB().getFreshPreparedStatementHotFromTheOven(QueryGen.createPlayersTable(sqlite));
+                statement.executeUpdate();
+                statement.close();
             }
             if (!getDB().checkTable(QueryGen.GAMES_TABLE)) {
-                getDB().getFreshPreparedStatementHotFromTheOven(QueryGen.createGamesTable(sqlite)).executeUpdate();
+                final PreparedStatement statement = getDB().getFreshPreparedStatementHotFromTheOven(QueryGen.createGamesTable(sqlite));
+                statement.executeUpdate();
+                statement.close();
             }
             if (!getDB().checkTable(QueryGen.STATS_TABLE)) {
-                getDB().getFreshPreparedStatementHotFromTheOven(QueryGen.createStatsTable(sqlite)).executeUpdate();
+                final PreparedStatement statement = getDB().getFreshPreparedStatementHotFromTheOven(QueryGen.createStatsTable(sqlite));
+                statement.executeUpdate();
+                statement.close();
             }
             if (!getDB().checkTable(QueryGen.TYPE_HISTORY_TABLE)) {
-                getDB().getFreshPreparedStatementHotFromTheOven(QueryGen.createTypeHistoryTable(sqlite)).executeUpdate();
+                final PreparedStatement statement = getDB().getFreshPreparedStatementHotFromTheOven(QueryGen.createTypeHistoryTable(sqlite));
+                statement.executeUpdate();
+                statement.close();
             }
             if (!getDB().checkTable(QueryGen.KILLS_TABLE)) {
-                getDB().getFreshPreparedStatementHotFromTheOven(QueryGen.createKillsTable(sqlite)).executeUpdate();
+                final PreparedStatement statement = getDB().getFreshPreparedStatementHotFromTheOven(QueryGen.createKillsTable(sqlite));
+                statement.executeUpdate();
+                statement.close();
             }
-            getDB().getFreshPreparedStatementHotFromTheOven(QueryGen.createGrandTotalKillsView()).executeUpdate();
+            final PreparedStatement statement = getDB().getFreshPreparedStatementHotFromTheOven(QueryGen.createGrandTotalKillsView());
+            statement.executeUpdate();
+            statement.close();
             return true;
         } catch (SQLException e) {
             e.printStackTrace();
@@ -142,6 +158,8 @@ class DefaultStatsDatabase implements StatsDatabase {
             preparedStatement.setString(1, player.getName());
             ResultSet resultSet = preparedStatement.executeQuery();
             if (!resultSet.next()) {
+                resultSet.close();
+                preparedStatement.close();
                 preparedStatement = getDB().getFreshPreparedStatementWithGeneratedKeys(QueryGen.createPlayer());
                 preparedStatement.setString(1, player.getName());
                 preparedStatement.executeUpdate();
@@ -149,6 +167,8 @@ class DefaultStatsDatabase implements StatsDatabase {
                 resultSet.next();
             }
             player.getDBInfo().setId(resultSet.getInt(1));
+            resultSet.close();
+            preparedStatement.close();
         }
     }
 
@@ -176,6 +196,8 @@ class DefaultStatsDatabase implements StatsDatabase {
             final ResultSet resultSet = preparedStatement.getGeneratedKeys();
             resultSet.next();
             game.getDBInfo().setId(resultSet.getInt(1));
+            resultSet.close();
+            preparedStatement.close();
         }
     }
 
@@ -218,6 +240,7 @@ class DefaultStatsDatabase implements StatsDatabase {
             preparedStatement.setTimestamp(1, startTime);
             preparedStatement.setInt(2, game.getDBInfo().getId());
             preparedStatement.executeUpdate();
+            preparedStatement.close();
         }
     }
 
@@ -258,12 +281,14 @@ class DefaultStatsDatabase implements StatsDatabase {
             preparedStatement.setInt(2, game.getDBInfo().getId());
             preparedStatement.setInt(3, 1);
             for (PlayerData playerData : players) {
+                System.out.println("Game: " + game.getDBInfo().getId() + " Player: " + playerData.player.getDBInfo().getId());
                 preparedStatement.setInt(1, playerData.player.getDBInfo().getId());
                 preparedStatement.setInt(4, playerData.isZombie);
                 preparedStatement.setInt(5, playerData.isZombie);
                 preparedStatement.setString(6, playerData.kit);
                 preparedStatement.executeUpdate();
             }
+            preparedStatement.close();
         }
     }
 
@@ -298,6 +323,7 @@ class DefaultStatsDatabase implements StatsDatabase {
             preparedStatement.setInt(4, isZombie);
             preparedStatement.setString(5, kit);
             preparedStatement.executeUpdate();
+            preparedStatement.close();
         }
     }
 
@@ -333,6 +359,7 @@ class DefaultStatsDatabase implements StatsDatabase {
             preparedStatement.setInt(2, humansWon);
             preparedStatement.setInt(3, game.getDBInfo().getId());
             preparedStatement.executeUpdate();
+            preparedStatement.close();
         }
     }
 
@@ -359,6 +386,7 @@ class DefaultStatsDatabase implements StatsDatabase {
                 preparedStatement.setInt(3, playerData.player.getDBInfo().getId());
                 preparedStatement.executeUpdate();
             }
+            preparedStatement.close();
         }
     }
 
@@ -389,6 +417,7 @@ class DefaultStatsDatabase implements StatsDatabase {
                 preparedStatement.setInt(4, playerData.player.getDBInfo().getId());
                 preparedStatement.executeUpdate();
             }
+            preparedStatement.close();
         }
     }
 
@@ -441,6 +470,7 @@ class DefaultStatsDatabase implements StatsDatabase {
             preparedStatement.setTimestamp(6, time);
             preparedStatement.setInt(7, weapon);
             preparedStatement.executeUpdate();
+            preparedStatement.close();
         }
     }
 
@@ -472,6 +502,7 @@ class DefaultStatsDatabase implements StatsDatabase {
             preparedStatement.setInt(3, type.getId());
             preparedStatement.setTimestamp(4, time);
             preparedStatement.executeUpdate();
+            preparedStatement.close();
         }
     }
 }
