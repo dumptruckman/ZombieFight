@@ -51,7 +51,7 @@ class DefaultGame implements Game {
 
     private Snapshot snapshot;
 
-    private Map<String, GamePlayer> gamePlayers;
+    private Map<String, DefaultGamePlayer> gamePlayers;
 
     private Set<String> bannedPlayers;
 
@@ -94,8 +94,8 @@ class DefaultGame implements Game {
         return getPlugin().getStats();
     }
 
-    protected GamePlayer getGamePlayer(String name) {
-        GamePlayer gPlayer = gamePlayers.get(name);
+    protected DefaultGamePlayer getGamePlayer(String name) {
+        DefaultGamePlayer gPlayer = gamePlayers.get(name);
         if (gPlayer == null) {
             gPlayer = new DefaultGamePlayer(name, getPlugin(), this);
             gamePlayers.put(name, gPlayer);
@@ -128,10 +128,10 @@ class DefaultGame implements Game {
     }
 
     protected void checkGameEnd() {
-        Set<GamePlayer> onlinePlayers = getOnlinePlayers();
-        List<GamePlayer> onlineZombies = new LinkedList<GamePlayer>();
-        List<GamePlayer> onlineHumans = new LinkedList<GamePlayer>();
-        for (GamePlayer player : onlinePlayers) {
+        Set<DefaultGamePlayer> onlinePlayers = getOnlinePlayers();
+        List<DefaultGamePlayer> onlineZombies = new LinkedList<DefaultGamePlayer>();
+        List<DefaultGamePlayer> onlineHumans = new LinkedList<DefaultGamePlayer>();
+        for (DefaultGamePlayer player : onlinePlayers) {
             if (player.isZombie()) {
                 onlineZombies.add(player);
             } else {
@@ -144,7 +144,7 @@ class DefaultGame implements Game {
             if (onlineHumans.size() > 1) {
                 Random rand = new Random(System.currentTimeMillis());
                 int index = rand.nextInt(onlineHumans.size());
-                GamePlayer newZombie = onlineHumans.get(index);
+                DefaultGamePlayer newZombie = onlineHumans.get(index);
                 Logging.fine("Found a new zombie candidate: "+ newZombie.getPlayer().getName());
                 newZombie.makeZombie(true);
                 onlineHumans.remove(index);
@@ -165,13 +165,13 @@ class DefaultGame implements Game {
         }
     }
 
-    protected GamePlayer randomZombie() {
+    protected DefaultGamePlayer randomZombie() {
         Random rand = new Random(System.currentTimeMillis());
-        Set<GamePlayer> onlinePlayers = getOnlinePlayers();
+        Set<DefaultGamePlayer> onlinePlayers = getOnlinePlayers();
         if (onlinePlayers.size() > 0) {
             int index = rand.nextInt(onlinePlayers.size());
             int i = 0;
-            for (GamePlayer gPlayer : onlinePlayers) {
+            for (DefaultGamePlayer gPlayer : onlinePlayers) {
                 if (i == index) {
                     return gPlayer;
                 }
@@ -185,10 +185,10 @@ class DefaultGame implements Game {
         return snapshot;
     }
 
-    private Set<GamePlayer> getOnlinePlayers() {
-        Collection<GamePlayer> gamePlayers = this.gamePlayers.values();
-        Set<GamePlayer> onlinePlayers = new HashSet<GamePlayer>(gamePlayers.size());
-        for (GamePlayer player : gamePlayers) {
+    private Set<DefaultGamePlayer> getOnlinePlayers() {
+        Collection<DefaultGamePlayer> gamePlayers = this.gamePlayers.values();
+        Set<DefaultGamePlayer> onlinePlayers = new HashSet<DefaultGamePlayer>(gamePlayers.size());
+        for (DefaultGamePlayer player : gamePlayers) {
             if (player != null && player.isOnline()) {
                 onlinePlayers.add(player);
             }
@@ -210,10 +210,12 @@ class DefaultGame implements Game {
         broadcast(Language.GAME_STARTING);
         Logging.finest("Game started");
         for (Player player : getWorld().getPlayers()) {
-            GamePlayer gPlayer = getGamePlayer(player.getName());
+            DefaultGamePlayer gPlayer = getGamePlayer(player.getName());
             if (!gPlayer.isOnline()) {
                 gPlayer.joinedGame();
+                gPlayer.getGameStats().setStartedInGame(true);
             }
+            gPlayer.getGameStats().setKitUsed(plugin.getPlayerKit(gPlayer.getName()));
             gPlayer.makeHuman();
             player.teleport(getSpawnLocation());
             String kitName = plugin.getPlayerKit(player.getName());
@@ -230,9 +232,10 @@ class DefaultGame implements Game {
                 plugin.getLootConfig().getDefaultKit().addToInventory(player.getInventory());
             }
         }
-        GamePlayer gPlayer = randomZombie();
+        DefaultGamePlayer gPlayer = randomZombie();
         if (gPlayer != null) {
             gPlayer.makeZombie(true);
+            gPlayer.getGameStats().setFirstZombie(true);
         } else {
             Logging.warning("Game started with NO PLAYERS!");
         }
@@ -255,7 +258,7 @@ class DefaultGame implements Game {
         checkGameEnd();
     }
 
-    private void _lastHuman(GamePlayer lastHuman) {
+    private void _lastHuman(DefaultGamePlayer lastHuman) {
         Logging.fine("Game lastHuman called");
         countingDown = false;
         started = true;
@@ -270,6 +273,7 @@ class DefaultGame implements Game {
         } else {
             Logging.warning("Last human reward is not setup correctly!");
         }
+        lastHuman.getGameStats().setLastHuman(true);
         lastHumanTask.setLastHuman(lastHuman);
         lastHumanTask.start();
     }
@@ -281,6 +285,9 @@ class DefaultGame implements Game {
         zombiesLocked = false;
         lastHuman = false;
         ended = true;
+        for (DefaultGamePlayer gPlayer : getOnlinePlayers()) {
+            gPlayer.getGameStats().setFinishedInGame(true);
+        }
         if (getStats() != null) {
             getStats().gameEnded(this);
         }
@@ -358,7 +365,7 @@ class DefaultGame implements Game {
         if (humanFinderTask != null) {
             humanFinderTask.kill();
         }
-        gamePlayers = new HashMap<String, GamePlayer>();
+        gamePlayers = new HashMap<String, DefaultGamePlayer>();
         bannedPlayers = new HashSet<String>();
         started = false;
         ended = false;
@@ -429,7 +436,7 @@ class DefaultGame implements Game {
             }
         }, 2L);
         // Mark player as joined
-        GamePlayer gPlayer = getGamePlayer(player.getName());
+        DefaultGamePlayer gPlayer = getGamePlayer(player.getName());
         gPlayer.joinedGame();
 
         // Inform the player
@@ -474,6 +481,8 @@ class DefaultGame implements Game {
             }
         }
         if (hasStarted() && !hasEnded() && getStats() != null) {
+            gPlayer.getGameStats().setJoinedInGame(true);
+            gPlayer.getGameStats().setKitUsed(plugin.getPlayerKit(gPlayer.getName()));
             getStats().playerJoinedGame(this, gPlayer);
         }
     }

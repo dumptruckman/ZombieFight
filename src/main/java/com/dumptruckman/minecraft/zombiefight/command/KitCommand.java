@@ -51,6 +51,7 @@ public class KitCommand extends ZFCommand {
                 getMessager().bad(Language.KIT_ERROR, player, kit.toString());
                 return;
             }
+
             plugin.setPlayerKit(player.getName(), kit.toString());
             getMessager().good(Language.CMD_KIT_SUCCESS, player, kit.toString());
         }

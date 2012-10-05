@@ -8,6 +8,7 @@ import com.dumptruckman.minecraft.pluginbase.database.SQLDatabase;
 import com.dumptruckman.minecraft.pluginbase.util.Logging;
 import com.dumptruckman.minecraft.zombiefight.api.Game;
 import com.dumptruckman.minecraft.zombiefight.api.GamePlayer;
+import com.dumptruckman.minecraft.zombiefight.api.GameStats;
 import com.dumptruckman.minecraft.zombiefight.api.PlayerType;
 import com.dumptruckman.minecraft.zombiefight.api.StatsDatabase;
 import com.dumptruckman.minecraft.zombiefight.api.ZFConfig;
@@ -169,6 +170,22 @@ class DefaultStatsDatabase implements StatsDatabase {
             player.getDBInfo().setId(resultSet.getInt(1));
             resultSet.close();
             preparedStatement.close();
+            final PreparedStatement statsStatement = getDB().getFreshPreparedStatementWithGeneratedKeys(QueryGen.createPlayerStats());
+            statsStatement.setInt(1, player.getDBInfo().getId());
+            statsStatement.setInt(2, player.getGame().getDBInfo().getId());
+            final GameStats stats = player.getGameStats();
+            statsStatement.setInt(3, stats.startedInGame() ? 1 : 0);
+            statsStatement.setInt(4, stats.joinedInGame() ? 1 : 0);
+            statsStatement.setInt(5, stats.finishedInGame() ? 1 : 0);
+            statsStatement.setInt(6, stats.isZombie() ? 1 : 0);
+            statsStatement.setInt(7, stats.isFirstZombie() ? 1 : 0);
+            statsStatement.setInt(8, stats.isLastHuman() ? 1 : 0);
+            statsStatement.setString(9, stats.getKitUsed());
+            statsStatement.executeUpdate();
+            final ResultSet result = statsStatement.getGeneratedKeys();
+            stats.getDBInfo().setId(result.getInt(1));
+            result.close();
+            statsStatement.close();
         }
     }
 
@@ -223,7 +240,7 @@ class DefaultStatsDatabase implements StatsDatabase {
         queueQuery(new GameStarter(plugin, game));
         final Set<GamePlayer> players = game.getGamePlayers();
         queueQuery(new PlayerUpdater(plugin, players));
-        queueQuery(new PlayerGameStarter(plugin, game, players));
+        queueQuery(new PlayerStatsUpdater(plugin, game, players));
     }
 
     private static class GameStarter extends SQLRunnable {
@@ -244,48 +261,29 @@ class DefaultStatsDatabase implements StatsDatabase {
         }
     }
 
-    private static class PlayerData {
-        private final GamePlayer player;
-        private final int isZombie;
-        private final String kit;
-        private final PlayerType type;
-        private PlayerData(final ZombieFight plugin, final GamePlayer player) {
-            this.player = player;
-            this.isZombie = player.isZombie() ? 1 : 0;
-            final String tempKit =plugin.getPlayerKit(player.getName());
-            if (tempKit == null) {
-                this.kit = "";
-            } else {
-                this.kit = tempKit;
-            }
-            this.type = player.getType();
-        }
-    }
-
-    private static class PlayerGameStarter extends SQLRunnable {
-        private final Collection<PlayerData> players;
+    private static class PlayerStatsUpdater extends SQLRunnable {
+        private final Collection<GamePlayer> players;
         private final Game game;
-        private PlayerGameStarter(final ZombieFight plugin, final Game game, final Collection<GamePlayer> players) {
+        private PlayerStatsUpdater(final ZombieFight plugin, final Game game, final Collection<GamePlayer> players) {
             super(plugin);
             this.game = game;
-            this.players = new ArrayList<PlayerData>(players.size());
-            for (GamePlayer player : players) {
-                if (player.isOnline()) {
-                    this.players.add(new PlayerData(plugin, player));
-                }
-            }
+            this.players = new ArrayList<GamePlayer>(players.size());
+            this.players.addAll(players);
         }
         @Override
         public void run() throws SQLException {
-            final PreparedStatement preparedStatement = getDB().getFreshPreparedStatementHotFromTheOven(QueryGen.playerStartingInGame());
-            preparedStatement.setInt(2, game.getDBInfo().getId());
-            preparedStatement.setInt(3, 1);
-            for (PlayerData playerData : players) {
-                System.out.println("Game: " + game.getDBInfo().getId() + " Player: " + playerData.player.getDBInfo().getId());
-                preparedStatement.setInt(1, playerData.player.getDBInfo().getId());
-                preparedStatement.setInt(4, playerData.isZombie);
-                preparedStatement.setInt(5, playerData.isZombie);
-                preparedStatement.setString(6, playerData.kit);
+            final PreparedStatement preparedStatement = getDB().getFreshPreparedStatementHotFromTheOven(QueryGen.updatePlayerStats());
+            preparedStatement.setInt(9, game.getDBInfo().getId());
+            for (final GamePlayer player : players) {
+                preparedStatement.setInt(8, player.getDBInfo().getId());
+                final GameStats stats = player.getGameStats();
+                preparedStatement.setInt(1, stats.startedInGame() ? 1 : 0);
+                preparedStatement.setInt(2, stats.joinedInGame() ? 1 : 0);
+                preparedStatement.setInt(3, stats.finishedInGame() ? 1 : 0);
+                preparedStatement.setInt(4, stats.isZombie() ? 1 : 0);
+                preparedStatement.setInt(5, stats.isFirstZombie() ? 1 : 0);
+                preparedStatement.setInt(6, stats.isLastHuman() ? 1 : 0);
+                preparedStatement.setString(7, stats.getKitUsed());
                 preparedStatement.executeUpdate();
             }
             preparedStatement.close();
@@ -294,37 +292,7 @@ class DefaultStatsDatabase implements StatsDatabase {
 
     @Override
     public void playerJoinedGame(final Game game, final GamePlayer player) {
-        queueQuery(new PlayerGameJoiner(plugin, player, game));
-    }
-
-    private static class PlayerGameJoiner extends SQLRunnable {
-        private final GamePlayer player;
-        private final Game game;
-        private final int isZombie;
-        private final String kit;
-        private PlayerGameJoiner(final ZombieFight plugin, final GamePlayer player, final Game game) {
-            super(plugin);
-            this.player = player;
-            this.game = game;
-            this.isZombie = player.isZombie() ? 1 : 0;
-            final String tempKit = plugin.getPlayerKit(player.getName());
-            if (tempKit == null) {
-                this.kit = "";
-            } else {
-                this.kit = tempKit;
-            }
-        }
-        @Override
-        public void run() throws SQLException {
-            final PreparedStatement preparedStatement = getDB().getFreshPreparedStatementHotFromTheOven(QueryGen.playerJoiningInGame());
-            preparedStatement.setInt(1, player.getDBInfo().getId());
-            preparedStatement.setInt(2, game.getDBInfo().getId());
-            preparedStatement.setInt(3, 1);
-            preparedStatement.setInt(4, isZombie);
-            preparedStatement.setString(5, kit);
-            preparedStatement.executeUpdate();
-            preparedStatement.close();
-        }
+        queueQuery(new PlayerStatsUpdater(plugin, game, Arrays.asList(player)));
     }
 
     @Override
@@ -339,7 +307,7 @@ class DefaultStatsDatabase implements StatsDatabase {
         }
         queueQuery(new GameEnder(plugin, game, humansWon));
         queueQuery(new PlayerUpdater(plugin, gamePlayers));
-        queueQuery(new PlayerGameFinisher(plugin, game, gamePlayers));
+        queueQuery(new PlayerStatsUpdater(plugin, game, gamePlayers));
     }
 
     private static class GameEnder extends SQLRunnable {
@@ -363,33 +331,6 @@ class DefaultStatsDatabase implements StatsDatabase {
         }
     }
 
-    private static class PlayerGameFinisher extends SQLRunnable {
-        private final Collection<PlayerData> players;
-        private final Game game;
-        private PlayerGameFinisher(final ZombieFight plugin, final Game game, final Collection<GamePlayer> players) {
-            super(plugin);
-            this.game = game;
-            this.players = new ArrayList<PlayerData>(players.size());
-            for (GamePlayer player : players) {
-                if (player.isOnline()) {
-                    this.players.add(new PlayerData(plugin, player));
-                }
-            }
-        }
-        @Override
-        public void run() throws SQLException {
-            final PreparedStatement preparedStatement = getDB().getFreshPreparedStatementHotFromTheOven(QueryGen.playerFinishingInGame());
-            preparedStatement.setInt(1, 1);
-            preparedStatement.setInt(4, game.getDBInfo().getId());
-            for (PlayerData playerData : players) {
-                preparedStatement.setInt(2, playerData.isZombie);
-                preparedStatement.setInt(3, playerData.player.getDBInfo().getId());
-                preparedStatement.executeUpdate();
-            }
-            preparedStatement.close();
-        }
-    }
-
     @Override
     public void playerUpdate(GamePlayer player) {
         if (queueThread == null) {
@@ -399,6 +340,21 @@ class DefaultStatsDatabase implements StatsDatabase {
     }
 
     private static class PlayerUpdater extends SQLRunnable {
+        private static class PlayerData {
+            private final GamePlayer player;
+            private final String kit;
+            private final PlayerType type;
+            private PlayerData(final ZombieFight plugin, final GamePlayer player) {
+                this.player = player;
+                final String tempKit = plugin.getPlayerKit(player.getName());
+                if (tempKit == null) {
+                    this.kit = "";
+                } else {
+                    this.kit = tempKit;
+                }
+                this.type = player.getType();
+            }
+        }
         private final Collection<PlayerData> players;
         private PlayerUpdater(final ZombieFight plugin, final Collection<GamePlayer> players) {
             super(plugin);

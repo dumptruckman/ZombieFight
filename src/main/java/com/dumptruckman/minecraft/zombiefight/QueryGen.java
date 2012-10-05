@@ -3,8 +3,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 package com.dumptruckman.minecraft.zombiefight;
 
-import java.sql.Timestamp;
-
 class QueryGen {
 
     static final String PLAYERS_TABLE = "zf_players";
@@ -67,6 +65,7 @@ class QueryGen {
                 + ",`finished_in` TINYINT(1) NOT NULL DEFAULT '0'"
                 + ",`is_zombie` TINYINT(1) NOT NULL DEFAULT '0'"
                 + ",`first_zombie` TINYINT(1) NOT NULL DEFAULT '0'"
+                + ",`last_human` TINYINT(1) NOT NULL DEFAULT '0'"
                 + ",`kit_used` VARCHAR(255)"
 
                 + (sqlite ? "" : ",PRIMARY KEY(`id`)")
@@ -122,15 +121,14 @@ class QueryGen {
                 " ORDER BY count(`" + KILLS_TABLE + "`.`killer_id`) DESC";
     }
 
+    static String addPlayerType(final boolean sqlite) {
+        return "INSERT " + (sqlite ? "OR " : "") + "IGNORE INTO `" + PLAYER_TYPE_TABLE + "` (`type_name`) VALUES (?)";
+    }
+
     static String createGame() {
         return "INSERT INTO `" + GAMES_TABLE + "` "
                 + "(`world`,`create_time`) VALUES "
                 + "(?,?)";
-    }
-
-    static String getGame(Timestamp time, String world) {
-        return "SELECT `id` FROM `" + GAMES_TABLE + "` "
-                + "WHERE `world`='" + world + "' AND `create_time`='" + time + "'";
     }
 
     static String startGame() {
@@ -158,31 +156,23 @@ class QueryGen {
                 + "WHERE `player_name`=?";
     }
 
-    static String playerStartingInGame() {
+    static String createPlayerStats() {
         return "INSERT INTO `" + STATS_TABLE + "` ("
-                + "`player_id`,`game_id`,`started_in`"
-                + ",`is_zombie`,`first_zombie`,`kit_used`"
-                + ") VALUES (?,?,?,?,?,?)";
+                + "`player_id`,`game_id`,`started_in`,`joined_in`,`finished_in`"
+                + ",`is_zombie`,`first_zombie`,`last_human`,`kit_used`"
+                + ") VALUES (?,?,?,?,?,?,?,?,?)";
     }
 
-    static String playerJoiningInGame() {
-        return "INSERT INTO `" + STATS_TABLE + "` "
-                + "(`player_id`,`game_id`,`joined_in`,`is_zombie`,`kit_used`) VALUES (?,?,?,?,?) "
-                + "ON DUPLICATE KEY UPDATE "
-                + "`joined_in`=VALUES(`joined_in`)"
-                + ",`is_zombie`=VALUES(`is_zombie`)"
-                + ",`kit_used`=VALUES(`kit_used`)";
-    }
-
-    static String playerFinishingInGame() {
+    static String updatePlayerStats() {
         return "UPDATE `" + STATS_TABLE + "` SET "
-                + "`finished_in`=?"
+                + "`started_in`=?"
+                + ",`joined_in`=?"
+                + ",`finished_in`=?"
                 + ",`is_zombie`=?"
+                + ",`first_zombie`=?"
+                + ",`last_human`=?"
+                + ",`kit_used`=?"
                 + " WHERE `player_id`=? AND `game_id`=?";
-    }
-
-    static String addPlayerType(final boolean sqlite) {
-        return "INSERT " + (sqlite ? "OR " : "") + "IGNORE INTO `" + PLAYER_TYPE_TABLE + "` (`type_name`) VALUES (?)";
     }
 
     static String getPlayerTypeId() {

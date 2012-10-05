@@ -25,14 +25,13 @@ class DefaultGamePlayer implements GamePlayer {
     private final Game game;
     private final String name;
     private final DBInfo dbInfo;
+    private final DefaultGameStats gameStats;
 
     private boolean online = false;
-
     private PlayerType playerType = PlayerType.HUMAN;
-
     private String trackedPlayer = "";
 
-    DefaultGamePlayer(String name, ZombieFight plugin, Game game) {
+    DefaultGamePlayer(final String name, final ZombieFight plugin, final Game game) {
         this.name = name;
         this.plugin = plugin;
         this.game = game;
@@ -41,6 +40,7 @@ class DefaultGamePlayer implements GamePlayer {
         if (player != null && player.getWorld().equals(game.getWorld())) {
             online = true;
         }
+        this.gameStats = new DefaultGameStats(game, this);
         plugin.getStats().setupPlayer(this);
     }
 
@@ -138,10 +138,21 @@ class DefaultGamePlayer implements GamePlayer {
     }
 
     @Override
+    public Game getGame() {
+        return game;
+    }
+
+    @Override
+    public DefaultGameStats getGameStats() {
+        return gameStats;
+    }
+
+    @Override
     public void makeZombie(final boolean broadcast) {
         if (isZombie()) {
             return;
         }
+        getGameStats().setZombie(true);
         playerType = PlayerType.ZOMBIE;
         final Player player = getPlayer();
         if (player != null) {

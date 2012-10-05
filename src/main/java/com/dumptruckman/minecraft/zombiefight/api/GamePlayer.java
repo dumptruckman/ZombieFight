@@ -22,6 +22,10 @@ public interface GamePlayer extends DBEntry {
 
     void leftGame();
 
+    Game getGame();
+
+    GameStats getGameStats();
+
     void makeZombie(final boolean broadcast);
 
     void makeHuman();
