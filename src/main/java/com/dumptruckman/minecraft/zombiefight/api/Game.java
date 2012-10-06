@@ -22,8 +22,6 @@ public interface Game extends DBEntry {
 
     Location getSpawnLocation();
 
-    void init();
-
     boolean hasStarted();
 
     boolean hasEnded();

@@ -319,36 +319,7 @@ class DefaultGame implements Game {
         }
     }
 
-    /**
-     * PUBLIC METHODS FROM Game INTERFACE
-     */
-
-    @Override
-    public DBInfo getDBInfo() {
-        return dbInfo;
-    }
-
-    @Override
-    public Location getSpawnLocation() {
-        Location loc;
-        if (!hasStarted() || hasReset()) {
-            Game primaryGame = plugin.getGameManager().getPrimaryGame();
-            if (primaryGame != null && !primaryGame.equals(this)) {
-                return primaryGame.getSpawnLocation();
-            }
-            loc = getWorld().getSpawnLocation();
-        } else {
-            loc = getWorld().getSpawnLocation();
-        }
-        if (loc == null) {
-            Logging.fine("No spawn set, will use world spawn.");
-            loc = getWorld().getSpawnLocation();
-        }
-        return loc;
-    }
-
-    @Override
-    public final void init() {
+    private void init() {
         Logging.fine("Game init called");
         if (countdownTask != null) {
             countdownTask.kill();
@@ -396,6 +367,34 @@ class DefaultGame implements Game {
             }
         }
         checkGameStart();
+    }
+
+    /**
+     * PUBLIC METHODS FROM Game INTERFACE
+     */
+
+    @Override
+    public DBInfo getDBInfo() {
+        return dbInfo;
+    }
+
+    @Override
+    public Location getSpawnLocation() {
+        Location loc;
+        if (!hasStarted() || hasReset()) {
+            Game primaryGame = plugin.getGameManager().getPrimaryGame();
+            if (primaryGame != null && !primaryGame.equals(this)) {
+                return primaryGame.getSpawnLocation();
+            }
+            loc = getWorld().getSpawnLocation();
+        } else {
+            loc = getWorld().getSpawnLocation();
+        }
+        if (loc == null) {
+            Logging.fine("No spawn set, will use world spawn.");
+            loc = getWorld().getSpawnLocation();
+        }
+        return loc;
     }
 
     @Override
