@@ -6,6 +6,7 @@ package com.dumptruckman.minecraft.zombiefight;
 import com.dumptruckman.minecraft.pluginbase.util.Logging;
 import com.dumptruckman.minecraft.zombiefight.api.Game;
 import com.dumptruckman.minecraft.zombiefight.api.GamePlayer;
+import com.dumptruckman.minecraft.zombiefight.api.GameStats;
 import com.dumptruckman.minecraft.zombiefight.api.PlayerType;
 import com.dumptruckman.minecraft.zombiefight.api.ZombieFight;
 import com.dumptruckman.minecraft.zombiefight.util.Language;
@@ -25,7 +26,8 @@ class DefaultGamePlayer implements GamePlayer {
     private final Game game;
     private final String name;
     private final DBInfo dbInfo;
-    private final DefaultGameStats gameStats;
+
+    private volatile GameStats gameStats;
 
     private boolean online = false;
     private PlayerType playerType = PlayerType.HUMAN;
@@ -40,7 +42,7 @@ class DefaultGamePlayer implements GamePlayer {
         if (player != null && player.getWorld().equals(game.getWorld())) {
             online = true;
         }
-        this.gameStats = new DefaultGameStats(game, this);
+        this.gameStats = StatsBuilder.createStats(this).build();
         plugin.getStats().setupPlayer(this);
     }
 
@@ -143,8 +145,12 @@ class DefaultGamePlayer implements GamePlayer {
     }
 
     @Override
-    public DefaultGameStats getGameStats() {
+    public GameStats getGameStats() {
         return gameStats;
+    }
+
+    void setGameStats(final GameStats gameStats) {
+        this.gameStats = gameStats;
     }
 
     @Override
@@ -152,7 +158,7 @@ class DefaultGamePlayer implements GamePlayer {
         if (isZombie()) {
             return;
         }
-        getGameStats().setZombie(true);
+        setGameStats(StatsBuilder.createStats(this).zombie(true).build());
         playerType = PlayerType.ZOMBIE;
         final Player player = getPlayer();
         if (player != null) {

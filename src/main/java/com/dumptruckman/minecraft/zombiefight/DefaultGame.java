@@ -213,9 +213,9 @@ class DefaultGame implements Game {
             DefaultGamePlayer gPlayer = getGamePlayer(player.getName());
             if (!gPlayer.isOnline()) {
                 gPlayer.joinedGame();
-                gPlayer.getGameStats().setStartedInGame(true);
+                gPlayer.setGameStats(StatsBuilder.createStats(gPlayer).startedInGame(true).build());
             }
-            gPlayer.getGameStats().setKitUsed(plugin.getPlayerKit(gPlayer.getName()));
+            gPlayer.setGameStats(StatsBuilder.createStats(gPlayer).kitUsed(plugin.getPlayerKit(gPlayer.getName())).build());
             gPlayer.makeHuman();
             player.teleport(getSpawnLocation());
             String kitName = plugin.getPlayerKit(player.getName());
@@ -235,7 +235,7 @@ class DefaultGame implements Game {
         DefaultGamePlayer gPlayer = randomZombie();
         if (gPlayer != null) {
             gPlayer.makeZombie(true);
-            gPlayer.getGameStats().setFirstZombie(true);
+            gPlayer.setGameStats(StatsBuilder.createStats(gPlayer).firstZombie(true).build());
         } else {
             Logging.warning("Game started with NO PLAYERS!");
         }
@@ -273,7 +273,7 @@ class DefaultGame implements Game {
         } else {
             Logging.warning("Last human reward is not setup correctly!");
         }
-        lastHuman.getGameStats().setLastHuman(true);
+        lastHuman.setGameStats(StatsBuilder.createStats(lastHuman).lastHuman(true).build());
         lastHumanTask.setLastHuman(lastHuman);
         lastHumanTask.start();
     }
@@ -286,7 +286,7 @@ class DefaultGame implements Game {
         lastHuman = false;
         ended = true;
         for (DefaultGamePlayer gPlayer : getOnlinePlayers()) {
-            gPlayer.getGameStats().setFinishedInGame(true);
+            gPlayer.setGameStats(StatsBuilder.createStats(gPlayer).finishedInGame(true).build());
         }
         if (getStats() != null) {
             getStats().gameEnded(this);
@@ -480,8 +480,7 @@ class DefaultGame implements Game {
             }
         }
         if (hasStarted() && !hasEnded() && getStats() != null) {
-            gPlayer.getGameStats().setJoinedInGame(true);
-            gPlayer.getGameStats().setKitUsed(plugin.getPlayerKit(gPlayer.getName()));
+            gPlayer.setGameStats(StatsBuilder.createStats(gPlayer).joinedInGame(true).kitUsed(plugin.getPlayerKit(gPlayer.getName())).build());
             getStats().playerJoinedGame(this, gPlayer);
         }
     }
