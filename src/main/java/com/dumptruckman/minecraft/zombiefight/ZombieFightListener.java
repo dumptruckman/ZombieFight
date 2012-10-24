@@ -143,7 +143,7 @@ public class ZombieFightListener implements Listener {
             return;
         }
         if (game.hasStarted() && !game.hasEnded()) {
-            if (game.isBanned(player) && !Perms.CAN_ALWAYS_BREAK.hasPermission(player)) {
+            if (game.isBanned(player) && !Perms.CAN_ALWAYS_BREAK.hasPermission(plugin.wrapPlayer(player))) {
                 event.setKickMessage("Banned for current game for logging out as only zombie!  Check back in a bit.");
                 event.setResult(PlayerLoginEvent.Result.KICK_BANNED);
             }
@@ -194,7 +194,7 @@ public class ZombieFightListener implements Listener {
             if (game.isZombie(player) && game.isZombieLockPhase()) {
                 //event.setCancelled(true);
             }
-        } else if (!Perms.CAN_ALWAYS_BREAK.hasPermission(player)) {
+        } else if (!Perms.CAN_ALWAYS_BREAK.hasPermission(plugin.wrapPlayer(player))) {
             event.setCancelled(true);
         }
     }
@@ -210,7 +210,7 @@ public class ZombieFightListener implements Listener {
             if (game.isZombie(player) && game.isZombieLockPhase()) {
                 event.setCancelled(true);
             }
-        } else if (!Perms.CAN_ALWAYS_BREAK.hasPermission(player)) {
+        } else if (!Perms.CAN_ALWAYS_BREAK.hasPermission(plugin.wrapPlayer(player))) {
             event.setCancelled(true);
         }
     }
@@ -257,7 +257,7 @@ public class ZombieFightListener implements Listener {
         if (!game.isEnabled()) {
             return;
         }
-        if ((!game.hasStarted() || game.hasEnded()) && !Perms.CAN_ALWAYS_BREAK.hasPermission(player)) {
+        if ((!game.hasStarted() || game.hasEnded()) && !Perms.CAN_ALWAYS_BREAK.hasPermission(plugin.wrapPlayer(player))) {
             event.setCancelled(true);
             return;
         }
@@ -338,7 +338,7 @@ public class ZombieFightListener implements Listener {
             } else if (distance >= radius - warnRadius) {
                 double oldDistance = loc.distance(event.getFrom());
                 if (oldDistance < distance) {
-                    getMessager().normal(Language.APPROACHING_BORDER, player);
+                    getMessager().normal(plugin.wrapPlayer(player), Language.APPROACHING_BORDER);
                 }
             }
             if (distance < radius) {
@@ -473,7 +473,7 @@ public class ZombieFightListener implements Listener {
         if (!game.isEnabled()) {
             return;
         }
-        if ((!game.hasStarted() || game.hasEnded()) && !Perms.CAN_ALWAYS_BREAK.hasPermission(player)) {
+        if ((!game.hasStarted() || game.hasEnded()) && !Perms.CAN_ALWAYS_BREAK.hasPermission(plugin.wrapPlayer(player))) {
             event.setCancelled(true);
             Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
                 public void run() {

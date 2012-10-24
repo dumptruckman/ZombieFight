@@ -3,42 +3,43 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 package com.dumptruckman.minecraft.zombiefight.command;
 
-import com.dumptruckman.minecraft.pluginbase.util.commandhandler.CommandHandler;
+import com.dumptruckman.minecraft.pluginbase.entity.BasePlayer;
+import com.dumptruckman.minecraft.pluginbase.locale.Message;
+import com.dumptruckman.minecraft.pluginbase.permission.Perm;
+import com.dumptruckman.minecraft.pluginbase.plugin.command.CommandInfo;
 import com.dumptruckman.minecraft.zombiefight.api.Game;
 import com.dumptruckman.minecraft.zombiefight.api.ZombieFight;
 import com.dumptruckman.minecraft.zombiefight.util.Language;
 import com.dumptruckman.minecraft.zombiefight.util.Perms;
+import com.sk89q.minecraft.util.commands.CommandContext;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
-import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-import java.util.List;
-
+@CommandInfo(
+        primaryAlias = "end",
+        desc = "Ends the game.",
+        flags = "w:f"
+)
 public class EndGameCommand extends ZFCommand {
 
-    public EndGameCommand(ZombieFight plugin) {
-        super(plugin);
-        this.setName(getMessager().getMessage(Language.CMD_END_GAME_NAME));
-        this.setCommandUsage("/" + plugin.getCommandPrefixes().get(0) + " end [-w <worldname>] [-f]");
-        this.setArgRange(0, 3);
-        for (String prefix : plugin.getCommandPrefixes()) {
-            this.addKey(prefix + " end");
-        }
-        this.addCommandExample("/" + plugin.getCommandPrefixes().get(0) + " end");
-        this.addCommandExample("/" + plugin.getCommandPrefixes().get(0) + " end -w world_nether");
-        this.addCommandExample("/" + plugin.getCommandPrefixes().get(0) + " end -f");
-        this.addCommandExample("/" + plugin.getCommandPrefixes().get(0) + " end -w world_nether -f");
-        this.setPermission(Perms.CMD_END.getPermission());
+    @Override
+    public Perm getPerm() {
+        return Perms.CMD_END;
     }
 
     @Override
-    public void runCommand(CommandSender sender, List<String> args) {
-        String worldName = CommandHandler.getFlag("-w", args);
+    public Message getHelp() {
+        return Language.CMD_END_GAME_HELP;
+    }
+
+    @Override
+    public void runCommand(ZombieFight p, BasePlayer sender, CommandContext context) {
+        String worldName = context.getFlag('w');
         World world;
         if (worldName == null) {
-            if (!(sender instanceof Player)) {
-                getMessager().bad(Language.CMD_CONSOLE_REQUIRES_WORLD, sender);
+            if (!sender.isPlayer()) {
+                p.getMessager().bad(sender, Language.CMD_CONSOLE_REQUIRES_WORLD);
                 return;
             } else {
                 world = ((Player) sender).getWorld();
@@ -47,27 +48,27 @@ public class EndGameCommand extends ZFCommand {
             world = Bukkit.getWorld(worldName);
         }
         if (world == null) {
-            getMessager().bad(Language.NO_WORLD, sender, worldName);
+            p.getMessager().bad(sender, Language.NO_WORLD, worldName);
             return;
         }
-        Game game = plugin.getGameManager().getGame(world);
+        Game game = p.getGameManager().getGame(world);
         if (!game.isEnabled()) {
-            getMessager().bad(Language.NOT_GAME_WORLD, sender, world.getName());
+            p.getMessager().bad(sender, Language.NOT_GAME_WORLD, world.getName());
             return;
         }
-        if (CommandHandler.hasFlag("-f", args)) {
+        if (context.hasFlag('f')) {
             if (!game.forceEnd(true)) {
-                getMessager().normal(Language.CMD_END_ALREADY_ENDED, sender);
+                p.getMessager().normal(sender, Language.CMD_END_ALREADY_ENDED);
                 return;
             }
         } else {
             if (!game.end()) {
-                getMessager().normal(Language.CMD_END_ALREADY_ENDED, sender);
+                p.getMessager().normal(sender, Language.CMD_END_ALREADY_ENDED);
                 return;
             }
         }
         game.broadcast(Language.CMD_END_BROADCAST, sender.getName());
 
-        getMessager().good(Language.CMD_END_SUCCESS, sender);
+        p.getMessager().good(sender, Language.CMD_END_SUCCESS);
     }
 }

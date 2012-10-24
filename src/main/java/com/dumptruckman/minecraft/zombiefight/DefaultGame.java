@@ -22,7 +22,6 @@ import com.dumptruckman.minecraft.zombiefight.util.Language;
 import com.dumptruckman.minecraft.zombiefight.util.Perms;
 import com.dumptruckman.minecraft.zombiefight.util.TimeTools;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -224,7 +223,7 @@ class DefaultGame implements Game {
                 if (kit != null) {
                     kit.addToInventory(player.getInventory());
                 } else {
-                    plugin.getMessager().bad(Language.KIT_ERROR_DEFAULT, player, kitName);
+                    plugin.getMessager().bad(plugin.wrapPlayer(player), Language.KIT_ERROR_DEFAULT, kitName);
                     plugin.setPlayerKit(player.getName(), null);
                     plugin.getLootConfig().getDefaultKit().addToInventory(player.getInventory());
                 }
@@ -269,7 +268,7 @@ class DefaultGame implements Game {
         LootTable reward = plugin.getLootConfig().getLastHumanReward();
         if (reward != null) {
             reward.addToInventory(lastHuman.getPlayer().getInventory());
-            getMessager().normal(Language.LAST_HUMAN_REWARD, lastHuman.getPlayer());
+            getMessager().normal(plugin.wrapPlayer(lastHuman.getPlayer()), Language.LAST_HUMAN_REWARD);
         } else {
             Logging.warning("Last human reward is not setup correctly!");
         }
@@ -429,8 +428,9 @@ class DefaultGame implements Game {
         Bukkit.getScheduler().scheduleSyncDelayedTask(getPlugin(), new Runnable() {
             @Override
             public void run() {
-                getMessager().sendMessage(player, ChatColor.GRAY + "Visit the official Minecraft Zombies website: "
-                        + ChatColor.RED + "www.mczombies.com");
+                // TODO configurable message
+                //getMessager().sendMessage(plugin.wrapPlayer(player), ChatColor.GRAY + "Visit the official Minecraft Zombies website: "
+                //        + ChatColor.RED + "www.mczombies.com");
                 getPlugin().displayKits(player);
             }
         }, 2L);
@@ -444,14 +444,14 @@ class DefaultGame implements Game {
                 Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
                     @Override
                     public void run() {
-                        getMessager().normal(Language.JOIN_WHILE_GAME_STARTING, player);
+                        getMessager().normal(plugin.wrapPlayer(player), Language.JOIN_WHILE_GAME_STARTING);
                     }
                 }, 4L);
             } else {
                 Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
                     @Override
                     public void run() {
-                        getMessager().normal(Language.JOIN_WHILE_GAME_PREPARING, player);
+                        getMessager().normal(plugin.wrapPlayer(player), Language.JOIN_WHILE_GAME_PREPARING);
                     }
                 }, 4L);
             }
@@ -469,7 +469,7 @@ class DefaultGame implements Game {
             Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
                 @Override
                 public void run() {
-                    getMessager().normal(Language.JOIN_WHILE_GAME_IN_PROGRESS, player);
+                    getMessager().normal(plugin.wrapPlayer(player), Language.JOIN_WHILE_GAME_IN_PROGRESS);
                 }
             }, 4L);
 
@@ -522,7 +522,7 @@ class DefaultGame implements Game {
                 }
                 if (onlineZombies < 1) {
                     bannedPlayers.add(player.getName());
-                    if (!Perms.CAN_ALWAYS_BREAK.hasPermission(player)) {
+                    if (!Perms.CAN_ALWAYS_BREAK.hasPermission(plugin.wrapPlayer(player))) {
                         player.kickPlayer("Banned for current game for logging out as only zombie!  Check back in a bit.");
                     }
                 }
@@ -745,7 +745,7 @@ class DefaultGame implements Game {
         } else {
             player.setCompassTarget(closestLocation);
             gPlayer.setTrackedPlayer(closestHuman);
-            getMessager().normal(Language.ZOMBIE_SMELL_LOCK, player);
+            getMessager().normal(plugin.wrapPlayer(player), Language.ZOMBIE_SMELL_LOCK);
         }
     }
 
@@ -753,7 +753,7 @@ class DefaultGame implements Game {
         GamePlayer gPlayer = getGamePlayer(player.getName());
         Player trackedPlayer = gPlayer.getTrackedPlayer();
         if (trackedPlayer == null || isZombie(trackedPlayer)) {
-            getMessager().normal(Language.ZOMBIE_SMELL_NOT_LOCKED, player);
+            getMessager().normal(plugin.wrapPlayer(player), Language.ZOMBIE_SMELL_NOT_LOCKED);
             return;
         }
         Location location = player.getLocation();
@@ -772,7 +772,7 @@ class DefaultGame implements Game {
         double pitch = -Math.toDegrees(Math.atan(distY / distance));
         location = player.getLocation();
         player.teleport(new Location(location.getWorld(), location.getX(), location.getY(), location.getZ(), (float) yaw, (float) pitch));
-        getMessager().normal(Language.ZOMBIE_SMELL_FACE, player);
+        getMessager().normal(plugin.wrapPlayer(player), Language.ZOMBIE_SMELL_FACE);
         /*
         double yaw = 0;
         double pitch;

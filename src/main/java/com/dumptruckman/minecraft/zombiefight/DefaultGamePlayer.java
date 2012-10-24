@@ -170,7 +170,7 @@ class DefaultGamePlayer implements GamePlayer {
                     if (broadcast) {
                         plugin.broadcastWorld(game.getWorld().getName(), plugin.getMessager().getMessage(Language.PLAYER_ZOMBIFIED, player.getName()));
                     }
-                    plugin.getMessager().normal(Language.YOU_ARE_ZOMBIE, player);
+                    plugin.getMessager().normal(plugin.wrapPlayer(player), Language.YOU_ARE_ZOMBIE);
                 }
             }, 3L);
         }

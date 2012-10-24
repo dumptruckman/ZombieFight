@@ -3,40 +3,43 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 package com.dumptruckman.minecraft.zombiefight.command;
 
-import com.dumptruckman.minecraft.pluginbase.util.commandhandler.CommandHandler;
+import com.dumptruckman.minecraft.pluginbase.entity.BasePlayer;
+import com.dumptruckman.minecraft.pluginbase.locale.Message;
+import com.dumptruckman.minecraft.pluginbase.permission.Perm;
+import com.dumptruckman.minecraft.pluginbase.plugin.command.CommandInfo;
 import com.dumptruckman.minecraft.zombiefight.api.ZFConfig;
 import com.dumptruckman.minecraft.zombiefight.api.ZombieFight;
 import com.dumptruckman.minecraft.zombiefight.util.Language;
 import com.dumptruckman.minecraft.zombiefight.util.Perms;
+import com.sk89q.minecraft.util.commands.CommandContext;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
-import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-import java.util.List;
-
+@CommandInfo(
+        primaryAlias = "enable",
+        desc = "Enables the game for a world.",
+        flags = "w:"
+)
 public class EnableGameCommand extends ZFCommand {
 
-    public EnableGameCommand(ZombieFight plugin) {
-        super(plugin);
-        this.setName(getMessager().getMessage(Language.CMD_ENABLE_NAME));
-        this.setCommandUsage("/" + plugin.getCommandPrefixes().get(0) + " enable [-w <worldname>]");
-        this.setArgRange(0, 2);
-        for (String prefix : plugin.getCommandPrefixes()) {
-            this.addKey(prefix + " enable");
-        }
-        this.addCommandExample("/" + plugin.getCommandPrefixes().get(0) + " enable");
-        this.addCommandExample("/" + plugin.getCommandPrefixes().get(0) + " enable -w world_nether");
-        this.setPermission(Perms.CMD_ENABLE.getPermission());
+    @Override
+    public Perm getPerm() {
+        return Perms.CMD_ENABLE;
     }
 
     @Override
-    public void runCommand(CommandSender sender, List<String> args) {
-        String worldName = CommandHandler.getFlag("-w", args);
-        World world = null;
+    public Message getHelp() {
+        return Language.CMD_ENABLE_HELP;
+    }
+
+    @Override
+    public void runCommand(ZombieFight p, BasePlayer sender, CommandContext context) {
+        String worldName = context.getFlag('w');
+        World world;
         if (worldName == null) {
-            if (!(sender instanceof Player)) {
-                getMessager().bad(Language.CMD_CONSOLE_REQUIRES_WORLD, sender);
+            if (!sender.isPlayer()) {
+                p.getMessager().bad(sender, Language.CMD_CONSOLE_REQUIRES_WORLD);
                 return;
             } else {
                 world = ((Player) sender).getWorld();
@@ -45,18 +48,18 @@ public class EnableGameCommand extends ZFCommand {
             world = Bukkit.getWorld(worldName);
         }
         if (world == null) {
-            getMessager().bad(Language.NO_WORLD, sender, worldName);
+            p.getMessager().bad(sender, Language.NO_WORLD, worldName);
             return;
         }
-        if (plugin.getGameManager().isWorldEnabled(world)) {
-            getMessager().bad(Language.CMD_ENABLE_ALREADY, sender);
+        if (p.getGameManager().isWorldEnabled(world)) {
+            p.getMessager().bad(sender, Language.CMD_ENABLE_ALREADY);
             return;
         }
-        int borderRadius = plugin.config().get(ZFConfig.BORDER_RADIUS, world.getName());
-        plugin.config().set(ZFConfig.BORDER_RADIUS, world.getName(), borderRadius);
-        int borderWarn = plugin.config().get(ZFConfig.BORDER_WARN, world.getName());
-        plugin.config().set(ZFConfig.BORDER_WARN, world.getName(), borderWarn);
-        plugin.getGameManager().enableWorld(world);
-        getMessager().good(Language.CMD_ENABLE_SUCCESS, sender);
+        int borderRadius = p.config().get(ZFConfig.BORDER_RADIUS, world.getName());
+        p.config().set(ZFConfig.BORDER_RADIUS, world.getName(), borderRadius);
+        int borderWarn = p.config().get(ZFConfig.BORDER_WARN, world.getName());
+        p.config().set(ZFConfig.BORDER_WARN, world.getName(), borderWarn);
+        p.getGameManager().enableWorld(world);
+        p.getMessager().good(sender, Language.CMD_ENABLE_SUCCESS);
     }
 }

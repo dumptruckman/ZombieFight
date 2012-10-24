@@ -3,57 +3,58 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 package com.dumptruckman.minecraft.zombiefight.command;
 
+import com.dumptruckman.minecraft.pluginbase.entity.BasePlayer;
+import com.dumptruckman.minecraft.pluginbase.locale.Message;
+import com.dumptruckman.minecraft.pluginbase.permission.Perm;
+import com.dumptruckman.minecraft.pluginbase.plugin.command.CommandInfo;
 import com.dumptruckman.minecraft.zombiefight.api.LootTable;
 import com.dumptruckman.minecraft.zombiefight.api.ZombieFight;
 import com.dumptruckman.minecraft.zombiefight.util.Language;
 import com.dumptruckman.minecraft.zombiefight.util.Perms;
-import org.bukkit.command.CommandSender;
+import com.sk89q.minecraft.util.commands.CommandContext;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
-import java.util.List;
-
+@CommandInfo(
+        primaryAlias = "kit",
+        aliases = "kit",
+        desc = "Lists kits available to you or selects a kit for the next game.",
+        usage = "[name of kit]"
+)
 public class KitCommand extends ZFCommand {
 
-    public KitCommand(ZombieFight plugin) {
-        super(plugin);
-        this.setName(getMessager().getMessage(Language.CMD_KIT_NAME));
-        this.setCommandUsage("/kit [kit name]");
-        this.setArgRange(0, 500);
-        this.addKey("kit");
-        this.addCommandExample("/kit");
-        this.addCommandExample("/kit starter kit");
-        this.setPermission(Perms.KIT.getPermission());
+    @Override
+    public Perm getPerm() {
+        return Perms.KIT;
     }
 
     @Override
-    public void runCommand(CommandSender sender, List<String> args) {
-        if (!(sender instanceof Player)) {
-            getMessager().bad(Language.IN_GAME_ONLY, sender);
+    public Message getHelp() {
+        return Language.CMD_KIT_HELP;
+    }
+
+    @Override
+    public void runCommand(ZombieFight p, BasePlayer sender, CommandContext context) {
+        if (!sender.isPlayer()) {
+            p.getMessager().bad(sender, Language.IN_GAME_ONLY);
             return;
         }
-        Player player = (Player) sender;
-        if (args.size() == 0) {
-            plugin.displayKits(player);
+        Player player = Bukkit.getPlayerExact(sender.getName());
+        if (context.argsLength() == 0) {
+            p.displayKits(player);
         } else {
-            StringBuilder kit = new StringBuilder();
-            for (String arg : args) {
-                if (!kit.toString().isEmpty()) {
-                    kit.append(" ");
-                }
-                kit.append(arg);
-            }
-            if (!Perms.KIT.specific(kit.toString()).hasPermission(player)) {
-                getMessager().bad(Language.CMD_KIT_NO_ACCESS, player, kit.toString());
+            final String kit = context.getJoinedStrings(0);
+            if (!Perms.KIT.hasPermission(sender, kit)) {
+                p.getMessager().bad(sender, Language.CMD_KIT_NO_ACCESS, kit);
                 return;
             }
-            LootTable lootTable = plugin.getLootConfig().getKit(kit.toString());
+            LootTable lootTable = p.getLootConfig().getKit(kit);
             if (lootTable == null) {
-                getMessager().bad(Language.KIT_ERROR, player, kit.toString());
+                p.getMessager().bad(sender, Language.KIT_ERROR, kit);
                 return;
             }
-
-            plugin.setPlayerKit(player.getName(), kit.toString());
-            getMessager().good(Language.CMD_KIT_SUCCESS, player, kit.toString());
+            p.setPlayerKit(player.getName(), kit);
+            p.getMessager().good(sender, Language.CMD_KIT_SUCCESS, kit);
         }
     }
 }

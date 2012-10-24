@@ -3,48 +3,54 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 package com.dumptruckman.minecraft.zombiefight.command;
 
+import com.dumptruckman.minecraft.pluginbase.entity.BasePlayer;
+import com.dumptruckman.minecraft.pluginbase.locale.Message;
+import com.dumptruckman.minecraft.pluginbase.permission.Perm;
+import com.dumptruckman.minecraft.pluginbase.plugin.command.CommandInfo;
 import com.dumptruckman.minecraft.zombiefight.api.ZFConfig;
 import com.dumptruckman.minecraft.zombiefight.api.ZombieFight;
 import com.dumptruckman.minecraft.zombiefight.util.Language;
 import com.dumptruckman.minecraft.zombiefight.util.Perms;
-import org.bukkit.command.CommandSender;
+import com.sk89q.minecraft.util.commands.CommandContext;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
-import java.util.List;
-
+@CommandInfo(
+        primaryAlias = "border",
+        desc = "Checks or sets a world's game border size.",
+        usage = "[radius]",
+        max = 1
+)
 public class BorderCommand extends ZFCommand {
 
-    public BorderCommand(ZombieFight plugin) {
-        super(plugin);
-        this.setName(getMessager().getMessage(Language.CMD_BORDER_NAME));
-        this.setCommandUsage("/" + plugin.getCommandPrefixes().get(0) + " border [value]");
-        this.setArgRange(0, 1);
-        for (String prefix : plugin.getCommandPrefixes()) {
-            this.addKey(prefix + " border");
-        }
-        this.addCommandExample("/" + plugin.getCommandPrefixes().get(0) + " border");
-        this.addCommandExample("/" + plugin.getCommandPrefixes().get(0) + " border 150");
-        this.setPermission(Perms.CMD_BORDER.getPermission());
+    @Override
+    public Perm getPerm() {
+        return Perms.CMD_BORDER;
     }
 
     @Override
-    public void runCommand(CommandSender sender, List<String> args) {
-        if (!(sender instanceof Player)) {
-            getMessager().bad(Language.IN_GAME_ONLY, sender);
+    public Message getHelp() {
+        return Language.CMD_BORDER_HELP;
+    }
+
+    @Override
+    public void runCommand(ZombieFight p, BasePlayer sender, CommandContext context) {
+        if (!sender.isPlayer()) {
+            p.getMessager().bad(sender, Language.IN_GAME_ONLY);
             return;
         }
-        Player player = (Player) sender;
-        if (!args.isEmpty()) {
+        Player player = Bukkit.getServer().getPlayerExact(sender.getName());
+        if (context.argsLength() != 0) {
             try {
-                int radius = Integer.valueOf(args.get(0));
-                plugin.config().set(ZFConfig.BORDER_RADIUS, player.getWorld().getName(), radius);
-                plugin.config().save();
-                getMessager().good(Language.CMD_BORDER_SET_SUCCESS, player, radius);
+                int radius = context.getInteger(0);
+                p.config().set(ZFConfig.BORDER_RADIUS, player.getWorld().getName(), radius);
+                p.config().save();
+                p.getMessager().good(sender, Language.CMD_BORDER_SET_SUCCESS, radius);
             } catch (NumberFormatException ignore) {
-                getMessager().bad(Language.CMD_BORDER_SET_FAILURE, player);
+                p.getMessager().bad(sender, Language.CMD_BORDER_SET_FAILURE);
             }
         } else {
-            getMessager().normal(Language.CMD_BORDER_CHECK, sender, plugin.config().get(ZFConfig.BORDER_RADIUS, player.getWorld().getName()));
+            p.getMessager().normal(sender, Language.CMD_BORDER_CHECK, p.config().get(ZFConfig.BORDER_RADIUS, player.getWorld().getName()));
         }
     }
 }

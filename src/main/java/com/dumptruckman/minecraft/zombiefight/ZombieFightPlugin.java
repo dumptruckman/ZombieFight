@@ -3,6 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 package com.dumptruckman.minecraft.zombiefight;
 
+import com.dumptruckman.minecraft.pluginbase.entity.BasePlayer;
 import com.dumptruckman.minecraft.pluginbase.plugin.AbstractBukkitPlugin;
 import com.dumptruckman.minecraft.pluginbase.plugin.command.HelpCommand;
 import com.dumptruckman.minecraft.pluginbase.util.Logging;
@@ -19,10 +20,9 @@ import com.dumptruckman.minecraft.zombiefight.command.DeselectCommand;
 import com.dumptruckman.minecraft.zombiefight.command.DisableGameCommand;
 import com.dumptruckman.minecraft.zombiefight.command.EnableGameCommand;
 import com.dumptruckman.minecraft.zombiefight.command.EndGameCommand;
-import com.dumptruckman.minecraft.zombiefight.command.GameSpawnCommand;
 import com.dumptruckman.minecraft.zombiefight.command.KitCommand;
-import com.dumptruckman.minecraft.zombiefight.command.PreGameSpawnCommand;
 import com.dumptruckman.minecraft.zombiefight.command.SelectCommand;
+import com.dumptruckman.minecraft.zombiefight.command.SpawnCommand;
 import com.dumptruckman.minecraft.zombiefight.command.StartGameCommand;
 import com.dumptruckman.minecraft.zombiefight.util.CommentedConfig;
 import com.dumptruckman.minecraft.zombiefight.util.Language;
@@ -35,7 +35,6 @@ import org.bukkit.plugin.PluginManager;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -45,7 +44,7 @@ import java.util.Set;
 
 public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements ZombieFight {
 
-    private final List<String> cmdPrefixes = Arrays.asList("zf");
+    private static final String CMD_PREFIX = "zf";
 
     private GameManager gameManager = null;
     private LootConfig lootConfig = null;
@@ -76,17 +75,16 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
         if (config().get(ZFConfig.TEST_MODE)) {
             pm.registerEvents(testListener, this);
         }
-        getCommandHandler().registerCommand(new PreGameSpawnCommand(this));
-        getCommandHandler().registerCommand(new GameSpawnCommand(this));
-        getCommandHandler().registerCommand(new StartGameCommand(this));
-        getCommandHandler().registerCommand(new EndGameCommand(this));
-        getCommandHandler().registerCommand(new EnableGameCommand(this));
-        getCommandHandler().registerCommand(new DisableGameCommand(this));
-        getCommandHandler().registerCommand(new KitCommand(this));
-        getCommandHandler().registerCommand(new BorderCommand(this));
-        getCommandHandler().registerCommand(new CleanupCommand(this));
-        getCommandHandler().registerCommand(new SelectCommand(this));
-        getCommandHandler().registerCommand(new DeselectCommand(this));
+        getCommandHandler().registerCommand(SpawnCommand.class);
+        getCommandHandler().registerCommand(StartGameCommand.class);
+        getCommandHandler().registerCommand(EndGameCommand.class);
+        getCommandHandler().registerCommand(EnableGameCommand.class);
+        getCommandHandler().registerCommand(DisableGameCommand.class);
+        getCommandHandler().registerCommand(KitCommand.class);
+        getCommandHandler().registerCommand(BorderCommand.class);
+        getCommandHandler().registerCommand(CleanupCommand.class);
+        getCommandHandler().registerCommand(SelectCommand.class);
+        getCommandHandler().registerCommand(DeselectCommand.class);
         getLootConfig();
     }
 
@@ -130,8 +128,8 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
     }
 
     @Override
-    public List<String> getCommandPrefixes() {
-        return cmdPrefixes;
+    public String getCommandPrefix() {
+        return CMD_PREFIX;
     }
 
     @Override
@@ -162,7 +160,7 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
         }
         Logging.fine("'" + worldName + "' broadcast: " + message);
         for (Player player : world.getPlayers()) {
-            getMessager().sendMessage(player, message);
+            getMessager().sendMessage(wrapPlayer(player), message);
         }
     }
 
@@ -186,8 +184,9 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
     public void displayKits(Player player) {
         String[] kits = getLootConfig().getKitNames();
         StringBuilder kitList = new StringBuilder();
+        final BasePlayer wrappedPlayer = wrapPlayer(player);
         for (String kit : kits) {
-            if (!Perms.KIT.specific(kit).hasPermission(player)) {
+            if (!Perms.KIT.hasPermission(wrappedPlayer, kit)) {
                 continue;
             }
             if (!kitList.toString().isEmpty()) {
@@ -195,7 +194,7 @@ public class ZombieFightPlugin extends AbstractBukkitPlugin<ZFConfig> implements
             }
             kitList.append(ChatColor.AQUA).append(kit).append(ChatColor.WHITE);
         }
-        getMessager().normal(Language.CMD_KIT_LIST, player, kitList.toString());
+        getMessager().normal(wrappedPlayer, Language.CMD_KIT_LIST, kitList.toString());
     }
 
     @Override
