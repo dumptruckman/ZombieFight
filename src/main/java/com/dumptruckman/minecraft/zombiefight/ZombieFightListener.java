@@ -97,8 +97,8 @@ public class ZombieFightListener implements Listener {
                             playersNotPastBorder.add(name);
                             break;
                         }
-                        int playerHealth = player.getHealth();
-                        int newHealth = playerHealth - plugin.config().get(ZFConfig.BORDER_DAMAGE);
+                        double playerHealth = player.getHealth();
+                        double newHealth = playerHealth - plugin.config().get(ZFConfig.BORDER_DAMAGE);
                         if (newHealth < 0) {
                             newHealth = 0;
                         }

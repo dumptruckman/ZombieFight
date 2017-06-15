@@ -12,12 +12,10 @@ import com.dumptruckman.minecraft.zombiefight.util.Language;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
-import pgDev.bukkit.DisguiseCraft.Disguise;
-import pgDev.bukkit.DisguiseCraft.Disguise.MobType;
-import pgDev.bukkit.DisguiseCraft.DisguiseCraft;
 
 class DefaultGamePlayer implements GamePlayer {
 
@@ -49,8 +47,8 @@ class DefaultGamePlayer implements GamePlayer {
         player.setDisplayName(ChatColor.stripColor(player.getDisplayName()));
         player.setPlayerListName(ChatColor.stripColor(player.getPlayerListName()));
         if (isZombie()) {
-            if (!DisguiseCraft.getAPI().isDisguised(player)) {
-                DisguiseCraft.getAPI().disguisePlayer(player, new Disguise(DisguiseCraft.getAPI().newEntityID(), MobType.Zombie));
+            if (!plugin.getDisguiser().isDisguised(player)) {
+                plugin.getDisguiser().disguise(player, EntityType.ZOMBIE);
             }
             /*if (!plugin.getDisguiser().isDisguised(player)) {
                 plugin.getDisguiser().disguise(player, EntityType.ZOMBIE);
@@ -65,8 +63,8 @@ class DefaultGamePlayer implements GamePlayer {
             game.addZombieItems(player.getInventory());
             //player.addPotionEffect(PotionEffectType.FAST_DIGGING.createEffect(Integer.MAX_VALUE, plugin.config().get(ZFConfig.ZOMBIE_BREAK_SPEED_STRENGTH)));
         } else {
-            if (DisguiseCraft.getAPI().isDisguised(player)) {
-                DisguiseCraft.getAPI().undisguisePlayer(player);
+            if (plugin.getDisguiser().isDisguised(player)) {
+                plugin.getDisguiser().undisguise(player);
             }
             /*if (plugin.getDisguiser().isDisguised(player)) {
                 plugin.getDisguiser().undisguise(player);
@@ -132,8 +130,8 @@ class DefaultGamePlayer implements GamePlayer {
         Player player = getPlayer();
         if (player != null) {
             player.setDisplayName(ChatColor.stripColor(player.getDisplayName()));
-            if (DisguiseCraft.getAPI().isDisguised(player)) {
-                DisguiseCraft.getAPI().undisguisePlayer(player);
+            if (plugin.getDisguiser().isDisguised(player)) {
+                plugin.getDisguiser().undisguise(player);
             }
         }
     }

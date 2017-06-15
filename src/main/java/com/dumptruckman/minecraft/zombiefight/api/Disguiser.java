@@ -14,8 +14,6 @@ public interface Disguiser {
 
     void undisguise(Player player);
 
-    void updateDisguise(Player player);
-
     boolean isDisguised(Player player);
 
     void handleQuit(Player player);

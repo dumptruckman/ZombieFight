@@ -255,7 +255,7 @@ public class DataStrings {
     }
 
     /**
-     * @param potionsString A player's potion effects in string form to be parsed into Collection<PotionEffect>.
+     * @param potionsString A player's potion effects in string form to be parsed into Collection of Potion Effects.
      * @return a collection of potion effects parsed from potionsString.
      */
     public static PotionEffect[] parsePotionEffects(String potionsString) {
@@ -334,7 +334,7 @@ public class DataStrings {
      * Converts a Collection of {@link PotionEffect} into a String for easy persistence.
      *
      * @param potionEffects The potion effects you wish to "string-i-tize".
-     * @return A String representation of a Collection<{@link PotionEffect}>
+     * @return A String representation of a Collection of {@link PotionEffect}
      */
     public static String valueOf(PotionEffect[] potionEffects) {
         StringBuilder builder = new StringBuilder();
